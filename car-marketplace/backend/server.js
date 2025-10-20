@@ -2,14 +2,35 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const { v4: uuidv4 } = require('uuid');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const JWT_SECRET = process.env.JWT_SECRET || 'automarket-secret-key-change-in-production';
 
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static('public'));
+
+// Middleware d'authentification
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ error: 'Token manquant' });
+  }
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.status(403).json({ error: 'Token invalide' });
+    }
+    req.user = user;
+    next();
+  });
+};
 
 // Base de données en mémoire (pour la démo)
 let cars = [
@@ -123,6 +144,99 @@ let cars = [
   }
 ];
 
+// Admin users (password: admin123)
+let users = [
+  {
+    id: '1',
+    username: 'admin',
+    email: 'admin@automarket.fr',
+    password: bcrypt.hashSync('admin123', 10),
+    role: 'admin',
+    createdAt: new Date()
+  }
+];
+
+// Pages de contenu
+let pages = [
+  {
+    id: '1',
+    slug: 'mentions-legales',
+    title: 'Mentions Légales',
+    content: '<h2>Mentions Légales</h2><p>Éditeur du site : AutoMarket SAS</p><p>Siège social : 123 Rue de la Voiture, 75001 Paris</p><p>SIRET : 123 456 789 00010</p><p>Directeur de publication : Jean Dupont</p>',
+    metaTitle: 'Mentions Légales - AutoMarket',
+    metaDescription: 'Mentions légales du site AutoMarket',
+    isPublished: true,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  },
+  {
+    id: '2',
+    slug: 'contact',
+    title: 'Contactez-nous',
+    content: '<h2>Contactez-nous</h2><p>Vous avez une question ? N\'hésitez pas à nous contacter !</p><p><strong>Email :</strong> contact@automarket.fr</p><p><strong>Téléphone :</strong> 01 23 45 67 89</p><p><strong>Adresse :</strong> 123 Rue de la Voiture, 75001 Paris</p>',
+    metaTitle: 'Contact - AutoMarket',
+    metaDescription: 'Contactez l\'équipe AutoMarket',
+    isPublished: true,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  },
+  {
+    id: '3',
+    slug: 'conditions-generales',
+    title: 'Conditions Générales d\'Utilisation',
+    content: '<h2>Conditions Générales d\'Utilisation</h2><p>Dernière mise à jour : Octobre 2025</p><h3>Article 1 - Objet</h3><p>Les présentes conditions générales ont pour objet de définir les modalités d\'utilisation du site AutoMarket.</p>',
+    metaTitle: 'CGU - AutoMarket',
+    metaDescription: 'Conditions générales d\'utilisation',
+    isPublished: true,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  },
+  {
+    id: '4',
+    slug: 'politique-confidentialite',
+    title: 'Politique de Confidentialité',
+    content: '<h2>Politique de Confidentialité</h2><p>Nous respectons votre vie privée et nous engageons à protéger vos données personnelles.</p><h3>Collecte des données</h3><p>Nous collectons uniquement les données nécessaires au bon fonctionnement du service.</p>',
+    metaTitle: 'Politique de Confidentialité - AutoMarket',
+    metaDescription: 'Notre politique de protection des données',
+    isPublished: true,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  }
+];
+
+// Menus de navigation
+let menus = [
+  {
+    id: '1',
+    name: 'Menu Principal',
+    location: 'main',
+    items: [
+      { id: '1', label: 'Accueil', url: '/', order: 1 },
+      { id: '2', label: 'Déposer une annonce', url: '/post-ad', order: 2 }
+    ]
+  },
+  {
+    id: '2',
+    name: 'Menu Footer',
+    location: 'footer',
+    items: [
+      { id: '1', label: 'Mentions Légales', url: '/page/mentions-legales', order: 1 },
+      { id: '2', label: 'CGU', url: '/page/conditions-generales', order: 2 },
+      { id: '3', label: 'Politique de Confidentialité', url: '/page/politique-confidentialite', order: 3 },
+      { id: '4', label: 'Contact', url: '/page/contact', order: 4 }
+    ]
+  }
+];
+
+// Editorial content (homepage banner, etc.)
+let editorials = {
+  homepageBanner: {
+    title: 'Trouvez la voiture de vos rêves',
+    subtitle: 'Des milliers d\'annonces de voitures d\'occasion vérifiées',
+    updatedAt: new Date()
+  }
+};
+
 // Routes API
 // GET toutes les annonces avec filtres
 app.get('/api/cars', (req, res) => {
@@ -219,6 +333,194 @@ app.get('/api/stats', (req, res) => {
   });
 });
 
+// ============ AUTHENTICATION ROUTES ============
+
+// POST login
+app.post('/api/auth/login', async (req, res) => {
+  const { username, password } = req.body;
+
+  const user = users.find(u => u.username === username || u.email === username);
+
+  if (!user) {
+    return res.status(401).json({ error: 'Identifiants incorrects' });
+  }
+
+  const validPassword = await bcrypt.compare(password, user.password);
+
+  if (!validPassword) {
+    return res.status(401).json({ error: 'Identifiants incorrects' });
+  }
+
+  const token = jwt.sign(
+    { id: user.id, username: user.username, role: user.role },
+    JWT_SECRET,
+    { expiresIn: '24h' }
+  );
+
+  res.json({
+    token,
+    user: {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      role: user.role
+    }
+  });
+});
+
+// GET verify token
+app.get('/api/auth/verify', authenticateToken, (req, res) => {
+  res.json({ valid: true, user: req.user });
+});
+
+// ============ PAGES ROUTES ============
+
+// GET toutes les pages (publiques seulement)
+app.get('/api/pages', (req, res) => {
+  const publishedPages = pages.filter(p => p.isPublished);
+  res.json(publishedPages.map(p => ({
+    id: p.id,
+    slug: p.slug,
+    title: p.title,
+    metaTitle: p.metaTitle,
+    metaDescription: p.metaDescription
+  })));
+});
+
+// GET une page par slug
+app.get('/api/pages/:slug', (req, res) => {
+  const page = pages.find(p => p.slug === req.params.slug);
+
+  if (!page || !page.isPublished) {
+    return res.status(404).json({ error: 'Page non trouvée' });
+  }
+
+  res.json(page);
+});
+
+// GET toutes les pages (admin)
+app.get('/api/admin/pages', authenticateToken, (req, res) => {
+  res.json(pages);
+});
+
+// GET une page par ID (admin)
+app.get('/api/admin/pages/:id', authenticateToken, (req, res) => {
+  const page = pages.find(p => p.id === req.params.id);
+
+  if (!page) {
+    return res.status(404).json({ error: 'Page non trouvée' });
+  }
+
+  res.json(page);
+});
+
+// POST créer une page (admin)
+app.post('/api/admin/pages', authenticateToken, (req, res) => {
+  const newPage = {
+    id: uuidv4(),
+    ...req.body,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  };
+
+  pages.push(newPage);
+  res.status(201).json(newPage);
+});
+
+// PUT mettre à jour une page (admin)
+app.put('/api/admin/pages/:id', authenticateToken, (req, res) => {
+  const index = pages.findIndex(p => p.id === req.params.id);
+
+  if (index === -1) {
+    return res.status(404).json({ error: 'Page non trouvée' });
+  }
+
+  pages[index] = {
+    ...pages[index],
+    ...req.body,
+    id: req.params.id,
+    updatedAt: new Date()
+  };
+
+  res.json(pages[index]);
+});
+
+// DELETE supprimer une page (admin)
+app.delete('/api/admin/pages/:id', authenticateToken, (req, res) => {
+  const index = pages.findIndex(p => p.id === req.params.id);
+
+  if (index === -1) {
+    return res.status(404).json({ error: 'Page non trouvée' });
+  }
+
+  pages.splice(index, 1);
+  res.status(204).send();
+});
+
+// ============ MENUS ROUTES ============
+
+// GET menus par location
+app.get('/api/menus/:location', (req, res) => {
+  const menu = menus.find(m => m.location === req.params.location);
+
+  if (!menu) {
+    return res.json({ items: [] });
+  }
+
+  res.json(menu);
+});
+
+// GET tous les menus (admin)
+app.get('/api/admin/menus', authenticateToken, (req, res) => {
+  res.json(menus);
+});
+
+// PUT mettre à jour un menu (admin)
+app.put('/api/admin/menus/:id', authenticateToken, (req, res) => {
+  const index = menus.findIndex(m => m.id === req.params.id);
+
+  if (index === -1) {
+    return res.status(404).json({ error: 'Menu non trouvé' });
+  }
+
+  menus[index] = {
+    ...menus[index],
+    ...req.body,
+    id: req.params.id
+  };
+
+  res.json(menus[index]);
+});
+
+// ============ EDITORIAL ROUTES ============
+
+// GET editorial content
+app.get('/api/editorial/:key', (req, res) => {
+  const content = editorials[req.params.key];
+
+  if (!content) {
+    return res.status(404).json({ error: 'Contenu non trouvé' });
+  }
+
+  res.json(content);
+});
+
+// GET all editorial content (admin)
+app.get('/api/admin/editorial', authenticateToken, (req, res) => {
+  res.json(editorials);
+});
+
+// PUT update editorial content (admin)
+app.put('/api/admin/editorial/:key', authenticateToken, (req, res) => {
+  editorials[req.params.key] = {
+    ...req.body,
+    updatedAt: new Date()
+  };
+
+  res.json(editorials[req.params.key]);
+});
+
 app.listen(PORT, () => {
   console.log(`🚗 Server running on http://localhost:${PORT}`);
+  console.log(`👤 Admin credentials: username: admin, password: admin123`);
 });

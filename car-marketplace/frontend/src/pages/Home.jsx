@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import SEO from '../components/SEO'
 import SearchBar from '../components/SearchBar'
 import Filters from '../components/Filters'
 import CarCard from '../components/CarCard'
@@ -8,6 +9,10 @@ function Home() {
   const [cars, setCars] = useState([])
   const [filteredCars, setFilteredCars] = useState([])
   const [loading, setLoading] = useState(true)
+  const [editorial, setEditorial] = useState({
+    title: 'Trouvez la voiture de vos rêves',
+    subtitle: 'Des milliers d\'annonces de voitures d\'occasion vérifiées'
+  })
   const [filters, setFilters] = useState({
     search: '',
     brand: '',
@@ -21,6 +26,7 @@ function Home() {
 
   useEffect(() => {
     fetchCars()
+    fetchEditorial()
   }, [])
 
   useEffect(() => {
@@ -37,6 +43,18 @@ function Home() {
     } catch (error) {
       console.error('Erreur lors du chargement des annonces:', error)
       setLoading(false)
+    }
+  }
+
+  const fetchEditorial = async () => {
+    try {
+      const response = await fetch('/api/editorial/homepageBanner')
+      const data = await response.json()
+      if (data.title) {
+        setEditorial(data)
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement de l\'éditorial:', error)
     }
   }
 
@@ -93,10 +111,16 @@ function Home() {
 
   return (
     <div>
+      <SEO
+        title="AutoMarket - Marketplace de voitures d'occasion"
+        description="Trouvez la voiture de vos rêves parmi des milliers d'annonces vérifiées. Achetez et vendez des voitures d'occasion en toute confiance."
+        keywords="voiture occasion, achat voiture, vente voiture, automobile, marketplace auto"
+      />
+
       <section className="hero">
         <div className="container">
-          <h1>Trouvez la voiture de vos rêves</h1>
-          <p>Des milliers d'annonces de voitures d'occasion vérifiées</p>
+          <h1>{editorial.title}</h1>
+          <p>{editorial.subtitle}</p>
         </div>
       </section>
 

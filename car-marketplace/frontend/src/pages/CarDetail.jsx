@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import SEO from '../components/SEO'
+import StructuredData from '../components/StructuredData'
 
 function CarDetail() {
   const { id } = useParams()
@@ -55,6 +57,14 @@ function CarDetail() {
 
   return (
     <div className="container">
+      <SEO
+        title={`${car.title} - ${formatPrice(car.price)} - AutoMarket`}
+        description={`${car.title} - ${car.year} - ${car.mileage.toLocaleString('fr-FR')} km - ${car.fuel} - ${car.transmission}. ${car.description}`}
+        keywords={`${car.brand}, ${car.model}, ${car.year}, voiture occasion, ${car.fuel}, ${car.location}`}
+        ogImage={car.image}
+      />
+      <StructuredData type="product" data={car} />
+
       <div style={{ margin: '2rem 0' }}>
         <Link to="/" className="btn btn-secondary">← Retour aux annonces</Link>
       </div>

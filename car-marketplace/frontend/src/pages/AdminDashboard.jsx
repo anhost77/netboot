@@ -5,6 +5,8 @@ import PagesManager from '../components/admin/PagesManager'
 import PageEditor from '../components/admin/PageEditor'
 import MenusManager from '../components/admin/MenusManager'
 import EditorialManager from '../components/admin/EditorialManager'
+import UsersManager from '../components/admin/UsersManager'
+import AdsManager from '../components/admin/AdsManager'
 
 function AdminDashboard() {
   const navigate = useNavigate()
@@ -65,6 +67,12 @@ function AdminDashboard() {
           <Link to="/admin" className="admin-nav-link">
             📊 Tableau de bord
           </Link>
+          <Link to="/admin/users" className="admin-nav-link">
+            👥 Utilisateurs
+          </Link>
+          <Link to="/admin/ads" className="admin-nav-link">
+            🚗 Annonces
+          </Link>
           <Link to="/admin/pages" className="admin-nav-link">
             📄 Pages de contenu
           </Link>
@@ -83,6 +91,8 @@ function AdminDashboard() {
       <div className="admin-content">
         <Routes>
           <Route path="/" element={<DashboardHome />} />
+          <Route path="/users" element={<UsersManager />} />
+          <Route path="/ads" element={<AdsManager />} />
           <Route path="/pages" element={<PagesManager />} />
           <Route path="/pages/new" element={<PageEditor />} />
           <Route path="/pages/edit/:id" element={<PageEditor />} />
@@ -103,6 +113,18 @@ function DashboardHome() {
       </p>
 
       <div className="admin-cards">
+        <Link to="/admin/users" className="admin-card">
+          <div className="admin-card-icon">👥</div>
+          <h3>Utilisateurs</h3>
+          <p>Gérer les utilisateurs du site</p>
+        </Link>
+
+        <Link to="/admin/ads" className="admin-card">
+          <div className="admin-card-icon">🚗</div>
+          <h3>Annonces</h3>
+          <p>Gérer toutes les annonces publiées</p>
+        </Link>
+
         <Link to="/admin/pages" className="admin-card">
           <div className="admin-card-icon">📄</div>
           <h3>Pages de contenu</h3>

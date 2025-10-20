@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom'
 function Header() {
   const [menuItems, setMenuItems] = useState([])
   const [isAdmin, setIsAdmin] = useState(false)
+  const [isUser, setIsUser] = useState(false)
+  const [currentUser, setCurrentUser] = useState(null)
 
   useEffect(() => {
     fetchMenuItems()
@@ -23,14 +25,28 @@ function Header() {
   }
 
   const checkAuth = () => {
-    const token = localStorage.getItem('adminToken')
-    setIsAdmin(!!token)
+    const adminToken = localStorage.getItem('adminToken')
+    const userToken = localStorage.getItem('userToken')
+    const userData = localStorage.getItem('currentUser')
+
+    setIsAdmin(!!adminToken)
+    setIsUser(!!userToken)
+    if (userData) {
+      setCurrentUser(JSON.parse(userData))
+    }
   }
 
   const handleLogout = () => {
-    localStorage.removeItem('adminToken')
-    localStorage.removeItem('adminUser')
+    if (isAdmin) {
+      localStorage.removeItem('adminToken')
+      localStorage.removeItem('adminUser')
+    } else {
+      localStorage.removeItem('userToken')
+      localStorage.removeItem('currentUser')
+    }
     setIsAdmin(false)
+    setIsUser(false)
+    setCurrentUser(null)
     window.location.href = '/'
   }
 
@@ -60,10 +76,31 @@ function Header() {
                   Déconnexion
                 </button>
               </>
+            ) : isUser ? (
+              <>
+                <Link to="/account" className="nav-link">
+                  👤 {currentUser?.firstName}
+                </Link>
+                <Link to="/post-ad" className="btn btn-primary" style={{ padding: '0.5rem 1rem' }}>
+                  Déposer une annonce
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="btn btn-secondary"
+                  style={{ padding: '0.5rem 1rem' }}
+                >
+                  Déconnexion
+                </button>
+              </>
             ) : (
-              <Link to="/admin/login" className="nav-link">
-                Connexion
-              </Link>
+              <>
+                <Link to="/login" className="nav-link">
+                  Connexion
+                </Link>
+                <Link to="/login" className="btn btn-primary" style={{ padding: '0.5rem 1rem' }}>
+                  Déposer une annonce
+                </Link>
+              </>
             )}
           </nav>
         </div>

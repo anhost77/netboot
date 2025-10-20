@@ -1,9 +1,12 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate, Link } from 'react-router-dom'
+import SEO from '../components/SEO'
 
 function PostAd() {
   const navigate = useNavigate()
   const [success, setSuccess] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [formData, setFormData] = useState({
     title: '',
     brand: '',
@@ -15,11 +18,19 @@ function PostAd() {
     transmission: 'Manuelle',
     location: '',
     description: '',
-    image: '',
-    seller: '',
-    phone: '',
-    email: ''
+    image: ''
   })
+
+  useEffect(() => {
+    const token = localStorage.getItem('userToken')
+    if (!token) {
+      setLoading(false)
+      setIsAuthenticated(false)
+    } else {
+      setIsAuthenticated(true)
+      setLoading(false)
+    }
+  }, [])
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -32,11 +43,14 @@ function PostAd() {
   const handleSubmit = async (e) => {
     e.preventDefault()
 
+    const token = localStorage.getItem('userToken')
+
     try {
       const response = await fetch('/api/cars', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           ...formData,
@@ -49,7 +63,7 @@ function PostAd() {
       if (response.ok) {
         setSuccess(true)
         setTimeout(() => {
-          navigate('/')
+          navigate('/account/my-ads')
         }, 2000)
       }
     } catch (error) {
@@ -58,11 +72,39 @@ function PostAd() {
     }
   }
 
+  if (loading) {
+    return <div className="container loading">Chargement...</div>
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="container">
+        <SEO
+          title="Connexion requise - AutoMarket"
+          description="Connectez-vous pour déposer une annonce"
+        />
+        <div className="empty-state" style={{ padding: '4rem 0' }}>
+          <h2>🔐 Connexion requise</h2>
+          <p style={{ marginBottom: '2rem' }}>
+            Vous devez être connecté pour déposer une annonce
+          </p>
+          <Link to="/login" className="btn btn-primary">
+            Se connecter ou créer un compte
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
   const currentYear = new Date().getFullYear()
   const years = Array.from({ length: 30 }, (_, i) => currentYear - i)
 
   return (
     <div className="container">
+      <SEO
+        title="Déposer une annonce - AutoMarket"
+        description="Publiez votre annonce de vente de véhicule sur AutoMarket"
+      />
       <form className="post-ad-form" onSubmit={handleSubmit}>
         <h2>Déposer une annonce</h2>
 
@@ -223,51 +265,6 @@ function PostAd() {
             onChange={handleChange}
             placeholder="https://exemple.com/image.jpg"
           />
-        </div>
-
-        <h3 style={{ marginTop: '2rem', marginBottom: '1rem', color: '#004e89' }}>
-          Vos coordonnées
-        </h3>
-
-        <div className="form-group">
-          <label className="form-label">Nom complet *</label>
-          <input
-            type="text"
-            name="seller"
-            className="form-input"
-            value={formData.seller}
-            onChange={handleChange}
-            placeholder="Ex: Jean Dupont"
-            required
-          />
-        </div>
-
-        <div className="form-row">
-          <div className="form-group">
-            <label className="form-label">Téléphone *</label>
-            <input
-              type="tel"
-              name="phone"
-              className="form-input"
-              value={formData.phone}
-              onChange={handleChange}
-              placeholder="Ex: 06 12 34 56 78"
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Email *</label>
-            <input
-              type="email"
-              name="email"
-              className="form-input"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="Ex: jean.dupont@email.com"
-              required
-            />
-          </div>
         </div>
 
         <div className="form-actions">

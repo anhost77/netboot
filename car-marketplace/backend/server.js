@@ -33,9 +33,36 @@ const authenticateToken = (req, res, next) => {
 };
 
 // Base de données en mémoire (pour la démo)
+// Utilisateurs normaux (clients)
+let clientUsers = [
+  {
+    id: 'user-1',
+    username: 'jean.dupont',
+    email: 'jean.dupont@email.com',
+    password: bcrypt.hashSync('password123', 10),
+    firstName: 'Jean',
+    lastName: 'Dupont',
+    phone: '06 12 34 56 78',
+    role: 'client',
+    createdAt: new Date('2025-10-01')
+  },
+  {
+    id: 'user-2',
+    username: 'marie.martin',
+    email: 'marie.martin@email.com',
+    password: bcrypt.hashSync('password123', 10),
+    firstName: 'Marie',
+    lastName: 'Martin',
+    phone: '06 98 76 54 32',
+    role: 'client',
+    createdAt: new Date('2025-10-02')
+  }
+];
+
 let cars = [
   {
     id: '1',
+    userId: 'user-1',
     title: 'Renault Clio 5 Intens',
     brand: 'Renault',
     model: 'Clio',
@@ -47,13 +74,13 @@ let cars = [
     location: 'Paris',
     description: 'Excellent état, première main, toutes options',
     image: 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800',
-    seller: 'Jean Dupont',
-    phone: '06 12 34 56 78',
-    email: 'jean.dupont@email.com',
-    createdAt: new Date('2025-10-15')
+    status: 'published',
+    createdAt: new Date('2025-10-15'),
+    updatedAt: new Date('2025-10-15')
   },
   {
     id: '2',
+    userId: 'user-2',
     title: 'Peugeot 3008 GT Line',
     brand: 'Peugeot',
     model: '3008',
@@ -65,13 +92,13 @@ let cars = [
     location: 'Lyon',
     description: 'SUV familial, très bien entretenu, garantie constructeur',
     image: 'https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?w=800',
-    seller: 'Marie Martin',
-    phone: '06 98 76 54 32',
-    email: 'marie.martin@email.com',
-    createdAt: new Date('2025-10-14')
+    status: 'published',
+    createdAt: new Date('2025-10-14'),
+    updatedAt: new Date('2025-10-14')
   },
   {
     id: '3',
+    userId: 'user-1',
     title: 'BMW Série 3 320d',
     brand: 'BMW',
     model: 'Série 3',
@@ -83,13 +110,13 @@ let cars = [
     location: 'Marseille',
     description: 'Pack M Sport, GPS, cuir, toit panoramique',
     image: 'https://images.unsplash.com/photo-1555215695-3004980ad54e?w=800',
-    seller: 'Pierre Dubois',
-    phone: '06 45 67 89 12',
-    email: 'pierre.dubois@email.com',
-    createdAt: new Date('2025-10-13')
+    status: 'published',
+    createdAt: new Date('2025-10-13'),
+    updatedAt: new Date('2025-10-13')
   },
   {
     id: '4',
+    userId: 'user-2',
     title: 'Volkswagen Golf 8 GTI',
     brand: 'Volkswagen',
     model: 'Golf',
@@ -101,13 +128,13 @@ let cars = [
     location: 'Toulouse',
     description: 'Version sportive, parfait état, garantie 2 ans',
     image: 'https://images.unsplash.com/photo-1617814076367-b759c7d7e738?w=800',
-    seller: 'Sophie Laurent',
-    phone: '06 23 45 67 89',
-    email: 'sophie.laurent@email.com',
-    createdAt: new Date('2025-10-12')
+    status: 'published',
+    createdAt: new Date('2025-10-12'),
+    updatedAt: new Date('2025-10-12')
   },
   {
     id: '5',
+    userId: 'user-1',
     title: 'Mercedes Classe A 180d',
     brand: 'Mercedes',
     model: 'Classe A',
@@ -119,13 +146,13 @@ let cars = [
     location: 'Bordeaux',
     description: 'Pack AMG Line, écran MBUX, sièges chauffants',
     image: 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=800',
-    seller: 'Thomas Bernard',
-    phone: '06 78 90 12 34',
-    email: 'thomas.bernard@email.com',
-    createdAt: new Date('2025-10-11')
+    status: 'published',
+    createdAt: new Date('2025-10-11'),
+    updatedAt: new Date('2025-10-11')
   },
   {
     id: '6',
+    userId: 'user-2',
     title: 'Audi A3 Sportback',
     brand: 'Audi',
     model: 'A3',
@@ -137,10 +164,35 @@ let cars = [
     location: 'Nice',
     description: 'Finition S Line, cockpit virtuel, excellent état',
     image: 'https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=800',
-    seller: 'Claire Petit',
-    phone: '06 34 56 78 90',
-    email: 'claire.petit@email.com',
-    createdAt: new Date('2025-10-10')
+    status: 'published',
+    createdAt: new Date('2025-10-10'),
+    updatedAt: new Date('2025-10-10')
+  }
+];
+
+// Messages entre utilisateurs
+let messages = [
+  {
+    id: 'msg-1',
+    carId: '1',
+    senderId: 'user-2',
+    receiverId: 'user-1',
+    subject: 'Intéressé par votre Renault Clio',
+    message: 'Bonjour, je suis intéressé par votre Clio. Est-elle toujours disponible ?',
+    read: true,
+    createdAt: new Date('2025-10-16T10:30:00'),
+    conversationId: 'conv-1'
+  },
+  {
+    id: 'msg-2',
+    carId: '1',
+    senderId: 'user-1',
+    receiverId: 'user-2',
+    subject: 'Re: Intéressé par votre Renault Clio',
+    message: 'Bonjour, oui elle est toujours disponible. Vous pouvez venir la voir quand vous voulez.',
+    read: true,
+    createdAt: new Date('2025-10-16T11:00:00'),
+    conversationId: 'conv-1'
   }
 ];
 
@@ -297,12 +349,15 @@ app.get('/api/cars/:id', (req, res) => {
   res.json(car);
 });
 
-// POST créer une nouvelle annonce
-app.post('/api/cars', (req, res) => {
+// POST créer une nouvelle annonce (nécessite authentification)
+app.post('/api/cars', authenticateToken, (req, res) => {
   const newCar = {
     id: uuidv4(),
+    userId: req.user.id,
     ...req.body,
-    createdAt: new Date()
+    status: 'published',
+    createdAt: new Date(),
+    updatedAt: new Date()
   };
 
   cars.push(newCar);
@@ -371,6 +426,303 @@ app.post('/api/auth/login', async (req, res) => {
 // GET verify token
 app.get('/api/auth/verify', authenticateToken, (req, res) => {
   res.json({ valid: true, user: req.user });
+});
+
+// ============ CLIENT USER ROUTES ============
+
+// POST register new client user
+app.post('/api/users/register', async (req, res) => {
+  const { username, email, password, firstName, lastName, phone } = req.body;
+
+  // Vérifier si l'utilisateur existe déjà
+  const existingUser = clientUsers.find(u => u.email === email || u.username === username);
+  if (existingUser) {
+    return res.status(400).json({ error: 'Cet email ou nom d\'utilisateur existe déjà' });
+  }
+
+  // Créer le nouvel utilisateur
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const newUser = {
+    id: uuidv4(),
+    username,
+    email,
+    password: hashedPassword,
+    firstName,
+    lastName,
+    phone,
+    role: 'client',
+    createdAt: new Date()
+  };
+
+  clientUsers.push(newUser);
+
+  // Générer un token
+  const token = jwt.sign(
+    { id: newUser.id, username: newUser.username, role: newUser.role },
+    JWT_SECRET,
+    { expiresIn: '24h' }
+  );
+
+  res.status(201).json({
+    token,
+    user: {
+      id: newUser.id,
+      username: newUser.username,
+      email: newUser.email,
+      firstName: newUser.firstName,
+      lastName: newUser.lastName,
+      phone: newUser.phone,
+      role: newUser.role
+    }
+  });
+});
+
+// POST login client user
+app.post('/api/users/login', async (req, res) => {
+  const { username, password } = req.body;
+
+  const user = clientUsers.find(u => u.username === username || u.email === username);
+
+  if (!user) {
+    return res.status(401).json({ error: 'Identifiants incorrects' });
+  }
+
+  const validPassword = await bcrypt.compare(password, user.password);
+
+  if (!validPassword) {
+    return res.status(401).json({ error: 'Identifiants incorrects' });
+  }
+
+  const token = jwt.sign(
+    { id: user.id, username: user.username, role: user.role },
+    JWT_SECRET,
+    { expiresIn: '24h' }
+  );
+
+  res.json({
+    token,
+    user: {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      phone: user.phone,
+      role: user.role
+    }
+  });
+});
+
+// GET current user profile
+app.get('/api/users/me', authenticateToken, (req, res) => {
+  const user = clientUsers.find(u => u.id === req.user.id);
+
+  if (!user) {
+    return res.status(404).json({ error: 'Utilisateur non trouvé' });
+  }
+
+  res.json({
+    id: user.id,
+    username: user.username,
+    email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    phone: user.phone,
+    role: user.role,
+    createdAt: user.createdAt
+  });
+});
+
+// PUT update user profile
+app.put('/api/users/me', authenticateToken, async (req, res) => {
+  const index = clientUsers.findIndex(u => u.id === req.user.id);
+
+  if (index === -1) {
+    return res.status(404).json({ error: 'Utilisateur non trouvé' });
+  }
+
+  const { firstName, lastName, phone, password } = req.body;
+
+  if (password) {
+    clientUsers[index].password = await bcrypt.hash(password, 10);
+  }
+
+  clientUsers[index] = {
+    ...clientUsers[index],
+    firstName: firstName || clientUsers[index].firstName,
+    lastName: lastName || clientUsers[index].lastName,
+    phone: phone || clientUsers[index].phone
+  };
+
+  res.json({
+    id: clientUsers[index].id,
+    username: clientUsers[index].username,
+    email: clientUsers[index].email,
+    firstName: clientUsers[index].firstName,
+    lastName: clientUsers[index].lastName,
+    phone: clientUsers[index].phone,
+    role: clientUsers[index].role
+  });
+});
+
+// GET my ads
+app.get('/api/users/my-ads', authenticateToken, (req, res) => {
+  const userCars = cars.filter(car => car.userId === req.user.id);
+  res.json(userCars);
+});
+
+// PUT update my ad
+app.put('/api/users/my-ads/:id', authenticateToken, (req, res) => {
+  const index = cars.findIndex(c => c.id === req.params.id);
+
+  if (index === -1) {
+    return res.status(404).json({ error: 'Annonce non trouvée' });
+  }
+
+  // Vérifier que c'est bien l'annonce de l'utilisateur
+  if (cars[index].userId !== req.user.id) {
+    return res.status(403).json({ error: 'Non autorisé' });
+  }
+
+  cars[index] = {
+    ...cars[index],
+    ...req.body,
+    userId: cars[index].userId, // Ne pas permettre de changer le userId
+    id: req.params.id,
+    updatedAt: new Date()
+  };
+
+  res.json(cars[index]);
+});
+
+// DELETE my ad
+app.delete('/api/users/my-ads/:id', authenticateToken, (req, res) => {
+  const index = cars.findIndex(c => c.id === req.params.id);
+
+  if (index === -1) {
+    return res.status(404).json({ error: 'Annonce non trouvée' });
+  }
+
+  // Vérifier que c'est bien l'annonce de l'utilisateur
+  if (cars[index].userId !== req.user.id) {
+    return res.status(403).json({ error: 'Non autorisé' });
+  }
+
+  cars.splice(index, 1);
+  res.status(204).send();
+});
+
+// ============ MESSAGING ROUTES ============
+
+// GET my conversations
+app.get('/api/messages/conversations', authenticateToken, (req, res) => {
+  // Grouper les messages par conversation
+  const userMessages = messages.filter(m =>
+    m.senderId === req.user.id || m.receiverId === req.user.id
+  );
+
+  // Grouper par conversationId
+  const conversations = {};
+  userMessages.forEach(msg => {
+    if (!conversations[msg.conversationId]) {
+      conversations[msg.conversationId] = [];
+    }
+    conversations[msg.conversationId].push(msg);
+  });
+
+  // Formater les conversations
+  const result = Object.keys(conversations).map(convId => {
+    const msgs = conversations[convId];
+    const latestMsg = msgs[msgs.length - 1];
+    const otherUserId = latestMsg.senderId === req.user.id ? latestMsg.receiverId : latestMsg.senderId;
+    const otherUser = clientUsers.find(u => u.id === otherUserId);
+    const car = cars.find(c => c.id === latestMsg.carId);
+    const unreadCount = msgs.filter(m => m.receiverId === req.user.id && !m.read).length;
+
+    return {
+      conversationId: convId,
+      carId: latestMsg.carId,
+      carTitle: car ? car.title : 'Annonce supprimée',
+      otherUser: otherUser ? {
+        id: otherUser.id,
+        firstName: otherUser.firstName,
+        lastName: otherUser.lastName
+      } : null,
+      latestMessage: latestMsg.message,
+      latestMessageDate: latestMsg.createdAt,
+      unreadCount,
+      messageCount: msgs.length
+    };
+  });
+
+  res.json(result.sort((a, b) => new Date(b.latestMessageDate) - new Date(a.latestMessageDate)));
+});
+
+// GET conversation messages
+app.get('/api/messages/conversation/:conversationId', authenticateToken, (req, res) => {
+  const conversationMessages = messages.filter(m =>
+    m.conversationId === req.params.conversationId &&
+    (m.senderId === req.user.id || m.receiverId === req.user.id)
+  );
+
+  // Marquer les messages reçus comme lus
+  conversationMessages.forEach(msg => {
+    if (msg.receiverId === req.user.id && !msg.read) {
+      const index = messages.findIndex(m => m.id === msg.id);
+      if (index !== -1) {
+        messages[index].read = true;
+      }
+    }
+  });
+
+  // Enrichir avec les infos utilisateur
+  const enrichedMessages = conversationMessages.map(msg => {
+    const sender = clientUsers.find(u => u.id === msg.senderId);
+    return {
+      ...msg,
+      senderName: sender ? `${sender.firstName} ${sender.lastName}` : 'Utilisateur inconnu'
+    };
+  });
+
+  res.json(enrichedMessages);
+});
+
+// POST send message
+app.post('/api/messages', authenticateToken, (req, res) => {
+  const { carId, receiverId, message, subject } = req.body;
+
+  // Trouver ou créer une conversation
+  const existingConv = messages.find(m =>
+    m.carId === carId &&
+    ((m.senderId === req.user.id && m.receiverId === receiverId) ||
+     (m.senderId === receiverId && m.receiverId === req.user.id))
+  );
+
+  const conversationId = existingConv ? existingConv.conversationId : `conv-${uuidv4()}`;
+
+  const newMessage = {
+    id: uuidv4(),
+    carId,
+    senderId: req.user.id,
+    receiverId,
+    subject: subject || 'Nouveau message',
+    message,
+    read: false,
+    createdAt: new Date(),
+    conversationId
+  };
+
+  messages.push(newMessage);
+  res.status(201).json(newMessage);
+});
+
+// GET unread messages count
+app.get('/api/messages/unread-count', authenticateToken, (req, res) => {
+  const unreadCount = messages.filter(m =>
+    m.receiverId === req.user.id && !m.read
+  ).length;
+
+  res.json({ count: unreadCount });
 });
 
 // ============ PAGES ROUTES ============
@@ -454,6 +806,113 @@ app.delete('/api/admin/pages/:id', authenticateToken, (req, res) => {
   }
 
   pages.splice(index, 1);
+  res.status(204).send();
+});
+
+// ============ ADMIN USER MANAGEMENT ============
+
+// GET all users (admin)
+app.get('/api/admin/users', authenticateToken, (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Accès interdit' });
+  }
+
+  const allUsers = clientUsers.map(u => ({
+    id: u.id,
+    username: u.username,
+    email: u.email,
+    firstName: u.firstName,
+    lastName: u.lastName,
+    phone: u.phone,
+    role: u.role,
+    createdAt: u.createdAt,
+    adCount: cars.filter(c => c.userId === u.id).length
+  }));
+
+  res.json(allUsers);
+});
+
+// DELETE user (admin)
+app.delete('/api/admin/users/:id', authenticateToken, (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Accès interdit' });
+  }
+
+  const index = clientUsers.findIndex(u => u.id === req.params.id);
+
+  if (index === -1) {
+    return res.status(404).json({ error: 'Utilisateur non trouvé' });
+  }
+
+  // Supprimer aussi les annonces de l'utilisateur
+  const userCars = cars.filter(c => c.userId === req.params.id);
+  userCars.forEach(car => {
+    const carIndex = cars.findIndex(c => c.id === car.id);
+    if (carIndex !== -1) {
+      cars.splice(carIndex, 1);
+    }
+  });
+
+  clientUsers.splice(index, 1);
+  res.status(204).send();
+});
+
+// ============ ADMIN ADS MANAGEMENT ============
+
+// GET all ads (admin)
+app.get('/api/admin/ads', authenticateToken, (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Accès interdit' });
+  }
+
+  // Enrichir avec les infos utilisateur
+  const enrichedCars = cars.map(car => {
+    const owner = clientUsers.find(u => u.id === car.userId);
+    return {
+      ...car,
+      ownerName: owner ? `${owner.firstName} ${owner.lastName}` : 'Inconnu',
+      ownerEmail: owner ? owner.email : ''
+    };
+  });
+
+  res.json(enrichedCars);
+});
+
+// PUT update any ad (admin)
+app.put('/api/admin/ads/:id', authenticateToken, (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Accès interdit' });
+  }
+
+  const index = cars.findIndex(c => c.id === req.params.id);
+
+  if (index === -1) {
+    return res.status(404).json({ error: 'Annonce non trouvée' });
+  }
+
+  cars[index] = {
+    ...cars[index],
+    ...req.body,
+    id: req.params.id,
+    updatedAt: new Date()
+  };
+
+  res.json(cars[index]);
+});
+
+// DELETE any ad (admin)
+app.delete('/api/admin/ads/:id', authenticateToken, (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Accès interdit' });
+  }
+
+  const index = cars.findIndex(c => c.id === req.params.id);
+
+  if (index === -1) {
+    return res.status(404).json({ error: 'Annonce non trouvée' });
+  }
+
+  cars.splice(index, 1);
   res.status(204).send();
 });
 

@@ -12,23 +12,44 @@ Un site web moderne de petites annonces automobiles, inspiré de leboncoin.fr, s
 - 📱 **Design responsive** : Fonctionne sur tous les appareils
 - 🖼️ **Interface moderne** : Design inspiré des meilleurs sites de petites annonces
 - 📊 **Vue détaillée** : Toutes les informations sur chaque véhicule
+- 🔍 **SEO optimisé** : Meta tags, Open Graph, Structured Data
 
 ### Pour les vendeurs
 - ➕ **Déposer une annonce** : Formulaire simple et intuitif
 - 📝 **Description complète** : Ajoutez tous les détails de votre véhicule
 - 📞 **Contact direct** : Les acheteurs peuvent vous contacter facilement
 
+### 🎛️ Pour les administrateurs (NOUVEAU!)
+- 🔐 **Authentification sécurisée** : Système de connexion admin avec JWT
+- 📄 **Gestion de contenu** : CMS complet pour créer et éditer des pages
+- ✏️ **Éditeur WYSIWYG** : Créez du contenu riche sans coder (React Quill)
+- 🧭 **Gestion des menus** : Configurez les menus du header et footer
+- ✍️ **Contenu éditorial** : Modifiez les textes de la page d'accueil
+- 🔍 **Optimisation SEO** : Meta tags personnalisés par page
+- 📊 **Dashboard intuitif** : Interface d'administration moderne
+- 📱 **Admin responsive** : Gérez votre site depuis n'importe quel appareil
+
+#### Accès au backoffice
+- **URL** : `http://localhost:3000/admin/login`
+- **Identifiant** : `admin`
+- **Mot de passe** : `admin123`
+
+📖 **[Guide complet du backoffice](docs/BACKOFFICE.md)**
+
 ## 🛠️ Technologies utilisées
 
 ### Frontend
 - **React 18** : Bibliothèque UI moderne
 - **React Router** : Navigation entre les pages
+- **React Quill** : Éditeur WYSIWYG pour le contenu
 - **Vite** : Build tool ultra-rapide
 - **CSS3** : Styling moderne et responsive
 
 ### Backend
 - **Node.js** : Runtime JavaScript
 - **Express.js** : Framework web minimaliste
+- **JWT** : Authentification sécurisée
+- **bcryptjs** : Hashage des mots de passe
 - **CORS** : Gestion des requêtes cross-origin
 
 ## 📦 Installation

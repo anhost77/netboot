@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
+import UserDetails from './UserDetails'
 
 function UsersManager() {
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [deleteMessage, setDeleteMessage] = useState('')
+  const [selectedUserId, setSelectedUserId] = useState(null)
 
   useEffect(() => {
     fetchUsers()
@@ -109,6 +111,12 @@ function UsersManager() {
                 <td>
                   <div className="action-buttons">
                     <button
+                      className="btn-edit"
+                      onClick={() => setSelectedUserId(user.id)}
+                    >
+                      👁️ Détails
+                    </button>
+                    <button
                       className="btn-delete"
                       onClick={() => handleDelete(user.id, `${user.firstName} ${user.lastName}`)}
                     >
@@ -128,6 +136,13 @@ function UsersManager() {
           </div>
         )}
       </div>
+
+      {selectedUserId && (
+        <UserDetails
+          userId={selectedUserId}
+          onClose={() => setSelectedUserId(null)}
+        />
+      )}
     </div>
   )
 }

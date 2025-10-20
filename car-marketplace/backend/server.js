@@ -43,8 +43,19 @@ let clientUsers = [
     firstName: 'Jean',
     lastName: 'Dupont',
     phone: '06 12 34 56 78',
+    address: '15 Rue de la République, 75001 Paris',
     role: 'client',
-    createdAt: new Date('2025-10-01')
+    createdAt: new Date('2025-10-01'),
+    lastLogin: new Date('2025-10-20T10:30:00'),
+    connectionHistory: [
+      { date: new Date('2025-10-20T10:30:00'), ip: '192.168.1.100' },
+      { date: new Date('2025-10-19T14:20:00'), ip: '192.168.1.100' },
+      { date: new Date('2025-10-15T09:15:00'), ip: '192.168.1.101' }
+    ],
+    transactionNotes: [
+      { date: new Date('2025-10-15'), note: 'Utilisateur actif, a publié sa première annonce', author: 'admin' }
+    ],
+    status: 'active'
   },
   {
     id: 'user-2',
@@ -54,8 +65,19 @@ let clientUsers = [
     firstName: 'Marie',
     lastName: 'Martin',
     phone: '06 98 76 54 32',
+    address: '42 Avenue des Champs-Élysées, 69002 Lyon',
     role: 'client',
-    createdAt: new Date('2025-10-02')
+    createdAt: new Date('2025-10-02'),
+    lastLogin: new Date('2025-10-20T16:45:00'),
+    connectionHistory: [
+      { date: new Date('2025-10-20T16:45:00'), ip: '192.168.2.50' },
+      { date: new Date('2025-10-18T11:00:00'), ip: '192.168.2.50' },
+      { date: new Date('2025-10-14T19:30:00'), ip: '192.168.2.51' }
+    ],
+    transactionNotes: [
+      { date: new Date('2025-10-14'), note: 'Utilisateur vérifié, a publié plusieurs annonces de qualité', author: 'admin' }
+    ],
+    status: 'active'
   }
 ];
 
@@ -450,8 +472,15 @@ app.post('/api/users/register', async (req, res) => {
     firstName,
     lastName,
     phone,
+    address: '',
     role: 'client',
-    createdAt: new Date()
+    createdAt: new Date(),
+    lastLogin: new Date(),
+    connectionHistory: [
+      { date: new Date(), ip: req.ip || req.connection.remoteAddress || 'Unknown' }
+    ],
+    transactionNotes: [],
+    status: 'active'
   };
 
   clientUsers.push(newUser);
@@ -491,6 +520,20 @@ app.post('/api/users/login', async (req, res) => {
 
   if (!validPassword) {
     return res.status(401).json({ error: 'Identifiants incorrects' });
+  }
+
+  // Enregistrer la connexion
+  user.lastLogin = new Date();
+  if (!user.connectionHistory) {
+    user.connectionHistory = [];
+  }
+  user.connectionHistory.unshift({
+    date: new Date(),
+    ip: req.ip || req.connection.remoteAddress || 'Unknown'
+  });
+  // Garder seulement les 20 dernières connexions
+  if (user.connectionHistory.length > 20) {
+    user.connectionHistory = user.connectionHistory.slice(0, 20);
   }
 
   const token = jwt.sign(
@@ -830,6 +873,90 @@ app.get('/api/admin/users', authenticateToken, (req, res) => {
   }));
 
   res.json(allUsers);
+});
+
+// GET single user details (admin)
+app.get('/api/admin/users/:id', authenticateToken, (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Accès interdit' });
+  }
+
+  const user = clientUsers.find(u => u.id === req.params.id);
+
+  if (!user) {
+    return res.status(404).json({ error: 'Utilisateur non trouvé' });
+  }
+
+  // Récupérer toutes les annonces de l'utilisateur
+  const userAds = cars.filter(c => c.userId === user.id);
+
+  // Récupérer les messages de l'utilisateur
+  const userMessages = messages.filter(m => m.senderId === user.id || m.receiverId === user.id);
+
+  const userDetails = {
+    id: user.id,
+    username: user.username,
+    email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    phone: user.phone,
+    address: user.address,
+    role: user.role,
+    status: user.status || 'active',
+    createdAt: user.createdAt,
+    lastLogin: user.lastLogin,
+    connectionHistory: user.connectionHistory || [],
+    transactionNotes: user.transactionNotes || [],
+    ads: userAds.map(ad => ({
+      id: ad.id,
+      title: ad.title,
+      brand: ad.brand,
+      model: ad.model,
+      year: ad.year,
+      price: ad.price,
+      status: ad.status,
+      createdAt: ad.createdAt,
+      image: ad.image
+    })),
+    messagesCount: userMessages.length,
+    adsCount: userAds.length
+  };
+
+  res.json(userDetails);
+});
+
+// POST add transaction note to user (admin)
+app.post('/api/admin/users/:id/notes', authenticateToken, (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Accès interdit' });
+  }
+
+  const user = clientUsers.find(u => u.id === req.params.id);
+
+  if (!user) {
+    return res.status(404).json({ error: 'Utilisateur non trouvé' });
+  }
+
+  const { note } = req.body;
+
+  if (!note) {
+    return res.status(400).json({ error: 'La note est requise' });
+  }
+
+  if (!user.transactionNotes) {
+    user.transactionNotes = [];
+  }
+
+  const newNote = {
+    id: uuidv4(),
+    date: new Date(),
+    note,
+    author: req.user.username || 'admin'
+  };
+
+  user.transactionNotes.unshift(newNote);
+
+  res.json({ success: true, note: newNote });
 });
 
 // DELETE user (admin)

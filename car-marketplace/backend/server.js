@@ -916,6 +916,50 @@ app.delete('/api/admin/ads/:id', authenticateToken, (req, res) => {
   res.status(204).send();
 });
 
+// POST assign user to ad (admin)
+app.post('/api/admin/ads/:id/assign-user', authenticateToken, (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Accès interdit' });
+  }
+
+  const { userId } = req.body;
+
+  if (!userId) {
+    return res.status(400).json({ error: 'userId est requis' });
+  }
+
+  // Vérifier que l'utilisateur existe
+  const user = clientUsers.find(u => u.id === userId);
+  if (!user) {
+    return res.status(404).json({ error: 'Utilisateur non trouvé' });
+  }
+
+  // Trouver l'annonce
+  const index = cars.findIndex(c => c.id === req.params.id);
+
+  if (index === -1) {
+    return res.status(404).json({ error: 'Annonce non trouvée' });
+  }
+
+  // Attribuer l'utilisateur à l'annonce
+  cars[index] = {
+    ...cars[index],
+    userId: userId,
+    updatedAt: new Date()
+  };
+
+  res.json({
+    success: true,
+    ad: cars[index],
+    user: {
+      id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email
+    }
+  });
+});
+
 // ============ MENUS ROUTES ============
 
 // GET menus par location

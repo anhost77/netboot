@@ -2,12 +2,16 @@ import { useState, useEffect } from 'react'
 
 function AdsManager() {
   const [ads, setAds] = useState([])
+  const [users, setUsers] = useState([])
   const [editingAd, setEditingAd] = useState(null)
+  const [assigningAd, setAssigningAd] = useState(null)
+  const [selectedUserId, setSelectedUserId] = useState('')
   const [loading, setLoading] = useState(true)
   const [saveMessage, setSaveMessage] = useState('')
 
   useEffect(() => {
     fetchAds()
+    fetchUsers()
   }, [])
 
   const fetchAds = async () => {
@@ -24,6 +28,21 @@ function AdsManager() {
     } catch (error) {
       console.error('Erreur:', error)
       setLoading(false)
+    }
+  }
+
+  const fetchUsers = async () => {
+    try {
+      const token = localStorage.getItem('adminToken')
+      const response = await fetch('/api/admin/users', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      const data = await response.json()
+      setUsers(data)
+    } catch (error) {
+      console.error('Erreur:', error)
     }
   }
 
@@ -100,6 +119,43 @@ function AdsManager() {
     }
   }
 
+  const handleOpenAssign = (ad) => {
+    setAssigningAd(ad)
+    setSelectedUserId('')
+  }
+
+  const handleAssignUser = async () => {
+    if (!selectedUserId) {
+      setSaveMessage('❌ Veuillez sélectionner un utilisateur')
+      setTimeout(() => setSaveMessage(''), 3000)
+      return
+    }
+
+    try {
+      const token = localStorage.getItem('adminToken')
+      const response = await fetch(`/api/admin/ads/${assigningAd.id}/assign-user`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ userId: selectedUserId })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setSaveMessage(`✅ Annonce attribuée à ${data.user.firstName} ${data.user.lastName}`)
+        fetchAds()
+        setAssigningAd(null)
+        setSelectedUserId('')
+        setTimeout(() => setSaveMessage(''), 3000)
+      }
+    } catch (error) {
+      console.error('Erreur:', error)
+      setSaveMessage('❌ Erreur lors de l\'attribution')
+    }
+  }
+
   if (loading) {
     return <div className="loading">Chargement...</div>
   }
@@ -164,7 +220,18 @@ function AdsManager() {
                       </span>
                     </>
                   ) : (
-                    <span style={{ color: '#999' }}>Utilisateur supprimé</span>
+                    <>
+                      <span style={{ color: '#999', display: 'block', marginBottom: '0.5rem' }}>
+                        Sans utilisateur
+                      </span>
+                      <button
+                        className="btn-edit"
+                        style={{ fontSize: '0.8rem', padding: '0.3rem 0.6rem' }}
+                        onClick={() => handleOpenAssign(ad)}
+                      >
+                        👤 Attribuer
+                      </button>
+                    </>
                   )}
                 </td>
                 <td>
@@ -208,6 +275,63 @@ function AdsManager() {
           </div>
         )}
       </div>
+
+      {assigningAd && (
+        <div className="modal-overlay" onClick={() => setAssigningAd(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Attribuer l'annonce à un utilisateur</h2>
+              <button className="modal-close" onClick={() => setAssigningAd(null)}>
+                ✕
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <p style={{ marginBottom: '1.5rem', color: '#666' }}>
+                Annonce: <strong>{assigningAd.title}</strong>
+              </p>
+
+              <div className="form-group">
+                <label className="form-label">Sélectionner un utilisateur *</label>
+                <select
+                  className="form-select"
+                  value={selectedUserId}
+                  onChange={(e) => setSelectedUserId(e.target.value)}
+                >
+                  <option value="">-- Choisir un utilisateur --</option>
+                  {users.map(user => (
+                    <option key={user.id} value={user.id}>
+                      {user.firstName} {user.lastName} ({user.email})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {users.length === 0 && (
+                <p style={{ color: '#dc3545', fontSize: '0.9rem', marginTop: '1rem' }}>
+                  ⚠️ Aucun utilisateur disponible. Veuillez créer un utilisateur d'abord.
+                </p>
+              )}
+            </div>
+
+            <div className="modal-footer">
+              <button
+                className="btn btn-secondary"
+                onClick={() => setAssigningAd(null)}
+              >
+                Annuler
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={handleAssignUser}
+                disabled={!selectedUserId}
+              >
+                Attribuer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {editingAd && (
         <div className="modal-overlay" onClick={() => setEditingAd(null)}>

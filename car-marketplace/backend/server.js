@@ -826,7 +826,7 @@ app.get('/api/admin/users', authenticateToken, (req, res) => {
     phone: u.phone,
     role: u.role,
     createdAt: u.createdAt,
-    adCount: cars.filter(c => c.userId === u.id).length
+    adsCount: cars.filter(c => c.userId === u.id).length
   }));
 
   res.json(allUsers);
@@ -870,8 +870,12 @@ app.get('/api/admin/ads', authenticateToken, (req, res) => {
     const owner = clientUsers.find(u => u.id === car.userId);
     return {
       ...car,
-      ownerName: owner ? `${owner.firstName} ${owner.lastName}` : 'Inconnu',
-      ownerEmail: owner ? owner.email : ''
+      owner: owner ? {
+        id: owner.id,
+        firstName: owner.firstName,
+        lastName: owner.lastName,
+        email: owner.email
+      } : null
     };
   });
 

@@ -64,7 +64,8 @@ export class BetsService {
       if (filters.platform) andConditions.push({ platform: { contains: filters.platform, mode: 'insensitive' } });
       if (filters.hippodrome) andConditions.push({ hippodrome: { contains: filters.hippodrome, mode: 'insensitive' } });
       if (filters.betType) andConditions.push({ betType: { contains: filters.betType, mode: 'insensitive' } });
-      if (filters.tag) andConditions.push({ tags: { has: filters.tag } });
+      // For Json fields containing arrays, use array_contains instead of has
+      if (filters.tag) andConditions.push({ tags: { array_contains: filters.tag } });
 
       // Add date range filter
       if (filters.startDate || filters.endDate) {

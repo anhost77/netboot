@@ -1,0 +1,478 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  user
+  admin
+  moderator
+}
+
+enum SubscriptionStatus {
+  trial
+  active
+  cancelled
+  expired
+  past_due
+}
+
+enum BillingCycle {
+  monthly
+  yearly
+}
+
+enum BetStatus {
+  pending
+  won
+  lost
+  refunded
+}
+
+enum TicketStatus {
+  new
+  in_progress
+  waiting_customer
+  resolved
+  closed
+}
+
+enum TicketPriority {
+  low
+  normal
+  high
+  urgent
+}
+
+enum TicketCategory {
+  technical
+  billing
+  feature_request
+  other
+}
+
+enum MenuType {
+  header
+  footer
+}
+
+enum MenuVisibility {
+  all
+  logged
+  guest
+  admin
+}
+
+enum EmailStatus {
+  pending
+  sent
+  failed
+}
+
+enum NotificationType {
+  info
+  success
+  warning
+  error
+}
+
+// Users table
+model User {
+  id                  String    @id @default(uuid())
+  email               String    @unique
+  passwordHash        String    @map("password_hash")
+  firstName           String?   @map("first_name")
+  lastName            String?   @map("last_name")
+  phone               String?
+  address             String?
+  city                String?
+  postalCode          String?   @map("postal_code")
+  country             String?   @default("FR")
+  avatarUrl           String?   @map("avatar_url")
+  locale              String    @default("fr")
+  timezone            String    @default("Europe/Paris")
+  role                UserRole  @default(user)
+  emailVerifiedAt     DateTime? @map("email_verified_at")
+  twoFactorSecret     String?   @map("two_factor_secret")
+  twoFactorEnabled    Boolean   @default(false) @map("two_factor_enabled")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+  deletedAt           DateTime? @map("deleted_at")
+
+  // Relations
+  subscriptions       Subscription[]
+  bets                Bet[]
+  invoices            Invoice[]
+  supportTickets      SupportTicket[]
+  supportMessages     SupportMessage[]
+  documents           Document[]
+  notifications       Notification[]
+  userSettings        UserSettings?
+  refreshTokens       RefreshToken[]
+  apiKeys             ApiKey[]
+  assignedTickets     SupportTicket[] @relation("AssignedToAdmin")
+  auditLogs           AuditLog[]
+  cmsPageHistory      CmsPageHistory[]
+
+  @@map("users")
+}
+
+// Plans table
+model Plan {
+  id                    String   @id @default(uuid())
+  name                  String
+  slug                  String   @unique
+  description           String?
+  priceMonthly          Decimal  @map("price_monthly") @db.Decimal(10, 2)
+  priceYearly           Decimal  @map("price_yearly") @db.Decimal(10, 2)
+  stripePriceIdMonthly  String?  @map("stripe_price_id_monthly")
+  stripePriceIdYearly   String?  @map("stripe_price_id_yearly")
+  maxBetsPerMonth       Int?     @map("max_bets_per_month")
+  maxStorageMb          Int?     @map("max_storage_mb")
+  features              Json?
+  active                Boolean  @default(true)
+  displayOrder          Int      @default(0) @map("display_order")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  subscriptions         Subscription[]
+
+  @@map("plans")
+}
+
+// Subscriptions table
+model Subscription {
+  id                    String              @id @default(uuid())
+  userId                String              @map("user_id")
+  planId                String              @map("plan_id")
+  status                SubscriptionStatus
+  billingCycle          BillingCycle        @map("billing_cycle")
+  stripeSubscriptionId  String?             @unique @map("stripe_subscription_id")
+  stripeCustomerId      String?             @map("stripe_customer_id")
+  trialEndsAt           DateTime?           @map("trial_ends_at")
+  currentPeriodStart    DateTime?           @map("current_period_start")
+  currentPeriodEnd      DateTime?           @map("current_period_end")
+  cancelAtPeriodEnd     Boolean             @default(false) @map("cancel_at_period_end")
+  cancelledAt           DateTime?           @map("cancelled_at")
+  createdAt             DateTime            @default(now()) @map("created_at")
+  updatedAt             DateTime            @updatedAt @map("updated_at")
+
+  // Relations
+  user                  User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan                  Plan                @relation(fields: [planId], references: [id])
+  invoices              Invoice[]
+
+  @@map("subscriptions")
+}
+
+// Bets table
+model Bet {
+  id                    String      @id @default(uuid())
+  userId                String      @map("user_id")
+  date                  DateTime
+  time                  String?
+  platform              String?
+  hippodrome            String?
+  raceNumber            String?     @map("race_number")
+  betType               String?     @map("bet_type")
+  horsesSelected        String?     @map("horses_selected")
+  stake                 Decimal     @db.Decimal(10, 2)
+  odds                  Decimal?    @db.Decimal(10, 2)
+  status                BetStatus   @default(pending)
+  payout                Decimal?    @db.Decimal(10, 2)
+  profit                Decimal?    @db.Decimal(10, 2)
+  notes                 String?
+  tags                  Json?
+  createdAt             DateTime    @default(now()) @map("created_at")
+  updatedAt             DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  user                  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date])
+  @@index([userId, status])
+  @@map("bets")
+}
+
+// Invoices table
+model Invoice {
+  id                    String      @id @default(uuid())
+  userId                String      @map("user_id")
+  subscriptionId        String?     @map("subscription_id")
+  invoiceNumber         String      @unique @map("invoice_number")
+  amount                Decimal     @db.Decimal(10, 2)
+  tax                   Decimal     @db.Decimal(10, 2)
+  total                 Decimal     @db.Decimal(10, 2)
+  currency              String      @default("EUR")
+  status                String      @default("pending")
+  stripeInvoiceId       String?     @unique @map("stripe_invoice_id")
+  stripeChargeId        String?     @map("stripe_charge_id")
+  pdfPath               String?     @map("pdf_path")
+  paidAt                DateTime?   @map("paid_at")
+  refundedAt            DateTime?   @map("refunded_at")
+  createdAt             DateTime    @default(now()) @map("created_at")
+  updatedAt             DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  user                  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription          Subscription? @relation(fields: [subscriptionId], references: [id])
+
+  @@index([userId])
+  @@map("invoices")
+}
+
+// Support tickets table
+model SupportTicket {
+  id                    String              @id @default(uuid())
+  userId                String              @map("user_id")
+  subject               String
+  category              TicketCategory      @default(other)
+  priority              TicketPriority      @default(normal)
+  status                TicketStatus        @default(new)
+  assignedToAdminId     String?             @map("assigned_to_admin_id")
+  createdAt             DateTime            @default(now()) @map("created_at")
+  updatedAt             DateTime            @updatedAt @map("updated_at")
+  closedAt              DateTime?           @map("closed_at")
+
+  // Relations
+  user                  User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignedTo            User?               @relation("AssignedToAdmin", fields: [assignedToAdminId], references: [id])
+  messages              SupportMessage[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("support_tickets")
+}
+
+// Support messages table
+model SupportMessage {
+  id                    String          @id @default(uuid())
+  ticketId              String          @map("ticket_id")
+  userId                String?         @map("user_id")
+  message               String
+  attachments           Json?
+  isInternalNote        Boolean         @default(false) @map("is_internal_note")
+  createdAt             DateTime        @default(now()) @map("created_at")
+
+  // Relations
+  ticket                SupportTicket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  user                  User?           @relation(fields: [userId], references: [id])
+
+  @@index([ticketId])
+  @@map("support_messages")
+}
+
+// Documents table
+model Document {
+  id                    String      @id @default(uuid())
+  userId                String      @map("user_id")
+  filename              String
+  originalFilename      String      @map("original_filename")
+  filePath              String      @map("file_path")
+  fileSize              Int         @map("file_size")
+  mimeType              String      @map("mime_type")
+  folder                String?
+  createdAt             DateTime    @default(now()) @map("created_at")
+  updatedAt             DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  user                  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("documents")
+}
+
+// CMS Pages table
+model CmsPage {
+  id                    String              @id @default(uuid())
+  slug                  String              @unique
+  title                 String
+  content               String
+  version               Int                 @default(1)
+  published             Boolean             @default(false)
+  metaTitle             String?             @map("meta_title")
+  metaDescription       String?             @map("meta_description")
+  createdAt             DateTime            @default(now()) @map("created_at")
+  updatedAt             DateTime            @updatedAt @map("updated_at")
+  publishedAt           DateTime?           @map("published_at")
+
+  // Relations
+  history               CmsPageHistory[]
+
+  @@map("cms_pages")
+}
+
+// CMS Page History table
+model CmsPageHistory {
+  id                    String      @id @default(uuid())
+  pageId                String      @map("page_id")
+  content               String
+  version               Int
+  createdByAdminId      String?     @map("created_by_admin_id")
+  createdAt             DateTime    @default(now()) @map("created_at")
+
+  // Relations
+  page                  CmsPage     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  createdBy             User?       @relation(fields: [createdByAdminId], references: [id])
+
+  @@index([pageId])
+  @@map("cms_page_history")
+}
+
+// Menu Items table
+model MenuItem {
+  id                    String          @id @default(uuid())
+  menuType              MenuType        @map("menu_type")
+  parentId              String?         @map("parent_id")
+  title                 String
+  url                   String
+  icon                  String?
+  displayOrder          Int             @default(0) @map("display_order")
+  visibility            MenuVisibility  @default(all)
+  openInNewTab          Boolean         @default(false) @map("open_in_new_tab")
+  createdAt             DateTime        @default(now()) @map("created_at")
+  updatedAt             DateTime        @updatedAt @map("updated_at")
+
+  // Self-relation for nested menus
+  parent                MenuItem?       @relation("MenuItemChildren", fields: [parentId], references: [id], onDelete: Cascade)
+  children              MenuItem[]      @relation("MenuItemChildren")
+
+  @@index([menuType])
+  @@map("menu_items")
+}
+
+// Notifications table
+model Notification {
+  id                    String              @id @default(uuid())
+  userId                String              @map("user_id")
+  type                  NotificationType    @default(info)
+  title                 String
+  message               String
+  link                  String?
+  readAt                DateTime?           @map("read_at")
+  createdAt             DateTime            @default(now()) @map("created_at")
+
+  // Relations
+  user                  User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@map("notifications")
+}
+
+// User Settings table
+model UserSettings {
+  id                        String      @id @default(uuid())
+  userId                    String      @unique @map("user_id")
+  initialBankroll           Decimal?    @map("initial_bankroll") @db.Decimal(10, 2)
+  currentBankroll           Decimal?    @map("current_bankroll") @db.Decimal(10, 2)
+  dailyLimit                Decimal?    @map("daily_limit") @db.Decimal(10, 2)
+  weeklyLimit               Decimal?    @map("weekly_limit") @db.Decimal(10, 2)
+  monthlyLimit              Decimal?    @map("monthly_limit") @db.Decimal(10, 2)
+  alertThreshold            Decimal?    @map("alert_threshold") @db.Decimal(5, 2)
+  favoriteHippodromes       Json?       @map("favorite_hippodromes")
+  notificationsEnabled      Boolean     @default(true) @map("notifications_enabled")
+  emailNotifications        Json?       @map("email_notifications")
+  theme                     String      @default("auto")
+  currency                  String      @default("EUR")
+  createdAt                 DateTime    @default(now()) @map("created_at")
+  updatedAt                 DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  user                      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_settings")
+}
+
+// Refresh Tokens table
+model RefreshToken {
+  id                    String      @id @default(uuid())
+  userId                String      @map("user_id")
+  token                 String      @unique
+  expiresAt             DateTime    @map("expires_at")
+  createdAt             DateTime    @default(now()) @map("created_at")
+
+  // Relations
+  user                  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+// n8n Logs table
+model N8nLog {
+  id                    String      @id @default(uuid())
+  workflowName          String      @map("workflow_name")
+  status                String
+  errorMessage          String?     @map("error_message")
+  executionId           String?     @map("execution_id")
+  executedAt            DateTime    @default(now()) @map("executed_at")
+
+  @@map("n8n_logs")
+}
+
+// API Keys table (for Pro/Business plans)
+model ApiKey {
+  id                    String      @id @default(uuid())
+  userId                String      @map("user_id")
+  name                  String
+  keyHash               String      @unique @map("key_hash")
+  keyPrefix             String      @map("key_prefix")
+  lastUsedAt            DateTime?   @map("last_used_at")
+  expiresAt             DateTime?   @map("expires_at")
+  createdAt             DateTime    @default(now()) @map("created_at")
+
+  // Relations
+  user                  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("api_keys")
+}
+
+// Audit Logs table (for admin actions)
+model AuditLog {
+  id                    String      @id @default(uuid())
+  adminId               String      @map("admin_id")
+  action                String
+  entityType            String      @map("entity_type")
+  entityId              String?     @map("entity_id")
+  changes               Json?
+  ipAddress             String?     @map("ip_address")
+  userAgent             String?     @map("user_agent")
+  createdAt             DateTime    @default(now()) @map("created_at")
+
+  // Relations
+  admin                 User        @relation(fields: [adminId], references: [id])
+
+  @@index([adminId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// Email Queue table
+model EmailQueue {
+  id                    String      @id @default(uuid())
+  recipientEmail        String      @map("recipient_email")
+  recipientName         String?     @map("recipient_name")
+  subject               String
+  htmlBody              String      @map("html_body")
+  textBody              String?     @map("text_body")
+  attachments           Json?
+  status                EmailStatus @default(pending)
+  attempts              Int         @default(0)
+  maxAttempts           Int         @default(3) @map("max_attempts")
+  lastError             String?     @map("last_error")
+  scheduledAt           DateTime?   @map("scheduled_at")
+  sentAt                DateTime?   @map("sent_at")
+  createdAt             DateTime    @default(now()) @map("created_at")
+
+  @@index([status, scheduledAt])
+  @@map("email_queue")
+}

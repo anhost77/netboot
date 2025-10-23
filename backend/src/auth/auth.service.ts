@@ -111,6 +111,10 @@ export class AuthService {
       }
 
       // Verify 2FA code
+      if (!user.twoFactorSecret) {
+        throw new UnauthorizedException('2FA not properly configured');
+      }
+
       const isValid = speakeasy.totp.verify({
         secret: user.twoFactorSecret,
         encoding: 'base32',
@@ -285,6 +289,10 @@ export class AuthService {
     });
 
     // Generate QR code
+    if (!secret.otpauth_url) {
+      throw new BadRequestException('Failed to generate 2FA secret');
+    }
+
     const qrCodeUrl = await QRCode.toDataURL(secret.otpauth_url);
 
     // Save secret (encrypted in production)
@@ -338,6 +346,10 @@ export class AuthService {
 
     if (!user || !user.twoFactorEnabled) {
       throw new BadRequestException('2FA not enabled');
+    }
+
+    if (!user.twoFactorSecret) {
+      throw new BadRequestException('2FA not properly configured');
     }
 
     const isValid = speakeasy.totp.verify({

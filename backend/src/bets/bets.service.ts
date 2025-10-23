@@ -207,7 +207,7 @@ export class BetsService {
 
     const platformStats: any = {};
 
-    bets.forEach((bet) => {
+    bets.forEach((bet: any) => {
       const platform = bet.platform || 'Unknown';
       if (!platformStats[platform]) {
         platformStats[platform] = {
@@ -245,7 +245,7 @@ export class BetsService {
 
     const betTypeStats: any = {};
 
-    bets.forEach((bet) => {
+    bets.forEach((bet: any) => {
       const betType = bet.betType || 'Unknown';
       if (!betTypeStats[betType]) {
         betTypeStats[betType] = {
@@ -303,7 +303,7 @@ export class BetsService {
       'Profit',
     ].join(',');
 
-    const rows = bets.map((bet) =>
+    const rows = bets.map((bet: any) =>
       [
         bet.date.toISOString().split('T')[0],
         bet.time || '',

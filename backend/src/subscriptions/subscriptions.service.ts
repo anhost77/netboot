@@ -49,7 +49,7 @@ export class SubscriptionsService {
       orderBy: { displayOrder: 'asc' },
     });
 
-    return plans.map((plan) => ({
+    return plans.map((plan: any) => ({
       ...plan,
       demoMode: this.isDemoMode,
     }));

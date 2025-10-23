@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { BetsModule } from './bets/bets.module';
 import { StorageModule } from './storage/storage.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
+import { StatisticsModule } from './statistics/statistics.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { SubscriptionsModule } from './subscriptions/subscriptions.module';
     BetsModule,
     StorageModule,
     SubscriptionsModule,
+    StatisticsModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

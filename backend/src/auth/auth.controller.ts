@@ -41,7 +41,7 @@ export class AuthController {
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Logout' })
-  async logout(@Request() req, @Body() body: { refreshToken: string }) {
+  async logout(@Request() req: any, @Body() body: { refreshToken: string }) {
     return this.authService.logout(req.user.id, body.refreshToken);
   }
 
@@ -77,7 +77,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user profile' })
-  async getMe(@Request() req) {
+  async getMe(@Request() req: any) {
     return this.authService.getMe(req.user.id);
   }
 
@@ -85,7 +85,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Enable 2FA' })
-  async enable2FA(@Request() req) {
+  async enable2FA(@Request() req: any) {
     return this.authService.enable2FA(req.user.id);
   }
 
@@ -93,7 +93,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Verify and activate 2FA' })
-  async verify2FA(@Request() req, @Body() dto: Verify2FADto) {
+  async verify2FA(@Request() req: any, @Body() dto: Verify2FADto) {
     return this.authService.verify2FA(req.user.id, dto.code);
   }
 
@@ -101,7 +101,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Disable 2FA' })
-  async disable2FA(@Request() req, @Body() dto: Verify2FADto) {
+  async disable2FA(@Request() req: any, @Body() dto: Verify2FADto) {
     return this.authService.disable2FA(req.user.id, dto.code);
   }
 }

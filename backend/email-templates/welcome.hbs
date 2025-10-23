@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bienvenue</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; margin: 0; padding: 0; background-color: #f3f4f6; }
+    .container { max-width: 600px; margin: 40px auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .header { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 40px 20px; text-align: center; }
+    .header h1 { margin: 0; font-size: 32px; }
+    .content { padding: 40px 30px; }
+    .content p { line-height: 1.6; color: #374151; margin: 0 0 20px; }
+    .button { display: inline-block; background: #10b981; color: white !important; padding: 14px 40px; text-decoration: none; border-radius: 6px; font-weight: 600; margin: 20px 0; }
+    .features { background: #f0fdf4; padding: 20px; border-radius: 6px; margin: 20px 0; }
+    .features li { margin: 10px 0; color: #065f46; }
+    .footer { background: #f9fafb; padding: 20px; text-align: center; font-size: 12px; color: #6b7280; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎉 Bienvenue !</h1>
+    </div>
+    <div class="content">
+      <h2 style="color: #111827; margin-top: 0;">Bienvenue sur BetTracker Pro, {{firstName}} !</h2>
+      <p>Nous sommes ravis de vous compter parmi nous. Votre compte est maintenant activé et vous pouvez commencer à tracker vos paris hippiques.</p>
+
+      <div class="features">
+        <strong style="color: #065f46;">✨ Fonctionnalités disponibles :</strong>
+        <ul>
+          <li>Suivi complet de vos paris</li>
+          <li>Statistiques détaillées et analytics</li>
+          <li>Export de données CSV</li>
+          <li>Gestion de votre budget</li>
+        </ul>
+      </div>
+
+      <p style="text-align: center;">
+        <a href="{{dashboardUrl}}" class="button">Accéder à mon tableau de bord</a>
+      </p>
+
+      <p style="margin-top: 30px;">Si vous avez des questions, n'hésitez pas à contacter notre support.</p>
+      <p>À bientôt,<br>L'équipe BetTracker Pro</p>
+    </div>
+    <div class="footer">
+      <p>&copy; 2025 BetTracker Pro. Tous droits réservés.</p>
+    </div>
+  </div>
+</body>
+</html>

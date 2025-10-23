@@ -10,6 +10,7 @@ import { StorageModule } from './storage/storage.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { StatisticsModule } from './statistics/statistics.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { NotificationsModule } from './notifications/notifications.module';
     SubscriptionsModule,
     StatisticsModule,
     NotificationsModule,
+    EmailModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

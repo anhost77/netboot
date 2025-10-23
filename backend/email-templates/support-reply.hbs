@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Réponse Support</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; margin: 0; padding: 0; background-color: #f3f4f6; }
+    .container { max-width: 600px; margin: 40px auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .header { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 40px 20px; text-align: center; }
+    .header h1 { margin: 0; font-size: 32px; }
+    .content { padding: 40px 30px; }
+    .content p { line-height: 1.6; color: #374151; margin: 0 0 20px; }
+    .ticket-badge { display: inline-block; background: #fef3c7; color: #92400e; padding: 8px 16px; border-radius: 4px; font-weight: 600; font-size: 14px; margin: 10px 0; border: 1px solid #fbbf24; }
+    .reply-box { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 20px; border-radius: 4px; margin: 20px 0; }
+    .reply-box p { margin: 10px 0; color: #78350f; }
+    .button { display: inline-block; background: #f59e0b; color: white !important; padding: 14px 40px; text-decoration: none; border-radius: 6px; font-weight: 600; margin: 20px 0; }
+    .footer { background: #f9fafb; padding: 20px; text-align: center; font-size: 12px; color: #6b7280; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>💬 Nouvelle Réponse</h1>
+    </div>
+    <div class="content">
+      <h2 style="color: #111827; margin-top: 0;">Notre équipe a répondu à votre ticket</h2>
+
+      <p>Bonjour,</p>
+      <p>Nous avons ajouté une nouvelle réponse à votre ticket de support :</p>
+
+      <div style="text-align: center;">
+        <span class="ticket-badge">Ticket #{{ticketNumber}}</span>
+      </div>
+
+      <div class="reply-box">
+        <strong style="color: #92400e;">💡 Message du support :</strong>
+        <p>{{replyMessage}}</p>
+        <p style="font-size: 12px; margin-top: 15px; color: #a16207;">
+          Répondu par {{agentName}} le {{replyDate}}
+        </p>
+      </div>
+
+      <p style="text-align: center;">
+        <a href="{{ticketUrl}}" class="button">Voir le ticket complet</a>
+      </p>
+
+      <p style="margin-top: 30px; font-size: 14px; color: #6b7280;">
+        Vous pouvez répondre directement depuis votre espace client ou en répondant à cet email.
+      </p>
+
+      <p>Cordialement,<br>L'équipe Support BetTracker Pro</p>
+    </div>
+    <div class="footer">
+      <p>&copy; 2025 BetTracker Pro. Tous droits réservés.</p>
+      <p style="margin-top: 10px;"><a href="{{supportUrl}}" style="color: #6b7280;">Centre d'aide</a></p>
+    </div>
+  </div>
+</body>
+</html>

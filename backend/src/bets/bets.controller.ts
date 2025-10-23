@@ -38,10 +38,9 @@ export class BetsController {
   @ApiOperation({ summary: 'Get all bets with pagination and filters' })
   findAll(
     @Request() req: any,
-    @Query() query: BetQueryDto,
     @Query() filters: BetFiltersDto,
   ) {
-    return this.betsService.findAll(req.user.id, query, filters);
+    return this.betsService.findAll(req.user.id, filters);
   }
 
   @Get('stats')

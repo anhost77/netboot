@@ -44,8 +44,8 @@ export class BetsService {
     return bet;
   }
 
-  async findAll(userId: string, query: BetQueryDto, filters: BetFiltersDto) {
-    const { page = 1, limit = 20, sortBy = 'date', sortOrder = 'desc' } = query;
+  async findAll(userId: string, filters: BetFiltersDto) {
+    const { page = 1, limit = 20, sortBy = 'date', sortOrder = 'desc' } = filters;
     const skip = (page - 1) * limit;
 
     // Build where clause

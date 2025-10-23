@@ -52,28 +52,42 @@ export class BetsService {
     const validSortFields = ['date', 'stake', 'profit', 'createdAt', 'updatedAt'];
     const safeSortBy = validSortFields.includes(sortBy) ? sortBy : 'date';
 
-    // Build where clause
+    // Build where clause - start with AND array to properly combine conditions
+    const andConditions: any[] = [];
+
+    // Always filter by userId
     const where: any = { userId };
 
-    if (filters.status) where.status = filters.status;
-    if (filters.platform) where.platform = { contains: filters.platform, mode: 'insensitive' };
-    if (filters.hippodrome) where.hippodrome = { contains: filters.hippodrome, mode: 'insensitive' };
-    if (filters.betType) where.betType = { contains: filters.betType, mode: 'insensitive' };
-    if (filters.tag) where.tags = { has: filters.tag };
+    // Add specific filters
+    if (filters.status) andConditions.push({ status: filters.status });
+    if (filters.platform) andConditions.push({ platform: { contains: filters.platform, mode: 'insensitive' } });
+    if (filters.hippodrome) andConditions.push({ hippodrome: { contains: filters.hippodrome, mode: 'insensitive' } });
+    if (filters.betType) andConditions.push({ betType: { contains: filters.betType, mode: 'insensitive' } });
+    if (filters.tag) andConditions.push({ tags: { has: filters.tag } });
 
+    // Add date range filter
     if (filters.startDate || filters.endDate) {
-      where.date = {};
-      if (filters.startDate) where.date.gte = new Date(filters.startDate);
-      if (filters.endDate) where.date.lte = new Date(filters.endDate);
+      const dateFilter: any = {};
+      if (filters.startDate) dateFilter.gte = new Date(filters.startDate);
+      if (filters.endDate) dateFilter.lte = new Date(filters.endDate);
+      andConditions.push({ date: dateFilter });
     }
 
+    // Add search filter (OR condition)
     if (filters.search) {
-      where.OR = [
-        { horsesSelected: { contains: filters.search, mode: 'insensitive' } },
-        { notes: { contains: filters.search, mode: 'insensitive' } },
-        { platform: { contains: filters.search, mode: 'insensitive' } },
-        { hippodrome: { contains: filters.search, mode: 'insensitive' } },
-      ];
+      andConditions.push({
+        OR: [
+          { horsesSelected: { contains: filters.search, mode: 'insensitive' } },
+          { notes: { contains: filters.search, mode: 'insensitive' } },
+          { platform: { contains: filters.search, mode: 'insensitive' } },
+          { hippodrome: { contains: filters.search, mode: 'insensitive' } },
+        ],
+      });
+    }
+
+    // Combine all conditions with AND
+    if (andConditions.length > 0) {
+      where.AND = andConditions;
     }
 
     // Get total count

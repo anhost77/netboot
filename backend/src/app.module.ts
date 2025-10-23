@@ -13,6 +13,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { EmailModule } from './email/email.module';
 import { SupportModule } from './support/support.module';
 import { CmsModule } from './cms/cms.module';
+import { BudgetModule } from './budget/budget.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { CmsModule } from './cms/cms.module';
     EmailModule,
     SupportModule,
     CmsModule,
+    BudgetModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

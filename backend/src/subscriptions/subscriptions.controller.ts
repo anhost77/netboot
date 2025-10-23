@@ -11,6 +11,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { SubscriptionsService } from './subscriptions.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { DemoPaymentDto } from './dto/demo-payment.dto';
+import { ChangePlanDto } from './dto/change-plan.dto';
 
 @ApiTags('Subscriptions')
 @Controller('subscriptions')
@@ -35,19 +36,19 @@ export class SubscriptionsController {
   @ApiOperation({ summary: 'Create checkout session (demo mode)' })
   createCheckoutSession(
     @Request() req: any,
-    @Body() body: { planId: string; billingCycle: 'monthly' | 'yearly' },
+    @Body() dto: DemoPaymentDto,
   ) {
     return this.subscriptionsService.createCheckoutSession(
       req.user.id,
-      body.planId,
-      body.billingCycle,
+      dto.planId,
+      dto.billingCycle,
     );
   }
 
   @Post('change-plan')
   @ApiOperation({ summary: 'Change subscription plan' })
-  changePlan(@Request() req: any, @Body() body: { planId: string }) {
-    return this.subscriptionsService.changePlan(req.user.id, body.planId);
+  changePlan(@Request() req: any, @Body() dto: ChangePlanDto) {
+    return this.subscriptionsService.changePlan(req.user.id, dto.planId);
   }
 
   @Post('cancel')

@@ -70,9 +70,9 @@ export class StorageController {
         },
         folder: {
           type: 'string',
-          required: false,
         },
       },
+      required: ['file'],
     },
   })
   @UseInterceptors(FileInterceptor('file'))

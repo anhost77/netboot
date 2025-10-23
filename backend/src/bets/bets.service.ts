@@ -48,6 +48,10 @@ export class BetsService {
     const { page = 1, limit = 20, sortBy = 'date', sortOrder = 'desc' } = filters;
     const skip = (page - 1) * limit;
 
+    // Validate sortBy field
+    const validSortFields = ['date', 'stake', 'profit', 'createdAt', 'updatedAt'];
+    const safeSortBy = validSortFields.includes(sortBy) ? sortBy : 'date';
+
     // Build where clause
     const where: any = { userId };
 
@@ -80,15 +84,15 @@ export class BetsService {
       where,
       skip,
       take: limit,
-      orderBy: { [sortBy]: sortOrder },
+      orderBy: { [safeSortBy]: sortOrder },
     });
 
     return {
       data: bets,
-      meta: {
-        total,
+      pagination: {
         page,
         limit,
+        total,
         totalPages: Math.ceil(total / limit),
       },
     };

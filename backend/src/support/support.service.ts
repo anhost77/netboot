@@ -51,7 +51,7 @@ export class SupportService {
         ticketId: ticket.id,
         userId,
         message: dto.message,
-        attachments: dto.attachments || null,
+        attachments: dto.attachments || undefined,
       },
     });
 
@@ -317,7 +317,7 @@ export class SupportService {
         ticketId,
         userId,
         message: dto.message,
-        attachments: dto.attachments || null,
+        attachments: dto.attachments || undefined,
         isInternalNote: dto.isInternalNote || false,
       },
       include: {

@@ -10,6 +10,7 @@ import {
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { SubscriptionsService } from './subscriptions.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { DemoPaymentDto } from './dto/demo-payment.dto';
 
 @ApiTags('Subscriptions')
 @Controller('subscriptions')
@@ -80,12 +81,12 @@ export class SubscriptionsController {
   })
   simulateDemoPayment(
     @Request() req: any,
-    @Body() body: { planId: string; billingCycle: 'monthly' | 'yearly' },
+    @Body() dto: DemoPaymentDto,
   ) {
     return this.subscriptionsService.simulateDemoPayment(
       req.user.id,
-      body.planId,
-      body.billingCycle,
+      dto.planId,
+      dto.billingCycle,
     );
   }
 }

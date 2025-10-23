@@ -5,6 +5,9 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaService } from './prisma.service';
 import { AuthModule } from './auth/auth.module';
+import { BetsModule } from './bets/bets.module';
+import { StorageModule } from './storage/storage.module';
+import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 
 @Module({
   imports: [
@@ -16,6 +19,9 @@ import { AuthModule } from './auth/auth.module';
       limit: parseInt(process.env.THROTTLE_LIMIT || '100'),
     }]),
     AuthModule,
+    BetsModule,
+    StorageModule,
+    SubscriptionsModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

@@ -42,9 +42,9 @@ coverage/
 # Prisma
 **/prisma/migrations/migration_lock.toml
 
-# Storage (local files)
-storage/
-**/storage/
+# Storage (local files - uploaded content only, not source code)
+/storage/
+backend/../storage/
 
 # Temp files
 temp/

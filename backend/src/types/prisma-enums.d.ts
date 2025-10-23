@@ -42,6 +42,13 @@ declare module '@prisma/client' {
     high = 'high',
     urgent = 'urgent',
   }
+
+  export enum NotificationType {
+    info = 'info',
+    success = 'success',
+    warning = 'warning',
+    error = 'error',
+  }
 }
 
 export {};

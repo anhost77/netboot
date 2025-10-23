@@ -45,71 +45,90 @@ export class BetsService {
   }
 
   async findAll(userId: string, filters: BetFiltersDto) {
-    const { page = 1, limit = 20, sortBy = 'date', sortOrder = 'desc' } = filters;
-    const skip = (page - 1) * limit;
+    try {
+      const { page = 1, limit = 20, sortBy = 'date', sortOrder = 'desc' } = filters;
+      const skip = (page - 1) * limit;
 
-    // Validate sortBy field
-    const validSortFields = ['date', 'stake', 'profit', 'createdAt', 'updatedAt'];
-    const safeSortBy = validSortFields.includes(sortBy) ? sortBy : 'date';
+      // Validate sortBy field
+      const validSortFields = ['date', 'stake', 'profit', 'createdAt', 'updatedAt'];
+      const safeSortBy = validSortFields.includes(sortBy) ? sortBy : 'date';
 
-    // Build where clause - start with AND array to properly combine conditions
-    const andConditions: any[] = [];
+      // Build where clause - start with AND array to properly combine conditions
+      const andConditions: any[] = [];
 
-    // Always filter by userId
-    const where: any = { userId };
+      // Always filter by userId
+      const where: any = { userId };
 
-    // Add specific filters
-    if (filters.status) andConditions.push({ status: filters.status });
-    if (filters.platform) andConditions.push({ platform: { contains: filters.platform, mode: 'insensitive' } });
-    if (filters.hippodrome) andConditions.push({ hippodrome: { contains: filters.hippodrome, mode: 'insensitive' } });
-    if (filters.betType) andConditions.push({ betType: { contains: filters.betType, mode: 'insensitive' } });
-    if (filters.tag) andConditions.push({ tags: { has: filters.tag } });
+      // Add specific filters
+      if (filters.status) andConditions.push({ status: filters.status });
+      if (filters.platform) andConditions.push({ platform: { contains: filters.platform, mode: 'insensitive' } });
+      if (filters.hippodrome) andConditions.push({ hippodrome: { contains: filters.hippodrome, mode: 'insensitive' } });
+      if (filters.betType) andConditions.push({ betType: { contains: filters.betType, mode: 'insensitive' } });
+      if (filters.tag) andConditions.push({ tags: { has: filters.tag } });
 
-    // Add date range filter
-    if (filters.startDate || filters.endDate) {
-      const dateFilter: any = {};
-      if (filters.startDate) dateFilter.gte = new Date(filters.startDate);
-      if (filters.endDate) dateFilter.lte = new Date(filters.endDate);
-      andConditions.push({ date: dateFilter });
-    }
+      // Add date range filter
+      if (filters.startDate || filters.endDate) {
+        const dateFilter: any = {};
+        if (filters.startDate) dateFilter.gte = new Date(filters.startDate);
+        if (filters.endDate) dateFilter.lte = new Date(filters.endDate);
+        andConditions.push({ date: dateFilter });
+      }
 
-    // Add search filter (OR condition)
-    if (filters.search) {
-      andConditions.push({
-        OR: [
-          { horsesSelected: { contains: filters.search, mode: 'insensitive' } },
-          { notes: { contains: filters.search, mode: 'insensitive' } },
-          { platform: { contains: filters.search, mode: 'insensitive' } },
-          { hippodrome: { contains: filters.search, mode: 'insensitive' } },
-        ],
+      // Add search filter (OR condition)
+      if (filters.search) {
+        andConditions.push({
+          OR: [
+            { horsesSelected: { contains: filters.search, mode: 'insensitive' } },
+            { notes: { contains: filters.search, mode: 'insensitive' } },
+            { platform: { contains: filters.search, mode: 'insensitive' } },
+            { hippodrome: { contains: filters.search, mode: 'insensitive' } },
+          ],
+        });
+      }
+
+      // Combine all conditions with AND
+      if (andConditions.length > 0) {
+        where.AND = andConditions;
+      }
+
+      // Debug logging
+      console.log('🔍 [BetsService.findAll] Query details:');
+      console.log('Filters:', JSON.stringify(filters, null, 2));
+      console.log('Where clause:', JSON.stringify(where, null, 2));
+      console.log('OrderBy:', { [safeSortBy]: sortOrder });
+
+      // Get total count
+      const total = await this.prisma.bet.count({ where });
+      console.log('✅ Count query successful, total:', total);
+
+      // Get bets with pagination
+      const bets = await this.prisma.bet.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { [safeSortBy]: sortOrder },
       });
+      console.log('✅ FindMany query successful, found:', bets.length, 'bets');
+
+      return {
+        data: bets,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
+    } catch (error) {
+      console.error('❌ [BetsService.findAll] Error occurred:');
+      console.error('Error name:', error.name);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+      console.error('Filters received:', JSON.stringify(filters, null, 2));
+
+      // Re-throw with more context
+      throw new Error(`Failed to fetch bets: ${error.message}`);
     }
-
-    // Combine all conditions with AND
-    if (andConditions.length > 0) {
-      where.AND = andConditions;
-    }
-
-    // Get total count
-    const total = await this.prisma.bet.count({ where });
-
-    // Get bets with pagination
-    const bets = await this.prisma.bet.findMany({
-      where,
-      skip,
-      take: limit,
-      orderBy: { [safeSortBy]: sortOrder },
-    });
-
-    return {
-      data: bets,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
   }
 
   async findOne(userId: string, id: string) {

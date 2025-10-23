@@ -43,6 +43,13 @@ declare module '@prisma/client' {
     urgent = 'urgent',
   }
 
+  export enum TicketCategory {
+    technical = 'technical',
+    billing = 'billing',
+    feature_request = 'feature_request',
+    other = 'other',
+  }
+
   export enum NotificationType {
     info = 'info',
     success = 'success',

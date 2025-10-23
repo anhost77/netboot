@@ -11,6 +11,7 @@ import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { StatisticsModule } from './statistics/statistics.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { EmailModule } from './email/email.module';
+import { SupportModule } from './support/support.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { EmailModule } from './email/email.module';
     StatisticsModule,
     NotificationsModule,
     EmailModule,
+    SupportModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

@@ -282,30 +282,35 @@ export default function StatisticsPage() {
                 );
               }
 
+              // Hauteur maximale du graphique en pixels (h-64 = 256px, moins espace pour titre et labels)
+              const MAX_CHART_HEIGHT = 200;
+
               return (
                 <div className="flex flex-col h-full">
                   {/* Graphique avec ligne de base à 0 */}
-                  <div className="flex-1 flex items-end justify-between relative">
+                  <div className="flex-1 flex items-end justify-between relative" style={{ height: `${MAX_CHART_HEIGHT}px` }}>
                     {/* Ligne horizontale à 0 */}
                     <div className="absolute inset-x-0 bottom-0 border-b-2 border-gray-300 z-0"></div>
 
                     <div className="flex items-end justify-between w-full space-x-1 relative z-10">
                       {timeSeries.map((data, index) => {
-                        const height = maxProfit > 0 ? (Math.abs(data.totalProfit) / maxProfit) * 90 : 0;
+                        // Calculer la hauteur en pixels au lieu de pourcentage
+                        const heightRatio = maxProfit > 0 ? Math.abs(data.totalProfit) / maxProfit : 0;
+                        const heightPx = heightRatio * MAX_CHART_HEIGHT;
                         const isPositive = data.totalProfit > 0;
                         const isZero = data.totalProfit === 0;
 
-                        // Pour les jours à 0, afficher une petite barre grise
-                        const displayHeight = isZero ? 0 : Math.max(height, 5);
+                        // Pour les jours à 0, afficher une petite barre grise, sinon minimum 10px
+                        const displayHeightPx = isZero ? 0 : Math.max(heightPx, 10);
 
                         // Debug: Log height calculations
                         if (data.totalProfit !== 0) {
                           console.log(`Jour ${data.period}:`, {
                             profit: data.totalProfit,
                             maxProfit,
-                            heightCalc: `(${Math.abs(data.totalProfit)} / ${maxProfit}) * 90`,
-                            height,
-                            displayHeight: `${displayHeight}%`
+                            heightRatio: heightRatio.toFixed(3),
+                            heightPx: `${heightPx.toFixed(1)}px`,
+                            displayHeightPx: `${displayHeightPx.toFixed(1)}px`
                           });
                         }
 
@@ -321,8 +326,8 @@ export default function StatisticsPage() {
                                     : 'bg-red-500 hover:bg-red-600'
                               }`}
                               style={{
-                                height: isZero ? '2px' : `${displayHeight}%`,
-                                minHeight: isZero ? '2px' : '8px'
+                                height: isZero ? '2px' : `${displayHeightPx}px`,
+                                minHeight: isZero ? '2px' : '10px'
                               }}
                             >
                               {/* Tooltip on hover */}

@@ -24,9 +24,22 @@ export default function StatisticsPage() {
   const [breakdowns, setBreakdowns] = useState<Breakdowns | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [period, setPeriod] = useState<'day' | 'week' | 'month'>('day');
-  const [dateRange, setDateRange] = useState({
-    start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    end: new Date().toISOString().split('T')[0],
+  const [dateRange, setDateRange] = useState(() => {
+    const today = new Date();
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+    // Format dates in local timezone YYYY-MM-DD
+    const formatLocalDate = (date: Date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
+    return {
+      start: formatLocalDate(thirtyDaysAgo),
+      end: formatLocalDate(today),
+    };
   });
 
   useEffect(() => {

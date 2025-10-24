@@ -345,7 +345,7 @@ export default function BetsPage() {
                       {formatCurrency(bet.stake)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {bet.odds ? bet.odds.toFixed(2) : '-'}
+                      {bet.odds ? Number(bet.odds).toFixed(2) : '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       {getStatusBadge(bet.status)}

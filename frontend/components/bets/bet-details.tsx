@@ -67,9 +67,9 @@ export function BetDetails({ bet, onClose, onEdit }: BetDetailsProps) {
                 <DollarSign className="h-5 w-5" />
                 <span className="text-sm font-medium">Mise</span>
               </div>
-              <p className="text-2xl font-bold text-blue-900">{formatCurrency(bet.stake)}</p>
+              <p className="text-2xl font-bold text-blue-900">{formatCurrency(Number(bet.stake))}</p>
               {bet.odds && (
-                <p className="text-sm text-blue-600 mt-1">Cote: {bet.odds.toFixed(2)}</p>
+                <p className="text-sm text-blue-600 mt-1">Cote: {Number(bet.odds).toFixed(2)}</p>
               )}
             </div>
 
@@ -79,9 +79,9 @@ export function BetDetails({ bet, onClose, onEdit }: BetDetailsProps) {
                   <TrendingUp className="h-5 w-5" />
                   <span className="text-sm font-medium">Gain</span>
                 </div>
-                <p className="text-2xl font-bold text-purple-900">{formatCurrency(bet.payout)}</p>
+                <p className="text-2xl font-bold text-purple-900">{formatCurrency(Number(bet.payout))}</p>
                 <p className="text-sm text-purple-600 mt-1">
-                  Retour: {bet.payout > 0 ? ((bet.payout / bet.stake) * 100).toFixed(0) : 0}%
+                  Retour: {Number(bet.payout) > 0 ? ((Number(bet.payout) / Number(bet.stake)) * 100).toFixed(0) : 0}%
                 </p>
               </div>
             )}
@@ -93,10 +93,10 @@ export function BetDetails({ bet, onClose, onEdit }: BetDetailsProps) {
                   <span className="text-sm font-medium">Profit</span>
                 </div>
                 <p className={`text-2xl font-bold ${isProfitable ? 'text-green-900' : 'text-red-900'}`}>
-                  {formatCurrency(bet.profit || 0)}
+                  {formatCurrency(Number(bet.profit || 0))}
                 </p>
                 <p className={`text-sm mt-1 ${isProfitable ? 'text-green-600' : 'text-red-600'}`}>
-                  ROI: {bet.stake > 0 ? (((bet.profit || 0) / bet.stake) * 100).toFixed(1) : 0}%
+                  ROI: {Number(bet.stake) > 0 ? (((Number(bet.profit || 0)) / Number(bet.stake)) * 100).toFixed(1) : 0}%
                 </p>
               </div>
             )}

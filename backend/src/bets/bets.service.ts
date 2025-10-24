@@ -4,6 +4,8 @@ import { CreateBetDto } from './dto/create-bet.dto';
 import { UpdateBetDto } from './dto/update-bet.dto';
 import { BetFiltersDto } from './dto/bet-filters.dto';
 import { BetQueryDto } from './dto/bet-query.dto';
+import { TransactionType } from '../platforms/dto/create-transaction.dto';
+import { Decimal } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class BetsService {
@@ -36,9 +38,9 @@ export class BetsService {
       },
     });
 
-    // Update user bankroll if needed
+    // Update platform bankroll if bet is won or lost
     if (dto.status === 'won' || dto.status === 'lost') {
-      await this.updateBankroll(userId, profit || -dto.stake);
+      await this.updatePlatformBankroll(userId, dto.platform, profit || -dto.stake, bet.id);
     }
 
     return bet;
@@ -146,10 +148,12 @@ export class BetsService {
 
   async update(userId: string, id: string, dto: UpdateBetDto) {
     // Check if bet exists and belongs to user
-    await this.findOne(userId, id);
+    const existingBet = await this.findOne(userId, id);
 
     // Calculate new profit if payout changed
-    const profit = dto.payout !== undefined ? dto.payout - (dto.stake || 0) : undefined;
+    const newStake = dto.stake !== undefined ? dto.stake : existingBet.stake.toNumber();
+    const newPayout = dto.payout !== undefined ? dto.payout : (existingBet.payout?.toNumber() || 0);
+    const profit = dto.payout !== undefined || dto.stake !== undefined ? newPayout - newStake : undefined;
 
     const updatedBet = await this.prisma.bet.update({
       where: { id },
@@ -159,6 +163,17 @@ export class BetsService {
         profit,
       },
     });
+
+    // Handle bankroll updates when status changes
+    const oldStatus = existingBet.status;
+    const newStatus = dto.status || oldStatus;
+    const platform = dto.platform || existingBet.platform;
+
+    // If status changed from pending to won/lost, or between won/lost
+    if (oldStatus !== newStatus && (newStatus === 'won' || newStatus === 'lost')) {
+      const finalProfit = profit !== undefined ? profit : (existingBet.profit?.toNumber() || -newStake);
+      await this.updatePlatformBankroll(userId, platform, finalProfit, id);
+    }
 
     return updatedBet;
   }
@@ -409,6 +424,53 @@ export class BetsService {
         `Monthly bet limit reached (${maxBets} bets). Upgrade your plan for more.`,
       );
     }
+  }
+
+  /**
+   * Update platform bankroll and create transaction when bet is won or lost
+   */
+  private async updatePlatformBankroll(
+    userId: string,
+    platformName: string,
+    profitOrLoss: number,
+    betId: string,
+  ) {
+    // Find the platform by name
+    const platform = await this.prisma.platform.findFirst({
+      where: {
+        userId,
+        name: platformName,
+      },
+    });
+
+    if (!platform) {
+      // Platform not found, skip bankroll update
+      console.warn(`Platform "${platformName}" not found for user ${userId}`);
+      return;
+    }
+
+    const amount = new Decimal(Math.abs(profitOrLoss));
+    const transactionType = profitOrLoss >= 0 ? TransactionType.DEPOSIT : TransactionType.WITHDRAWAL;
+    const newBalance = new Decimal(platform.currentBankroll).plus(profitOrLoss);
+
+    // Create transaction and update platform in a single DB transaction
+    await this.prisma.$transaction([
+      this.prisma.bankrollTransaction.create({
+        data: {
+          userId,
+          platformId: platform.id,
+          type: transactionType,
+          amount,
+          balanceAfter: newBalance,
+          description: `Pari ${profitOrLoss >= 0 ? 'gagné' : 'perdu'} - ID: ${betId.substring(0, 8)}`,
+          date: new Date(),
+        },
+      }),
+      this.prisma.platform.update({
+        where: { id: platform.id },
+        data: { currentBankroll: newBalance },
+      }),
+    ]);
   }
 
   private async updateBankroll(userId: string, profitOrLoss: number) {

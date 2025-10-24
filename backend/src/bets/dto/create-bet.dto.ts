@@ -1,6 +1,24 @@
 import { IsString, IsNumber, IsEnum, IsOptional, IsDateString, IsArray, Min } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { BetStatus, HorseBetType } from '@prisma/client';
+import { BetStatus } from '@prisma/client';
+
+// HorseBetType enum (matching schema.prisma)
+export enum HorseBetType {
+  gagnant = 'gagnant',
+  place = 'place',
+  gagnant_place = 'gagnant_place',
+  couple = 'couple',
+  couple_ordre = 'couple_ordre',
+  trio = 'trio',
+  trio_ordre = 'trio_ordre',
+  quarte = 'quarte',
+  quarte_ordre = 'quarte_ordre',
+  quinte = 'quinte',
+  quinte_ordre = 'quinte_ordre',
+  multi = 'multi',
+  pick5 = 'pick5',
+  autre = 'autre',
+}
 
 export class CreateBetDto {
   @ApiProperty({ example: '2025-10-23' })
@@ -12,10 +30,9 @@ export class CreateBetDto {
   @IsOptional()
   time?: string;
 
-  @ApiPropertyOptional({ example: 'PMU' })
+  @ApiProperty({ example: 'PMU', description: 'Platform name (required)' })
   @IsString()
-  @IsOptional()
-  platform?: string;
+  platform: string;
 
   @ApiPropertyOptional({ example: 'Vincennes' })
   @IsString()

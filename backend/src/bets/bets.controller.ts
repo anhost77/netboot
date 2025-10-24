@@ -12,7 +12,9 @@ import {
   HttpCode,
   HttpStatus,
   Header,
+  Res,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { BetsService } from './bets.service';
 import { CreateBetDto } from './dto/create-bet.dto';
@@ -67,12 +69,26 @@ export class BetsController {
     return this.betsService.getStatsByBetType(req.user.id);
   }
 
-  @Get('export')
-  @ApiOperation({ summary: 'Export bets to CSV' })
-  @Header('Content-Type', 'text/csv')
-  @Header('Content-Disposition', 'attachment; filename="bets.csv"')
-  async exportBets(@Request() req: any, @Query() filters: BetFiltersDto) {
-    return this.betsService.exportBets(req.user.id, filters);
+  @Get('export/:format')
+  @ApiOperation({ summary: 'Export bets to CSV or Excel' })
+  async exportBets(
+    @Request() req: any,
+    @Res() res: Response,
+    @Param('format') format: string,
+    @Query() filters: BetFiltersDto
+  ) {
+    const data = await this.betsService.exportBets(req.user.id, format, filters);
+
+    // Set appropriate headers based on format
+    if (format === 'csv') {
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename="bets.csv"');
+    } else if (format === 'excel') {
+      res.setHeader('Content-Type', 'application/vnd.ms-excel');
+      res.setHeader('Content-Disposition', 'attachment; filename="bets.xls"');
+    }
+
+    res.send(data);
   }
 
   @Get(':id')

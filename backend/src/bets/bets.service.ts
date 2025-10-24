@@ -308,7 +308,7 @@ export class BetsService {
     }));
   }
 
-  async exportBets(userId: string, filters: BetFiltersDto) {
+  async exportBets(userId: string, format: string, filters: BetFiltersDto) {
     const where: any = { userId };
 
     if (filters.status) where.status = filters.status;
@@ -325,7 +325,10 @@ export class BetsService {
       orderBy: { date: 'desc' },
     });
 
-    // Convert to CSV format
+    // Determine separator based on format
+    const separator = format === 'excel' ? '\t' : ',';
+
+    // Convert to CSV/TSV format
     const headers = [
       'Date',
       'Heure',
@@ -339,7 +342,7 @@ export class BetsService {
       'Statut',
       'Gain',
       'Profit',
-    ].join(',');
+    ].join(separator);
 
     const rows = bets.map((bet: any) =>
       [
@@ -355,7 +358,7 @@ export class BetsService {
         bet.status,
         bet.payout?.toString() || '',
         bet.profit?.toString() || '',
-      ].join(','),
+      ].join(separator),
     );
 
     return [headers, ...rows].join('\n');

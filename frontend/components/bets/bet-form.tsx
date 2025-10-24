@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { X } from 'lucide-react';
 import type { Bet, CreateBetData } from '@/lib/types';
+import { platformsAPI, type Platform } from '@/lib/api/platforms';
 
 interface BetFormProps {
   bet?: Bet | null;
@@ -13,6 +14,9 @@ interface BetFormProps {
 }
 
 export function BetForm({ bet, onSubmit, onCancel, isLoading = false }: BetFormProps) {
+  const [platforms, setPlatforms] = useState<Platform[]>([]);
+  const [loadingPlatforms, setLoadingPlatforms] = useState(true);
+
   const {
     register,
     handleSubmit,
@@ -46,6 +50,21 @@ export function BetForm({ bet, onSubmit, onCancel, isLoading = false }: BetFormP
   const watchOdds = watch('odds');
   const watchStatus = watch('status');
   const watchPayout = watch('payout');
+
+  // Load platforms
+  useEffect(() => {
+    const loadPlatforms = async () => {
+      try {
+        const data = await platformsAPI.getAll();
+        setPlatforms(data.filter(p => p.isActive));
+      } catch (error) {
+        console.error('Failed to load platforms:', error);
+      } finally {
+        setLoadingPlatforms(false);
+      }
+    };
+    loadPlatforms();
+  }, []);
 
   // Auto-calculate payout and profit
   useEffect(() => {
@@ -146,12 +165,41 @@ export function BetForm({ bet, onSubmit, onCancel, isLoading = false }: BetFormP
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Plateforme
               </label>
-              <input
-                type="text"
-                placeholder="Ex: PMU, Betclic, Unibet..."
-                {...register('platform')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-              />
+              {loadingPlatforms ? (
+                <select
+                  disabled
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+                >
+                  <option>Chargement...</option>
+                </select>
+              ) : platforms.length === 0 ? (
+                <div className="relative">
+                  <select
+                    disabled
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500"
+                  >
+                    <option>Aucune plateforme disponible</option>
+                  </select>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Créez une plateforme dans{' '}
+                    <a href="/dashboard/settings" className="text-primary-600 hover:text-primary-700 underline">
+                      Paramètres
+                    </a>
+                  </p>
+                </div>
+              ) : (
+                <select
+                  {...register('platform')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                >
+                  <option value="">Sélectionnez une plateforme</option>
+                  {platforms.map((platform) => (
+                    <option key={platform.id} value={platform.name}>
+                      {platform.name}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
 
             <div>

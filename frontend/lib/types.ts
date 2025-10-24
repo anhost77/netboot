@@ -60,6 +60,7 @@ export interface CreateBetData {
   odds?: number;
   status?: BetStatus;
   payout?: number;
+  profit?: number;
   notes?: string;
   tags?: string[];
 }

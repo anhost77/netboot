@@ -38,9 +38,10 @@ export default function TransactionModal({ platform, onClose, onSuccess }: Trans
 
   const amount = watch('amount');
   const amountNumber = Number(amount) || 0;
+  const currentBankrollNumber = Number(platform.currentBankroll);
   const newBalance = transactionType === TransactionType.DEPOSIT
-    ? platform.currentBankroll + amountNumber
-    : platform.currentBankroll - amountNumber;
+    ? currentBankrollNumber + amountNumber
+    : currentBankrollNumber - amountNumber;
 
   const onSubmit = async (data: FormData) => {
     try {
@@ -142,7 +143,7 @@ export default function TransactionModal({ platform, onClose, onSuccess }: Trans
                 max:
                   transactionType === TransactionType.WITHDRAWAL
                     ? {
-                        value: platform.currentBankroll,
+                        value: currentBankrollNumber,
                         message: 'Fonds insuffisants',
                       }
                     : undefined,

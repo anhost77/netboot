@@ -75,7 +75,9 @@ export function BetForm({ bet, onSubmit, onCancel, isLoading = false }: BetFormP
     data.stake = parseFloat(data.stake as any);
     if (data.odds) data.odds = parseFloat(data.odds as any);
     if (data.payout) data.payout = parseFloat(data.payout as any);
-    if (data.profit) data.profit = parseFloat(data.profit as any);
+
+    // Remove profit - it's calculated by the backend
+    delete (data as any).profit;
 
     await onSubmit(data);
   };

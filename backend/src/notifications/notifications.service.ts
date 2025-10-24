@@ -65,7 +65,7 @@ export class NotificationsService {
 
     return {
       data: notifications,
-      pagination: {
+      meta: {
         page,
         limit,
         total,

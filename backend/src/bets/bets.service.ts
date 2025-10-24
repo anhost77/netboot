@@ -113,7 +113,7 @@ export class BetsService {
 
       return {
         data: bets,
-        pagination: {
+        meta: {
           page,
           limit,
           total,

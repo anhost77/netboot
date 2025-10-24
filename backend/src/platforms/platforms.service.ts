@@ -3,7 +3,7 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../prisma.service';
 import { CreatePlatformDto } from './dto/create-platform.dto';
 import { UpdatePlatformDto } from './dto/update-platform.dto';
 import { CreateTransactionDto, TransactionType } from './dto/create-transaction.dto';
@@ -148,13 +148,20 @@ export class PlatformsService {
       },
     });
 
+    type PlatformData = {
+      id: string;
+      name: string;
+      initialBankroll: Decimal;
+      currentBankroll: Decimal;
+    };
+
     const totalInitial = platforms.reduce(
-      (sum, p) => sum.plus(new Decimal(p.initialBankroll)),
+      (sum: Decimal, p: PlatformData) => sum.plus(new Decimal(p.initialBankroll)),
       new Decimal(0),
     );
 
     const totalCurrent = platforms.reduce(
-      (sum, p) => sum.plus(new Decimal(p.currentBankroll)),
+      (sum: Decimal, p: PlatformData) => sum.plus(new Decimal(p.currentBankroll)),
       new Decimal(0),
     );
 

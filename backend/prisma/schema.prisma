@@ -100,6 +100,11 @@ enum NotificationType {
   error
 }
 
+enum TransactionType {
+  deposit
+  withdrawal
+}
+
 // Users table
 model User {
   id                  String    @id @default(uuid())
@@ -137,6 +142,8 @@ model User {
   assignedTickets     SupportTicket[] @relation("AssignedToAdmin")
   auditLogs           AuditLog[]
   cmsPageHistory      CmsPageHistory[]
+  platforms           Platform[]
+  bankrollTransactions BankrollTransaction[]
 
   @@map("users")
 }
@@ -493,4 +500,44 @@ model EmailQueue {
 
   @@index([status, scheduledAt])
   @@map("email_queue")
+}
+
+// Platforms table (PMU, Betclic, etc.)
+model Platform {
+  id                    String                @id @default(uuid())
+  userId                String                @map("user_id")
+  name                  String
+  initialBankroll       Decimal               @map("initial_bankroll") @db.Decimal(10, 2)
+  currentBankroll       Decimal               @map("current_bankroll") @db.Decimal(10, 2)
+  isActive              Boolean               @default(true) @map("is_active")
+  createdAt             DateTime              @default(now()) @map("created_at")
+  updatedAt             DateTime              @updatedAt @map("updated_at")
+
+  // Relations
+  user                  User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions          BankrollTransaction[]
+
+  @@index([userId])
+  @@map("platforms")
+}
+
+// Bankroll Transactions table (deposits and withdrawals)
+model BankrollTransaction {
+  id                    String            @id @default(uuid())
+  userId                String            @map("user_id")
+  platformId            String            @map("platform_id")
+  type                  TransactionType
+  amount                Decimal           @db.Decimal(10, 2)
+  balanceAfter          Decimal           @map("balance_after") @db.Decimal(10, 2)
+  description           String?
+  date                  DateTime
+  createdAt             DateTime          @default(now()) @map("created_at")
+
+  // Relations
+  user                  User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  platform              Platform          @relation(fields: [platformId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date])
+  @@index([platformId])
+  @@map("bankroll_transactions")
 }

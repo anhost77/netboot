@@ -15,6 +15,7 @@ import { SupportModule } from './support/support.module';
 import { CmsModule } from './cms/cms.module';
 import { BudgetModule } from './budget/budget.module';
 import { AdminModule } from './admin/admin.module';
+import { PlatformsModule } from './platforms/platforms.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { AdminModule } from './admin/admin.module';
     CmsModule,
     BudgetModule,
     AdminModule,
+    PlatformsModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

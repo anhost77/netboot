@@ -106,12 +106,12 @@ export const statisticsAPI = {
 
   /**
    * Get time series data for charts
-   * @param period - 'day', 'week', or 'month'
+   * @param period - 'daily', 'weekly', or 'monthly'
    * @param startDate - Start date (optional)
    * @param endDate - End date (optional)
    */
   async getTimeSeries(
-    period: 'day' | 'week' | 'month',
+    period: 'daily' | 'weekly' | 'monthly',
     startDate?: string,
     endDate?: string
   ): Promise<TimeSeriesData[]> {

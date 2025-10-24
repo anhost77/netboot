@@ -34,9 +34,17 @@ export default function StatisticsPage() {
   const loadData = async () => {
     try {
       setIsLoading(true);
+
+      // Map UI period values to backend expected values
+      const periodMap = {
+        'day': 'daily',
+        'week': 'weekly',
+        'month': 'monthly',
+      } as const;
+
       const [dashStats, tsData, perfData, breakData] = await Promise.all([
         statisticsAPI.getDashboard(),
-        statisticsAPI.getTimeSeries(period, dateRange.start, dateRange.end),
+        statisticsAPI.getTimeSeries(periodMap[period], dateRange.start, dateRange.end),
         statisticsAPI.getPerformance(dateRange.start, dateRange.end),
         statisticsAPI.getBreakdowns(dateRange.start, dateRange.end),
       ]);

@@ -65,6 +65,14 @@ export default function StatisticsPage() {
         statisticsAPI.getBreakdowns(dateRange.start, dateRange.end),
       ]);
 
+      // Debug: Log time series data
+      console.log('=== DEBUG GRAPHIQUE ===');
+      console.log('Nombre de jours:', tsData.length);
+      console.log('Premier jour:', tsData[0]);
+      console.log('Dernier jour:', tsData[tsData.length - 1]);
+      console.log('Tous les profits:', tsData.map(d => ({ date: d.period, profit: d.totalProfit })));
+      console.log('Max profit:', Math.max(...tsData.map(d => Math.abs(d.totalProfit))));
+
       setDashboardStats(dashStats);
       setPeriods(periodsData);
       setTimeSeries(tsData);
@@ -289,6 +297,17 @@ export default function StatisticsPage() {
 
                         // Pour les jours à 0, afficher une petite barre grise
                         const displayHeight = isZero ? 0 : Math.max(height, 5);
+
+                        // Debug: Log height calculations
+                        if (data.totalProfit !== 0) {
+                          console.log(`Jour ${data.period}:`, {
+                            profit: data.totalProfit,
+                            maxProfit,
+                            heightCalc: `(${Math.abs(data.totalProfit)} / ${maxProfit}) * 90`,
+                            height,
+                            displayHeight: `${displayHeight}%`
+                          });
+                        }
 
                         return (
                           <div key={index} className="flex-1 flex flex-col items-center group relative">

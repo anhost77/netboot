@@ -37,9 +37,10 @@ export default function TransactionModal({ platform, onClose, onSuccess }: Trans
   });
 
   const amount = watch('amount');
+  const amountNumber = Number(amount) || 0;
   const newBalance = transactionType === TransactionType.DEPOSIT
-    ? platform.currentBankroll + (amount || 0)
-    : platform.currentBankroll - (amount || 0);
+    ? platform.currentBankroll + amountNumber
+    : platform.currentBankroll - amountNumber;
 
   const onSubmit = async (data: FormData) => {
     try {
@@ -168,7 +169,7 @@ export default function TransactionModal({ platform, onClose, onSuccess }: Trans
           </div>
 
           {/* Nouveau solde prévisionnel */}
-          {amount > 0 && (
+          {amountNumber > 0 && (
             <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-700">Nouveau solde :</span>

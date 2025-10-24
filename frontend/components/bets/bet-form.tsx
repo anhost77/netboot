@@ -190,10 +190,10 @@ export function BetForm({ bet, onSubmit, onCancel, isLoading = false }: BetFormP
               <input
                 type="number"
                 step="0.01"
-                min="1"
+                min="1.01"
                 placeholder="Ex: 3.50"
                 {...register('odds', {
-                  min: { value: 1, message: 'La cote doit être ≥ 1' },
+                  min: { value: 1.01, message: 'La cote doit être ≥ 1.01' },
                 })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
               />

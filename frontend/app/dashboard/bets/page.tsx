@@ -63,9 +63,21 @@ export default function BetsPage() {
       setShowAddModal(false);
       setSelectedBet(null);
       loadBets();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to save bet:', error);
-      alert('Erreur lors de la sauvegarde du pari');
+
+      // Extract detailed error message
+      let errorMessage = 'Erreur lors de la sauvegarde du pari';
+
+      if (error.response?.data?.message) {
+        if (Array.isArray(error.response.data.message)) {
+          errorMessage = error.response.data.message.join('\n');
+        } else {
+          errorMessage = error.response.data.message;
+        }
+      }
+
+      alert(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

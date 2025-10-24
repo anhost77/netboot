@@ -48,7 +48,7 @@ export default function TransactionModal({ platform, onClose, onSuccess }: Trans
 
       await platformsAPI.createTransaction(platform.id, {
         type: transactionType,
-        amount: data.amount,
+        amount: Number(data.amount),
         description: data.description || undefined,
       });
 

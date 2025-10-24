@@ -48,7 +48,7 @@ export default function PlatformModal({ platform, onClose, onSuccess }: Platform
         // Création
         await platformsAPI.create({
           name: data.name,
-          initialBankroll: data.initialBankroll,
+          initialBankroll: Number(data.initialBankroll),
         });
       }
 

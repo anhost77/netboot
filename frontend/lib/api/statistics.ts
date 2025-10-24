@@ -29,39 +29,40 @@ export interface PeriodStats {
 
 // Time Series Data
 export interface TimeSeriesData {
-  date: string;
+  period: string;
   totalBets: number;
   wonBets: number;
   lostBets: number;
   totalStake: number;
+  totalPayout: number;
   totalProfit: number;
-  cumulativeProfit: number;
+  winRate: number;
+  avgOdds: number;
+  roi: number;
 }
 
 // Performance Metrics
 export interface PerformanceMetrics {
-  currentStreak: {
-    type: 'win' | 'loss';
-    count: number;
+  streaks: {
+    currentWinStreak: number;
+    currentLoseStreak: number;
+    maxWinStreak: number;
+    maxLoseStreak: number;
   };
-  longestWinStreak: number;
-  longestLossStreak: number;
   volatility: number;
   sharpeRatio: number;
+  avgProfit: number;
+  bestBet: BetSummary | null;
+  worstBet: BetSummary | null;
   consistencyScore: number;
-  bestBets: BetSummary[];
-  worstBets: BetSummary[];
 }
 
 export interface BetSummary {
   id: string;
   date: string;
-  platform?: string;
-  hippodrome?: string;
   stake: number;
-  odds?: number;
+  odds: number;
   profit: number;
-  roi: number;
 }
 
 // Breakdowns

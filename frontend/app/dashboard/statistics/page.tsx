@@ -211,14 +211,15 @@ export default function StatisticsPage() {
                     >
                       {/* Tooltip on hover */}
                       <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block bg-gray-900 text-white text-xs rounded py-1 px-2 whitespace-nowrap z-10">
-                        <div>{new Date(data.date).toLocaleDateString('fr-FR')}</div>
+                        <div>{data.period}</div>
                         <div>Profit: {formatCurrency(data.totalProfit)}</div>
                         <div>Paris: {data.totalBets}</div>
+                        <div>Taux réussite: {data.winRate.toFixed(1)}%</div>
                       </div>
                     </div>
                     {timeSeries.length <= 31 && (
                       <div className="text-xs text-gray-500 mt-1 transform rotate-45 origin-left">
-                        {new Date(data.date).getDate()}
+                        {data.period.split('-').pop()}
                       </div>
                     )}
                   </div>
@@ -242,17 +243,25 @@ export default function StatisticsPage() {
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-600">Série actuelle</span>
-                  <span className={`text-sm font-semibold ${performance.currentStreak.type === 'win' ? 'text-green-600' : 'text-red-600'}`}>
-                    {performance.currentStreak.count} {performance.currentStreak.type === 'win' ? 'victoires' : 'défaites'}
-                  </span>
+                  {performance.streaks.currentWinStreak > 0 ? (
+                    <span className="text-sm font-semibold text-green-600">
+                      {performance.streaks.currentWinStreak} victoires
+                    </span>
+                  ) : performance.streaks.currentLoseStreak > 0 ? (
+                    <span className="text-sm font-semibold text-red-600">
+                      {performance.streaks.currentLoseStreak} défaites
+                    </span>
+                  ) : (
+                    <span className="text-sm font-semibold text-gray-600">0</span>
+                  )}
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-600">Plus longue série gagnante</span>
-                  <span className="text-sm font-semibold text-green-600">{performance.longestWinStreak}</span>
+                  <span className="text-sm font-semibold text-green-600">{performance.streaks.maxWinStreak}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-600">Plus longue série perdante</span>
-                  <span className="text-sm font-semibold text-red-600">{performance.longestLossStreak}</span>
+                  <span className="text-sm font-semibold text-red-600">{performance.streaks.maxLoseStreak}</span>
                 </div>
               </div>
             </div>
@@ -263,6 +272,12 @@ export default function StatisticsPage() {
                 <span className="font-medium">Indicateurs</span>
               </div>
               <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Profit moyen</span>
+                  <span className={`text-sm font-semibold ${performance.avgProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {formatCurrency(performance.avgProfit)}
+                  </span>
+                </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-600">Volatilité</span>
                   <span className="text-sm font-semibold">{performance.volatility.toFixed(2)}</span>
@@ -281,17 +296,34 @@ export default function StatisticsPage() {
             <div className="space-y-4">
               <div className="flex items-center space-x-2">
                 <Target className="h-5 w-5 text-purple-500" />
-                <span className="font-medium">Meilleurs paris</span>
+                <span className="font-medium">Meilleur/Pire pari</span>
               </div>
               <div className="space-y-2">
-                {performance.bestBets.slice(0, 3).map((bet, index) => (
-                  <div key={bet.id} className="text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">{new Date(bet.date).toLocaleDateString('fr-FR')}</span>
-                      <span className="font-semibold text-green-600">+{formatCurrency(bet.profit)}</span>
+                {performance.bestBet && (
+                  <div className="text-sm">
+                    <div className="flex justify-between mb-1">
+                      <span className="text-gray-600">Meilleur:</span>
+                      <span className="font-semibold text-green-600">+{formatCurrency(performance.bestBet.profit)}</span>
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {new Date(performance.bestBet.date).toLocaleDateString('fr-FR')} - Cote: {Number(performance.bestBet.odds).toFixed(2)}
                     </div>
                   </div>
-                ))}
+                )}
+                {performance.worstBet && (
+                  <div className="text-sm mt-3">
+                    <div className="flex justify-between mb-1">
+                      <span className="text-gray-600">Pire:</span>
+                      <span className="font-semibold text-red-600">{formatCurrency(performance.worstBet.profit)}</span>
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {new Date(performance.worstBet.date).toLocaleDateString('fr-FR')} - Cote: {Number(performance.worstBet.odds).toFixed(2)}
+                    </div>
+                  </div>
+                )}
+                {!performance.bestBet && !performance.worstBet && (
+                  <div className="text-sm text-gray-500">Aucune donnée</div>
+                )}
               </div>
             </div>
           </div>

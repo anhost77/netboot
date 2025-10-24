@@ -170,7 +170,7 @@ export class BetsService {
     const platform = dto.platform || existingBet.platform;
 
     // If status changed from pending to won/lost, or between won/lost
-    if (oldStatus !== newStatus && (newStatus === 'won' || newStatus === 'lost')) {
+    if (oldStatus !== newStatus && (newStatus === 'won' || newStatus === 'lost') && platform) {
       const finalProfit = profit !== undefined ? profit : (existingBet.profit?.toNumber() || -newStake);
       await this.updatePlatformBankroll(userId, platform, finalProfit, id);
     }

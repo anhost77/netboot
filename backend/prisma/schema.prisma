@@ -36,6 +36,23 @@ enum BetStatus {
   refunded
 }
 
+enum HorseBetType {
+  gagnant        // Simple gagnant
+  place          // Simple placé
+  gagnant_place  // Couplé gagnant-placé
+  couple         // Couplé
+  couple_ordre   // Couplé ordre
+  trio           // Trio
+  trio_ordre     // Trio ordre
+  quarte         // Quarté
+  quarte_ordre   // Quarté ordre
+  quinte         // Quinté
+  quinte_ordre   // Quinté ordre
+  multi          // Multi
+  pick5          // Pick 5
+  autre          // Autre
+}
+
 enum TicketStatus {
   new
   in_progress
@@ -175,27 +192,28 @@ model Subscription {
 
 // Bets table
 model Bet {
-  id                    String      @id @default(uuid())
-  userId                String      @map("user_id")
+  id                    String          @id @default(uuid())
+  userId                String          @map("user_id")
   date                  DateTime
   time                  String?
   platform              String?
   hippodrome            String?
-  raceNumber            String?     @map("race_number")
-  betType               String?     @map("bet_type")
-  horsesSelected        String?     @map("horses_selected")
-  stake                 Decimal     @db.Decimal(10, 2)
-  odds                  Decimal?    @db.Decimal(10, 2)
-  status                BetStatus   @default(pending)
-  payout                Decimal?    @db.Decimal(10, 2)
-  profit                Decimal?    @db.Decimal(10, 2)
+  raceNumber            String?         @map("race_number")
+  betType               HorseBetType?   @map("bet_type")
+  horsesSelected        String?         @map("horses_selected")
+  winningHorse          String?         @map("winning_horse")
+  stake                 Decimal         @db.Decimal(10, 2)
+  odds                  Decimal?        @db.Decimal(10, 2)
+  status                BetStatus       @default(pending)
+  payout                Decimal?        @db.Decimal(10, 2)
+  profit                Decimal?        @db.Decimal(10, 2)
   notes                 String?
   tags                  Json?
-  createdAt             DateTime    @default(now()) @map("created_at")
-  updatedAt             DateTime    @updatedAt @map("updated_at")
+  createdAt             DateTime        @default(now()) @map("created_at")
+  updatedAt             DateTime        @updatedAt @map("updated_at")
 
   // Relations
-  user                  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                  User            @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, date])
   @@index([userId, status])

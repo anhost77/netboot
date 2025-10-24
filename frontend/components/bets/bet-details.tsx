@@ -1,6 +1,6 @@
 'use client';
 
-import { X, Calendar, DollarSign, TrendingUp, MapPin, Building2, Tag, FileText } from 'lucide-react';
+import { X, Calendar, DollarSign, TrendingUp, MapPin, Building2, Tag, FileText, Hash, Trophy, Ticket } from 'lucide-react';
 import type { Bet } from '@/lib/types';
 import { formatCurrency, formatDate } from '@/lib/utils';
 
@@ -34,6 +34,27 @@ export function BetDetails({ bet, onClose, onEdit }: BetDetailsProps) {
       refunded: 'Remboursé',
     };
     return labels[status as keyof typeof labels] || status;
+  };
+
+  const getBetTypeLabel = (betType: string | null | undefined) => {
+    if (!betType) return null;
+    const labels: Record<string, string> = {
+      gagnant: 'Simple Gagnant',
+      place: 'Simple Placé',
+      gagnant_place: 'Couplé Gagnant-Placé',
+      couple: 'Couplé',
+      couple_ordre: 'Couplé Ordre',
+      trio: 'Trio',
+      trio_ordre: 'Trio Ordre',
+      quarte: 'Quarté',
+      quarte_ordre: 'Quarté Ordre',
+      quinte: 'Quinté',
+      quinte_ordre: 'Quinté Ordre',
+      multi: 'Multi',
+      pick5: 'Pick 5',
+      autre: 'Autre',
+    };
+    return labels[betType] || betType;
   };
 
   const isProfitable = (bet.profit || 0) > 0;
@@ -131,6 +152,46 @@ export function BetDetails({ bet, onClose, onEdit }: BetDetailsProps) {
                   <div>
                     <p className="text-sm font-medium text-gray-500">Hippodrome</p>
                     <p className="text-base text-gray-900">{bet.hippodrome}</p>
+                  </div>
+                </div>
+              )}
+
+              {bet.raceNumber && (
+                <div className="flex items-start space-x-3">
+                  <Hash className="h-5 w-5 text-gray-400 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Numéro de course</p>
+                    <p className="text-base text-gray-900">{bet.raceNumber}</p>
+                  </div>
+                </div>
+              )}
+
+              {bet.betType && (
+                <div className="flex items-start space-x-3">
+                  <Ticket className="h-5 w-5 text-gray-400 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Type de pari</p>
+                    <p className="text-base text-gray-900">{getBetTypeLabel(bet.betType)}</p>
+                  </div>
+                </div>
+              )}
+
+              {bet.horsesSelected && (
+                <div className="flex items-start space-x-3">
+                  <Trophy className="h-5 w-5 text-gray-400 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Chevaux sélectionnés</p>
+                    <p className="text-base text-gray-900">{bet.horsesSelected}</p>
+                  </div>
+                </div>
+              )}
+
+              {bet.winningHorse && (
+                <div className="flex items-start space-x-3">
+                  <Trophy className="h-5 w-5 text-yellow-500 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Cheval gagnant</p>
+                    <p className="text-base font-semibold text-yellow-600">{bet.winningHorse}</p>
                   </div>
                 </div>
               )}

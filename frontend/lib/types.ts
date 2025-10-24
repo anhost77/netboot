@@ -27,6 +27,22 @@ export interface RegisterData {
 // Bet Types
 export type BetStatus = 'pending' | 'won' | 'lost' | 'refunded';
 
+export type HorseBetType =
+  | 'gagnant'
+  | 'place'
+  | 'gagnant_place'
+  | 'couple'
+  | 'couple_ordre'
+  | 'trio'
+  | 'trio_ordre'
+  | 'quarte'
+  | 'quarte_ordre'
+  | 'quinte'
+  | 'quinte_ordre'
+  | 'multi'
+  | 'pick5'
+  | 'autre';
+
 export interface Bet {
   id: string;
   userId: string;
@@ -35,8 +51,9 @@ export interface Bet {
   platform?: string | null;
   hippodrome?: string | null;
   raceNumber?: string | null;
-  betType?: string | null;
+  betType?: HorseBetType | null;
   horsesSelected?: string | null;
+  winningHorse?: string | null;
   stake: number;
   odds?: number | null;
   status: BetStatus;
@@ -54,8 +71,9 @@ export interface CreateBetData {
   platform?: string;
   hippodrome?: string;
   raceNumber?: string;
-  betType?: string;
+  betType?: HorseBetType;
   horsesSelected?: string;
+  winningHorse?: string;
   stake: number;
   odds?: number;
   status?: BetStatus;

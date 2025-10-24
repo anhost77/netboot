@@ -25,6 +25,10 @@ export function BetForm({ bet, onSubmit, onCancel, isLoading = false }: BetFormP
           date: bet.date.split('T')[0],
           platform: bet.platform || undefined,
           hippodrome: bet.hippodrome || undefined,
+          raceNumber: bet.raceNumber || undefined,
+          betType: bet.betType || undefined,
+          horsesSelected: bet.horsesSelected || undefined,
+          winningHorse: bet.winningHorse || undefined,
           stake: bet.stake,
           odds: bet.odds || undefined,
           status: bet.status,
@@ -160,6 +164,80 @@ export function BetForm({ bet, onSubmit, onCancel, isLoading = false }: BetFormP
                 {...register('hippodrome')}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
+            </div>
+          </div>
+
+          {/* Race Number and Bet Type Row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Numéro de course
+              </label>
+              <input
+                type="text"
+                placeholder="Ex: 5"
+                {...register('raceNumber')}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Type de pari
+              </label>
+              <select
+                {...register('betType')}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                <option value="">Sélectionnez un type</option>
+                <option value="gagnant">Simple Gagnant</option>
+                <option value="place">Simple Placé</option>
+                <option value="gagnant_place">Couplé Gagnant-Placé</option>
+                <option value="couple">Couplé</option>
+                <option value="couple_ordre">Couplé Ordre</option>
+                <option value="trio">Trio</option>
+                <option value="trio_ordre">Trio Ordre</option>
+                <option value="quarte">Quarté</option>
+                <option value="quarte_ordre">Quarté Ordre</option>
+                <option value="quinte">Quinté</option>
+                <option value="quinte_ordre">Quinté Ordre</option>
+                <option value="multi">Multi</option>
+                <option value="pick5">Pick 5</option>
+                <option value="autre">Autre</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Horses Selected and Winning Horse Row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Chevaux sélectionnés
+              </label>
+              <input
+                type="text"
+                placeholder="Ex: 7, 12, 3"
+                {...register('horsesSelected')}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Numéros des chevaux, séparés par des virgules
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Cheval gagnant
+              </label>
+              <input
+                type="text"
+                placeholder="Ex: 7"
+                {...register('winningHorse')}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Numéro du cheval qui a gagné (si connu)
+              </p>
             </div>
           </div>
 

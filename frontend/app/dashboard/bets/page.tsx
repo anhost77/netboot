@@ -20,6 +20,28 @@ import {
   Target,
 } from 'lucide-react';
 
+// Helper function to get bet type label in French
+const getBetTypeLabel = (betType: string | null | undefined) => {
+  if (!betType) return '-';
+  const labels: Record<string, string> = {
+    gagnant: 'Gagnant',
+    place: 'Placé',
+    gagnant_place: 'G-P',
+    couple: 'Couplé',
+    couple_ordre: 'C. Ordre',
+    trio: 'Trio',
+    trio_ordre: 'T. Ordre',
+    quarte: 'Quarté',
+    quarte_ordre: 'Q. Ordre',
+    quinte: 'Quinté',
+    quinte_ordre: 'Q+Ordre',
+    multi: 'Multi',
+    pick5: 'Pick 5',
+    autre: 'Autre',
+  };
+  return labels[betType] || betType;
+};
+
 export default function BetsPage() {
   const [bets, setBets] = useState<PaginatedResponse<Bet> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -309,7 +331,8 @@ export default function BetsPage() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Plateforme</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hippodrome</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mise</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cote</th>
@@ -321,7 +344,7 @@ export default function BetsPage() {
             <tbody className="bg-white divide-y divide-gray-200">
               {isLoading ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={10} className="px-6 py-12 text-center text-gray-500">
                     <div className="flex justify-center">
                       <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary-600 border-r-transparent"></div>
                     </div>
@@ -330,7 +353,7 @@ export default function BetsPage() {
                 </tr>
               ) : !bets || bets.data.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={10} className="px-6 py-12 text-center text-gray-500">
                     <div className="text-6xl mb-4">🏇</div>
                     <p>Aucun pari trouvé</p>
                     <button
@@ -348,7 +371,10 @@ export default function BetsPage() {
                       {formatDate(bet.date)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {bet.platform || '-'}
+                      {bet.raceNumber ? `R${bet.raceNumber}` : '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {bet.betType ? getBetTypeLabel(bet.betType) : '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {bet.hippodrome || '-'}

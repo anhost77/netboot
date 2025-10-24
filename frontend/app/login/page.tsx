@@ -28,7 +28,22 @@ export default function LoginPage() {
     try {
       await login(data.email, data.password);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Échec de la connexion. Vérifiez vos identifiants.');
+      console.error('Login error:', err);
+
+      // Extract detailed error message
+      let errorMessage = 'Échec de la connexion.';
+
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message === 'Network Error' || !err.response) {
+        errorMessage = 'Impossible de se connecter au serveur. Vérifiez que le backend est lancé sur http://localhost:3001';
+      } else if (err.response?.status === 401) {
+        errorMessage = 'Email ou mot de passe incorrect.';
+      } else if (err.response?.status >= 500) {
+        errorMessage = 'Erreur serveur. Veuillez réessayer plus tard.';
+      }
+
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

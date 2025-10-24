@@ -34,7 +34,27 @@ export default function RegisterPage() {
     try {
       await registerUser(data.email, data.password, data.firstName, data.lastName);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Échec de l\'inscription. Veuillez réessayer.');
+      console.error('Registration error:', err);
+
+      // Extract detailed error message
+      let errorMessage = 'Échec de l\'inscription. Veuillez réessayer.';
+
+      if (err.response?.data?.message) {
+        // Backend returned an error message
+        if (Array.isArray(err.response.data.message)) {
+          errorMessage = err.response.data.message.join(', ');
+        } else {
+          errorMessage = err.response.data.message;
+        }
+      } else if (err.message === 'Network Error' || !err.response) {
+        errorMessage = 'Impossible de se connecter au serveur. Vérifiez que le backend est lancé sur http://localhost:3001';
+      } else if (err.response?.status === 409) {
+        errorMessage = 'Cet email est déjà utilisé.';
+      } else if (err.response?.status >= 500) {
+        errorMessage = 'Erreur serveur. Veuillez réessayer plus tard.';
+      }
+
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

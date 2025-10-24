@@ -262,36 +262,71 @@ export default function StatisticsPage() {
               }
 
               return (
-                <div className="flex items-end justify-between h-full space-x-1">
-                  {timeSeries.map((data, index) => {
-                    const height = (Math.abs(data.totalProfit) / maxProfit) * 100;
-                    const isPositive = data.totalProfit >= 0;
-                    const displayHeight = Math.max(height, 2); // Minimum 2% pour visibilité
+                <div className="flex flex-col h-full">
+                  {/* Graphique avec ligne de base à 0 */}
+                  <div className="flex-1 flex items-end justify-between relative">
+                    {/* Ligne horizontale à 0 */}
+                    <div className="absolute inset-x-0 bottom-0 border-b-2 border-gray-300 z-0"></div>
 
-                    return (
-                      <div key={index} className="flex-1 flex flex-col items-center group relative">
-                        <div
-                          className={`w-full rounded-t transition-all cursor-pointer ${
-                            isPositive ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'
-                          }`}
-                          style={{ height: `${displayHeight}%`, minHeight: '4px' }}
-                        >
-                          {/* Tooltip on hover */}
-                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block bg-gray-900 text-white text-xs rounded py-1 px-2 whitespace-nowrap z-10">
-                            <div>{data.period}</div>
-                            <div>Profit: {formatCurrency(data.totalProfit)}</div>
-                            <div>Paris: {data.totalBets}</div>
-                            <div>Taux réussite: {data.winRate.toFixed(1)}%</div>
+                    <div className="flex items-end justify-between w-full space-x-1 relative z-10">
+                      {timeSeries.map((data, index) => {
+                        const height = maxProfit > 0 ? (Math.abs(data.totalProfit) / maxProfit) * 90 : 0;
+                        const isPositive = data.totalProfit > 0;
+                        const isZero = data.totalProfit === 0;
+
+                        // Pour les jours à 0, afficher une petite barre grise
+                        const displayHeight = isZero ? 0 : Math.max(height, 5);
+
+                        return (
+                          <div key={index} className="flex-1 flex flex-col items-center group relative">
+                            {/* Barre */}
+                            <div
+                              className={`w-full rounded-t transition-all cursor-pointer ${
+                                isZero
+                                  ? 'bg-gray-300 hover:bg-gray-400'
+                                  : isPositive
+                                    ? 'bg-green-500 hover:bg-green-600'
+                                    : 'bg-red-500 hover:bg-red-600'
+                              }`}
+                              style={{
+                                height: isZero ? '2px' : `${displayHeight}%`,
+                                minHeight: isZero ? '2px' : '8px'
+                              }}
+                            >
+                              {/* Tooltip on hover */}
+                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block bg-gray-900 text-white text-xs rounded py-1 px-2 whitespace-nowrap z-20 shadow-lg">
+                                <div className="font-semibold">{data.period}</div>
+                                <div className={`${data.totalProfit > 0 ? 'text-green-400' : data.totalProfit < 0 ? 'text-red-400' : 'text-gray-400'}`}>
+                                  Profit: {formatCurrency(data.totalProfit)}
+                                </div>
+                                <div>Paris: {data.totalBets}</div>
+                                {data.totalBets > 0 && (
+                                  <div>Taux réussite: {data.winRate.toFixed(1)}%</div>
+                                )}
+                              </div>
+                            </div>
                           </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Labels des dates */}
+                  <div className="flex justify-between mt-2 px-1">
+                    {timeSeries.length <= 31 && timeSeries.map((data, index) => {
+                      // Afficher un label tous les X jours selon le nombre total
+                      const showLabel = timeSeries.length <= 7 || index % Math.ceil(timeSeries.length / 7) === 0 || index === timeSeries.length - 1;
+                      return (
+                        <div key={index} className="flex-1 text-center">
+                          {showLabel && (
+                            <div className="text-xs text-gray-500">
+                              {data.period.split('-').slice(1).join('/')}
+                            </div>
+                          )}
                         </div>
-                        {timeSeries.length <= 31 && (
-                          <div className="text-xs text-gray-500 mt-1 transform rotate-45 origin-left">
-                            {data.period.split('-').pop()}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
               );
             })()}

@@ -116,7 +116,10 @@ export class StatisticsService {
     // Group by period
     const grouped = this.groupByPeriod(bets, period);
 
-    return grouped.map(group => ({
+    // Fill missing periods with empty data for continuous chart
+    const filledData = this.fillMissingPeriods(grouped, start, end, period);
+
+    return filledData.map(group => ({
       period: group.period,
       totalBets: group.bets.length,
       wonBets: group.bets.filter(b => b.status === 'won').length,
@@ -383,6 +386,58 @@ export class StatisticsService {
     return Array.from(groups.entries())
       .map(([period, bets]) => ({ period, bets }))
       .sort((a, b) => a.period.localeCompare(b.period));
+  }
+
+  private fillMissingPeriods(
+    grouped: Array<{ period: string; bets: any[] }>,
+    startDate: Date,
+    endDate: Date,
+    period: 'daily' | 'weekly' | 'monthly',
+  ) {
+    const result: Array<{ period: string; bets: any[] }> = [];
+    const groupedMap = new Map(grouped.map(g => [g.period, g.bets]));
+
+    const current = new Date(startDate);
+    current.setHours(0, 0, 0, 0);
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
+
+    while (current <= end) {
+      let key: string;
+
+      switch (period) {
+        case 'daily':
+          key = current.toISOString().split('T')[0];
+          result.push({
+            period: key,
+            bets: groupedMap.get(key) || [],
+          });
+          current.setDate(current.getDate() + 1);
+          break;
+
+        case 'weekly':
+          const weekStart = new Date(current);
+          weekStart.setDate(current.getDate() - current.getDay());
+          key = weekStart.toISOString().split('T')[0];
+          result.push({
+            period: key,
+            bets: groupedMap.get(key) || [],
+          });
+          current.setDate(current.getDate() + 7);
+          break;
+
+        case 'monthly':
+          key = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}`;
+          result.push({
+            period: key,
+            bets: groupedMap.get(key) || [],
+          });
+          current.setMonth(current.getMonth() + 1);
+          break;
+      }
+    }
+
+    return result;
   }
 
   private calculateStreaks(bets: any[]) {

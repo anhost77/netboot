@@ -245,38 +245,56 @@ export default function StatisticsPage() {
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Évolution des profits</h2>
           <div className="relative h-64">
-            {/* Simple bar chart with CSS */}
-            <div className="flex items-end justify-between h-full space-x-1">
-              {timeSeries.map((data, index) => {
-                const maxProfit = Math.max(...timeSeries.map(d => Math.abs(d.totalProfit)));
-                const height = Math.abs(data.totalProfit) / maxProfit * 100;
-                const isPositive = data.totalProfit >= 0;
+            {/* Check if we have any data */}
+            {(() => {
+              const maxProfit = Math.max(...timeSeries.map(d => Math.abs(d.totalProfit)));
+              const hasData = maxProfit > 0;
 
+              if (!hasData) {
                 return (
-                  <div key={index} className="flex-1 flex flex-col items-center group relative">
-                    <div
-                      className={`w-full rounded-t transition-all ${
-                        isPositive ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'
-                      }`}
-                      style={{ height: `${height}%` }}
-                    >
-                      {/* Tooltip on hover */}
-                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block bg-gray-900 text-white text-xs rounded py-1 px-2 whitespace-nowrap z-10">
-                        <div>{data.period}</div>
-                        <div>Profit: {formatCurrency(data.totalProfit)}</div>
-                        <div>Paris: {data.totalBets}</div>
-                        <div>Taux réussite: {data.winRate.toFixed(1)}%</div>
-                      </div>
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-center text-gray-500">
+                      <p className="text-sm">Aucune donnée de profit pour cette période</p>
+                      <p className="text-xs mt-1">Ajoutez des paris pour voir le graphique</p>
                     </div>
-                    {timeSeries.length <= 31 && (
-                      <div className="text-xs text-gray-500 mt-1 transform rotate-45 origin-left">
-                        {data.period.split('-').pop()}
-                      </div>
-                    )}
                   </div>
                 );
-              })}
-            </div>
+              }
+
+              return (
+                <div className="flex items-end justify-between h-full space-x-1">
+                  {timeSeries.map((data, index) => {
+                    const height = (Math.abs(data.totalProfit) / maxProfit) * 100;
+                    const isPositive = data.totalProfit >= 0;
+                    const displayHeight = Math.max(height, 2); // Minimum 2% pour visibilité
+
+                    return (
+                      <div key={index} className="flex-1 flex flex-col items-center group relative">
+                        <div
+                          className={`w-full rounded-t transition-all cursor-pointer ${
+                            isPositive ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'
+                          }`}
+                          style={{ height: `${displayHeight}%`, minHeight: '4px' }}
+                        >
+                          {/* Tooltip on hover */}
+                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block bg-gray-900 text-white text-xs rounded py-1 px-2 whitespace-nowrap z-10">
+                            <div>{data.period}</div>
+                            <div>Profit: {formatCurrency(data.totalProfit)}</div>
+                            <div>Paris: {data.totalBets}</div>
+                            <div>Taux réussite: {data.winRate.toFixed(1)}%</div>
+                          </div>
+                        </div>
+                        {timeSeries.length <= 31 && (
+                          <div className="text-xs text-gray-500 mt-1 transform rotate-45 origin-left">
+                            {data.period.split('-').pop()}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}

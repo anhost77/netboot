@@ -28,6 +28,15 @@ export class StatisticsController {
     return this.statisticsService.getDashboardStats(req.user.id);
   }
 
+  @Get('periods')
+  @ApiOperation({
+    summary: 'Get statistics for predefined periods',
+    description: 'Returns stats for today, yesterday, this week, last week, this month, last month',
+  })
+  getPeriods(@Request() req: any) {
+    return this.statisticsService.getPeriodStats(req.user.id);
+  }
+
   @Get('time-series')
   @ApiOperation({
     summary: 'Get time series data for charts',

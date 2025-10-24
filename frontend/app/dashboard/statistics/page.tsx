@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { statisticsAPI, type DashboardStats, type TimeSeriesData, type PerformanceMetrics, type Breakdowns } from '@/lib/api/statistics';
+import { statisticsAPI, type DashboardStats, type TimeSeriesData, type PerformanceMetrics, type Breakdowns, type PredefinedPeriods } from '@/lib/api/statistics';
 import { formatCurrency } from '@/lib/utils';
 import {
   TrendingUp,
@@ -13,10 +13,12 @@ import {
   BarChart3,
   Calendar,
   Filter,
+  Clock,
 } from 'lucide-react';
 
 export default function StatisticsPage() {
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
+  const [periods, setPeriods] = useState<PredefinedPeriods | null>(null);
   const [timeSeries, setTimeSeries] = useState<TimeSeriesData[]>([]);
   const [performance, setPerformance] = useState<PerformanceMetrics | null>(null);
   const [breakdowns, setBreakdowns] = useState<Breakdowns | null>(null);
@@ -42,14 +44,16 @@ export default function StatisticsPage() {
         'month': 'monthly',
       } as const;
 
-      const [dashStats, tsData, perfData, breakData] = await Promise.all([
+      const [dashStats, periodsData, tsData, perfData, breakData] = await Promise.all([
         statisticsAPI.getDashboard(),
+        statisticsAPI.getPeriods(),
         statisticsAPI.getTimeSeries(periodMap[period], dateRange.start, dateRange.end),
         statisticsAPI.getPerformance(dateRange.start, dateRange.end),
         statisticsAPI.getBreakdowns(dateRange.start, dateRange.end),
       ]);
 
       setDashboardStats(dashStats);
+      setPeriods(periodsData);
       setTimeSeries(tsData);
       setPerformance(perfData);
       setBreakdowns(breakData);
@@ -127,6 +131,53 @@ export default function StatisticsPage() {
           </div>
         </div>
       </div>
+
+      {/* Période Stats - Aujourd'hui, Hier, Semaine, etc. */}
+      {periods && (
+        <div>
+          <div className="flex items-center space-x-2 mb-4">
+            <Clock className="h-5 w-5 text-primary-600" />
+            <h2 className="text-xl font-semibold text-gray-900">Statistiques par période</h2>
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              { title: "Aujourd'hui", stats: periods.today, icon: '📅' },
+              { title: 'Hier', stats: periods.yesterday, icon: '📆' },
+              { title: 'Cette semaine', stats: periods.thisWeek, icon: '📊' },
+              { title: 'Semaine dernière', stats: periods.lastWeek, icon: '📈' },
+              { title: 'Ce mois', stats: periods.thisMonth, icon: '📋' },
+              { title: 'Mois dernier', stats: periods.lastMonth, icon: '📁' },
+            ].map((item, index) => (
+              <div key={index} className="bg-white rounded-lg shadow p-4 border-l-4 border-primary-500">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-medium text-gray-900">{item.title}</h3>
+                  <span className="text-2xl">{item.icon}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <p className="text-gray-500">Paris</p>
+                    <p className="font-semibold">{item.stats.totalBets}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500">Taux</p>
+                    <p className="font-semibold">{item.stats.winRate.toFixed(0)}%</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500">Mise</p>
+                    <p className="font-semibold">{formatCurrency(item.stats.totalStake)}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500">Profit</p>
+                    <p className={`font-semibold ${item.stats.totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {formatCurrency(item.stats.totalProfit)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Dashboard Stats */}
       {dashboardStats && (
@@ -366,11 +417,11 @@ export default function StatisticsPage() {
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Par montant de mise</h3>
             <div className="space-y-3">
-              {breakdowns.byStakeRange.map((item) => (
-                <div key={item.category} className="flex items-center justify-between">
+              {breakdowns.byStakeRange.map((item, idx) => (
+                <div key={idx} className="flex items-center justify-between">
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-medium text-gray-700">{item.category}</span>
+                      <span className="text-sm font-medium text-gray-700">{item.range}</span>
                       <span className="text-sm text-gray-600">{item.totalBets} paris</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
@@ -391,13 +442,13 @@ export default function StatisticsPage() {
             </div>
           </div>
 
-          {/* By Type */}
-          {breakdowns.byType.length > 0 && (
+          {/* By Bet Type */}
+          {breakdowns.byBetType.length > 0 && (
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Par type de pari</h3>
               <div className="space-y-3">
-                {breakdowns.byType.map((item) => (
-                  <div key={item.category} className="flex items-center justify-between">
+                {breakdowns.byBetType.map((item, idx) => (
+                  <div key={idx} className="flex items-center justify-between">
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-sm font-medium text-gray-700">{item.category || 'Non spécifié'}</span>
@@ -426,11 +477,11 @@ export default function StatisticsPage() {
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Par plage de cotes</h3>
             <div className="space-y-3">
-              {breakdowns.byOddsRange.map((item) => (
-                <div key={item.category} className="flex items-center justify-between">
+              {breakdowns.byOddsRange.map((item, idx) => (
+                <div key={idx} className="flex items-center justify-between">
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-medium text-gray-700">{item.category}</span>
+                      <span className="text-sm font-medium text-gray-700">{item.range}</span>
                       <span className="text-sm text-gray-600">{item.totalBets} paris</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
@@ -450,6 +501,68 @@ export default function StatisticsPage() {
               ))}
             </div>
           </div>
+
+          {/* By Hippodrome */}
+          {breakdowns.byHippodrome.length > 0 && (
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Par hippodrome</h3>
+              <div className="space-y-3">
+                {breakdowns.byHippodrome.map((item, idx) => (
+                  <div key={idx} className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-medium text-gray-700">{item.category || 'Non spécifié'}</span>
+                        <span className="text-sm text-gray-600">{item.totalBets} paris</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-indigo-600 h-2 rounded-full"
+                          style={{ width: `${item.winRate}%` }}
+                        />
+                      </div>
+                    </div>
+                    <div className="ml-4 text-right">
+                      <div className={`text-sm font-semibold ${item.totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {formatCurrency(item.totalProfit)}
+                      </div>
+                      <div className="text-xs text-gray-500">ROI: {item.roi.toFixed(1)}%</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* By Platform */}
+          {breakdowns.byPlatform.length > 0 && (
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Par plateforme</h3>
+              <div className="space-y-3">
+                {breakdowns.byPlatform.map((item, idx) => (
+                  <div key={idx} className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-medium text-gray-700">{item.category || 'Non spécifié'}</span>
+                        <span className="text-sm text-gray-600">{item.totalBets} paris</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-pink-600 h-2 rounded-full"
+                          style={{ width: `${item.winRate}%` }}
+                        />
+                      </div>
+                    </div>
+                    <div className="ml-4 text-right">
+                      <div className={`text-sm font-semibold ${item.totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {formatCurrency(item.totalProfit)}
+                      </div>
+                      <div className="text-xs text-gray-500">ROI: {item.roi.toFixed(1)}%</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

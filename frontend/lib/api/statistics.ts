@@ -67,17 +67,19 @@ export interface BetSummary {
 
 // Breakdowns
 export interface Breakdowns {
-  byType: BreakdownItem[];
+  byBetType: BreakdownItem[];
   byStatus: BreakdownItem[];
   byStakeRange: BreakdownItem[];
   byOddsRange: BreakdownItem[];
+  byHippodrome: BreakdownItem[];
+  byPlatform: BreakdownItem[];
 }
 
 export interface BreakdownItem {
-  category: string;
+  category?: string;
+  range?: string;
   totalBets: number;
   wonBets: number;
-  lostBets: number;
   totalStake: number;
   totalProfit: number;
   winRate: number;
@@ -97,12 +99,29 @@ export interface ComparativeAnalysis {
   };
 }
 
+// Predefined Periods
+export interface PredefinedPeriods {
+  today: PeriodStats;
+  yesterday: PeriodStats;
+  thisWeek: PeriodStats;
+  lastWeek: PeriodStats;
+  thisMonth: PeriodStats;
+  lastMonth: PeriodStats;
+}
+
 export const statisticsAPI = {
   /**
    * Get comprehensive dashboard statistics
    */
   async getDashboard(): Promise<DashboardStats> {
     return apiClient.get<DashboardStats>('/statistics/dashboard');
+  },
+
+  /**
+   * Get statistics for predefined periods (today, yesterday, week, month)
+   */
+  async getPeriods(): Promise<PredefinedPeriods> {
+    return apiClient.get<PredefinedPeriods>('/statistics/periods');
   },
 
   /**

@@ -74,8 +74,7 @@ export default function SettingsPage() {
   const handleSaveProfile = async () => {
     try {
       setIsSaving(true);
-      // Note: You'll need to implement this endpoint in the backend
-      // await authAPI.updateProfile({ firstName, lastName });
+      await authAPI.updateProfile({ firstName, lastName });
       alert('Profil mis à jour avec succès !');
       loadData();
     } catch (error) {

@@ -406,6 +406,37 @@ export class AuthService {
     return user;
   }
 
+  async updateProfile(userId: string, dto: { firstName?: string; lastName?: string }) {
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        firstName: dto.firstName,
+        lastName: dto.lastName,
+      },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        address: true,
+        city: true,
+        postalCode: true,
+        country: true,
+        avatarUrl: true,
+        locale: true,
+        timezone: true,
+        role: true,
+        emailVerifiedAt: true,
+        twoFactorEnabled: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    return user;
+  }
+
   private async generateTokens(userId: string, email: string) {
     // Generate access token
     const accessToken = await this.jwt.signAsync(

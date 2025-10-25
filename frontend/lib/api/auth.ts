@@ -42,4 +42,8 @@ export const authAPI = {
   async verifyEmail(token: string): Promise<{ message: string }> {
     return apiClient.post('/auth/verify-email', { token });
   },
+
+  async updateProfile(data: { firstName?: string; lastName?: string }): Promise<User> {
+    return apiClient.patch<User>('/auth/me', data);
+  },
 };

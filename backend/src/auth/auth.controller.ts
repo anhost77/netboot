@@ -3,6 +3,7 @@ import {
   Post,
   Body,
   Get,
+  Patch,
   UseGuards,
   Request,
   HttpCode,
@@ -16,6 +17,7 @@ import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { Verify2FADto } from './dto/verify-2fa.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 
 @ApiTags('Authentication')
@@ -79,6 +81,14 @@ export class AuthController {
   @ApiOperation({ summary: 'Get current user profile' })
   async getMe(@Request() req: any) {
     return this.authService.getMe(req.user.id);
+  }
+
+  @Patch('me')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update current user profile' })
+  async updateMe(@Request() req: any, @Body() dto: UpdateProfileDto) {
+    return this.authService.updateProfile(req.user.id, dto);
   }
 
   @Post('2fa/enable')

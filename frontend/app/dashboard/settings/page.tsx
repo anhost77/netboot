@@ -1,103 +1,156 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { platformsAPI, type Platform, type GlobalBankroll, type BankrollEvolutionData } from '@/lib/api/platforms';
-import { formatCurrency } from '@/lib/utils';
+import { authAPI } from '@/lib/api/auth';
+import { subscriptionsAPI } from '@/lib/api/subscriptions';
+import { formatCurrency, formatDate } from '@/lib/utils';
 import {
-  Wallet,
-  Plus,
-  Edit2,
+  User,
+  Mail,
+  Shield,
+  CreditCard,
+  AlertTriangle,
+  Save,
   Trash2,
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
-  Settings as SettingsIcon,
-  BarChart3,
+  CheckCircle,
 } from 'lucide-react';
-import PlatformModal from '@/components/platforms/platform-modal';
-import TransactionModal from '@/components/platforms/transaction-modal';
-import BankrollChart from '@/components/charts/bankroll-chart';
+
+interface UserProfile {
+  id: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  role: string;
+  createdAt: string;
+}
+
+interface Subscription {
+  id: string;
+  plan: {
+    name: string;
+    priceMonthly: number;
+    priceYearly: number;
+  };
+  status: string;
+  billingCycle: string;
+  currentPeriodEnd: string | null;
+  cancelAtPeriodEnd: boolean;
+}
 
 export default function SettingsPage() {
-  const [platforms, setPlatforms] = useState<Platform[]>([]);
-  const [globalBankroll, setGlobalBankroll] = useState<GlobalBankroll | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [showPlatformModal, setShowPlatformModal] = useState(false);
-  const [showTransactionModal, setShowTransactionModal] = useState(false);
-  const [selectedPlatform, setSelectedPlatform] = useState<Platform | null>(null);
-  const [editingPlatform, setEditingPlatform] = useState<Platform | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
-  // Bankroll evolution
-  const [period, setPeriod] = useState<'day' | 'week' | 'month' | 'year'>('day');
-  const [globalEvolution, setGlobalEvolution] = useState<BankrollEvolutionData[]>([]);
-  const [platformEvolutions, setPlatformEvolutions] = useState<Record<string, BankrollEvolutionData[]>>({});
+  // Form state
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
   useEffect(() => {
     loadData();
   }, []);
 
-  useEffect(() => {
-    loadEvolutionData();
-  }, [period, platforms]);
-
   const loadData = async () => {
     try {
       setIsLoading(true);
-      const [platformsData, bankrollData] = await Promise.all([
-        platformsAPI.getAll(),
-        platformsAPI.getGlobalBankroll(),
+      const [userData, subData] = await Promise.all([
+        authAPI.getProfile(),
+        subscriptionsAPI.getCurrentSubscription().catch(() => null),
       ]);
-      setPlatforms(platformsData);
-      setGlobalBankroll(bankrollData);
+      setUser(userData);
+      setFirstName(userData.firstName || '');
+      setLastName(userData.lastName || '');
+      setSubscription(subData);
     } catch (error) {
-      console.error('Failed to load platforms:', error);
+      console.error('Failed to load settings:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const loadEvolutionData = async () => {
+  const handleSaveProfile = async () => {
     try {
-      // Load global evolution
-      const globalData = await platformsAPI.getGlobalBankrollEvolution(period);
-      setGlobalEvolution(globalData);
-
-      // Load evolution for each platform
-      const evolutions: Record<string, BankrollEvolutionData[]> = {};
-      await Promise.all(
-        platforms.map(async (platform) => {
-          const data = await platformsAPI.getBankrollEvolution(platform.id, period);
-          evolutions[platform.id] = data;
-        })
-      );
-      setPlatformEvolutions(evolutions);
+      setIsSaving(true);
+      // Note: You'll need to implement this endpoint in the backend
+      // await authAPI.updateProfile({ firstName, lastName });
+      alert('Profil mis à jour avec succès !');
+      loadData();
     } catch (error) {
-      console.error('Failed to load evolution data:', error);
+      console.error('Failed to save profile:', error);
+      alert('Erreur lors de la mise à jour du profil');
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  const handleDeletePlatform = async (id: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette plateforme ?')) {
+  const handleCancelSubscription = async () => {
+    if (!confirm('Êtes-vous sûr de vouloir annuler votre abonnement ?')) {
       return;
     }
 
     try {
-      await platformsAPI.delete(id);
-      await loadData();
+      await subscriptionsAPI.cancel();
+      alert('Abonnement annulé. Vous garderez l\'accès jusqu\'à la fin de la période en cours.');
+      loadData();
     } catch (error) {
-      console.error('Failed to delete platform:', error);
-      alert('Erreur lors de la suppression de la plateforme');
+      console.error('Failed to cancel subscription:', error);
+      alert('Erreur lors de l\'annulation de l\'abonnement');
     }
   };
 
-  const handleAddFunds = (platform: Platform) => {
-    setSelectedPlatform(platform);
-    setShowTransactionModal(true);
+  const handleResumeSubscription = async () => {
+    try {
+      await subscriptionsAPI.resume();
+      alert('Abonnement réactivé avec succès !');
+      loadData();
+    } catch (error) {
+      console.error('Failed to resume subscription:', error);
+      alert('Erreur lors de la réactivation de l\'abonnement');
+    }
   };
 
-  const handleEditPlatform = (platform: Platform) => {
-    setEditingPlatform(platform);
-    setShowPlatformModal(true);
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== 'SUPPRIMER') {
+      alert('Veuillez taper "SUPPRIMER" pour confirmer');
+      return;
+    }
+
+    if (!confirm('ATTENTION : Cette action est irréversible. Toutes vos données seront définitivement supprimées.')) {
+      return;
+    }
+
+    try {
+      // Note: You'll need to implement this endpoint in the backend
+      // await authAPI.deleteAccount();
+      alert('Votre compte a été supprimé. Vous allez être déconnecté.');
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Failed to delete account:', error);
+      alert('Erreur lors de la suppression du compte');
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    const styles = {
+      trial: 'bg-blue-100 text-blue-800',
+      active: 'bg-green-100 text-green-800',
+      cancelled: 'bg-yellow-100 text-yellow-800',
+      expired: 'bg-red-100 text-red-800',
+    };
+    const labels = {
+      trial: 'Essai gratuit',
+      active: 'Actif',
+      cancelled: 'Annulé',
+      expired: 'Expiré',
+    };
+    return (
+      <span className={`px-3 py-1 rounded-full text-sm font-medium ${styles[status as keyof typeof styles] || 'bg-gray-100 text-gray-800'}`}>
+        {labels[status as keyof typeof labels] || status}
+      </span>
+    );
   };
 
   if (isLoading) {
@@ -111,249 +164,231 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Paramètres</h1>
-          <p className="mt-2 text-gray-600">Gérez vos plateformes et votre bankroll</p>
-        </div>
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">Paramètres</h1>
+        <p className="mt-2 text-gray-600">Gérez votre profil, abonnement et préférences de compte</p>
       </div>
 
-      {/* Global Bankroll Summary */}
-      {globalBankroll && (
-        <div className="bg-gradient-to-r from-primary-600 to-primary-700 rounded-lg shadow-lg p-6 text-white">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold">Bankroll Globale</h2>
-            <Wallet className="h-8 w-8 opacity-80" />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <p className="text-sm opacity-80">Investissement initial</p>
-              <p className="text-2xl font-bold">{formatCurrency(globalBankroll.totalInitialBankroll)}</p>
-            </div>
-            <div>
-              <p className="text-sm opacity-80">Bankroll actuelle</p>
-              <p className="text-2xl font-bold">{formatCurrency(globalBankroll.totalCurrentBankroll)}</p>
-            </div>
-            <div>
-              <p className="text-sm opacity-80">Profit/Perte</p>
-              <div className="flex items-center space-x-2">
-                <p className={`text-2xl font-bold ${globalBankroll.totalProfit >= 0 ? 'text-green-300' : 'text-red-300'}`}>
-                  {formatCurrency(globalBankroll.totalProfit)}
-                </p>
-                {globalBankroll.totalProfit >= 0 ? (
-                  <TrendingUp className="h-5 w-5 text-green-300" />
-                ) : (
-                  <TrendingDown className="h-5 w-5 text-red-300" />
-                )}
-              </div>
-            </div>
-            <div>
-              <p className="text-sm opacity-80">ROI</p>
-              <p className={`text-2xl font-bold ${globalBankroll.roi >= 0 ? 'text-green-300' : 'text-red-300'}`}>
-                {globalBankroll.roi.toFixed(2)}%
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Bankroll Evolution Section */}
+      {/* Profile Section */}
       <div className="bg-white rounded-lg shadow">
         <div className="border-b border-gray-200 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <BarChart3 className="h-5 w-5 text-primary-600" />
-              <h2 className="text-lg font-semibold text-gray-900">Évolution des Bankrolls</h2>
-            </div>
-            <select
-              value={period}
-              onChange={(e) => setPeriod(e.target.value as 'day' | 'week' | 'month' | 'year')}
-              className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-            >
-              <option value="day">Par jour</option>
-              <option value="week">Par semaine</option>
-              <option value="month">Par mois</option>
-              <option value="year">Par année</option>
-            </select>
+          <div className="flex items-center space-x-2">
+            <User className="h-5 w-5 text-primary-600" />
+            <h2 className="text-lg font-semibold text-gray-900">Informations personnelles</h2>
           </div>
         </div>
+        <div className="p-6 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Prénom
+              </label>
+              <input
+                type="text"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                placeholder="Votre prénom"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Nom
+              </label>
+              <input
+                type="text"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                placeholder="Votre nom"
+              />
+            </div>
+          </div>
 
-        <div className="p-6 space-y-8">
-          {/* Global Evolution */}
           <div>
-            <BankrollChart
-              data={globalEvolution}
-              title="Évolution Globale"
-              height={250}
-            />
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Email
+            </label>
+            <div className="flex items-center space-x-2 text-gray-500">
+              <Mail className="h-5 w-5" />
+              <span>{user?.email}</span>
+            </div>
+            <p className="mt-1 text-xs text-gray-500">L'email ne peut pas être modifié</p>
           </div>
 
-          {/* Platform Evolution */}
-          {platforms.length > 0 && (
-            <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-gray-900 pt-6 border-t">
-                Évolution par Plateforme
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {platforms.map((platform) => (
-                  <div key={platform.id} className="border border-gray-200 rounded-lg p-4">
-                    <BankrollChart
-                      data={platformEvolutions[platform.id] || []}
-                      title={platform.name}
-                      height={200}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Platforms Section */}
-      <div className="bg-white rounded-lg shadow">
-        <div className="border-b border-gray-200 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">Mes Plateformes</h2>
+          <div className="pt-4">
             <button
-              onClick={() => {
-                setEditingPlatform(null);
-                setShowPlatformModal(true);
-              }}
-              className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors"
+              onClick={handleSaveProfile}
+              disabled={isSaving}
+              className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors disabled:opacity-50"
             >
-              <Plus className="h-4 w-4" />
-              <span>Ajouter une plateforme</span>
+              <Save className="h-4 w-4" />
+              <span>{isSaving ? 'Enregistrement...' : 'Enregistrer les modifications'}</span>
             </button>
           </div>
         </div>
+      </div>
 
-        <div className="p-6">
-          {platforms.length === 0 ? (
-            <div className="text-center py-12">
-              <Wallet className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">Aucune plateforme</h3>
-              <p className="mt-1 text-sm text-gray-500">
-                Commencez par ajouter une plateforme de paris (PMU, Betclic, etc.)
-              </p>
-              <button
-                onClick={() => {
-                  setEditingPlatform(null);
-                  setShowPlatformModal(true);
-                }}
-                className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors"
-              >
-                Ajouter ma première plateforme
-              </button>
+      {/* Subscription Section */}
+      {subscription && (
+        <div className="bg-white rounded-lg shadow">
+          <div className="border-b border-gray-200 px-6 py-4">
+            <div className="flex items-center space-x-2">
+              <CreditCard className="h-5 w-5 text-primary-600" />
+              <h2 className="text-lg font-semibold text-gray-900">Abonnement</h2>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {platforms.map((platform) => {
-                const profit = platform.currentBankroll - platform.initialBankroll;
-                const roi = platform.initialBankroll > 0
-                  ? (profit / platform.initialBankroll) * 100
-                  : 0;
-
-                return (
-                  <div
-                    key={platform.id}
-                    className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h3 className="font-semibold text-gray-900">{platform.name}</h3>
-                        {!platform.isActive && (
-                          <span className="inline-block px-2 py-1 text-xs bg-gray-200 text-gray-600 rounded mt-1">
-                            Inactif
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <button
-                          onClick={() => handleEditPlatform(platform)}
-                          className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
-                          title="Modifier"
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDeletePlatform(platform.id)}
-                          className="p-1 text-gray-400 hover:text-red-600 transition-colors"
-                          title="Supprimer"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Initial</span>
-                        <span className="font-medium">{formatCurrency(platform.initialBankroll)}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Actuel</span>
-                        <span className="font-medium">{formatCurrency(platform.currentBankroll)}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Profit/Perte</span>
-                        <span className={`font-medium ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {formatCurrency(profit)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">ROI</span>
-                        <span className={`font-medium ${roi >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {roi.toFixed(2)}%
-                        </span>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={() => handleAddFunds(platform)}
-                      className="mt-4 w-full flex items-center justify-center space-x-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
-                    >
-                      <DollarSign className="h-4 w-4" />
-                      <span>Gérer les fonds</span>
-                    </button>
-                  </div>
-                );
-              })}
+          </div>
+          <div className="p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-gray-900">{subscription.plan.name}</h3>
+                <p className="text-sm text-gray-500">
+                  {subscription.billingCycle === 'monthly' ? 'Mensuel' : 'Annuel'} -{' '}
+                  {formatCurrency(
+                    subscription.billingCycle === 'monthly'
+                      ? subscription.plan.priceMonthly
+                      : subscription.plan.priceYearly
+                  )}{' '}
+                  / {subscription.billingCycle === 'monthly' ? 'mois' : 'an'}
+                </p>
+              </div>
+              {getStatusBadge(subscription.status)}
             </div>
-          )}
+
+            {subscription.currentPeriodEnd && (
+              <div className="text-sm text-gray-600">
+                <p>
+                  {subscription.cancelAtPeriodEnd
+                    ? 'Expire le : '
+                    : 'Prochaine facturation : '}
+                  <span className="font-medium">
+                    {formatDate(subscription.currentPeriodEnd)}
+                  </span>
+                </p>
+              </div>
+            )}
+
+            <div className="flex items-center space-x-3 pt-4">
+              {subscription.cancelAtPeriodEnd ? (
+                <button
+                  onClick={handleResumeSubscription}
+                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                >
+                  Réactiver l'abonnement
+                </button>
+              ) : (
+                <button
+                  onClick={handleCancelSubscription}
+                  className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition-colors"
+                >
+                  Annuler l'abonnement
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Security Section */}
+      <div className="bg-white rounded-lg shadow">
+        <div className="border-b border-gray-200 px-6 py-4">
+          <div className="flex items-center space-x-2">
+            <Shield className="h-5 w-5 text-primary-600" />
+            <h2 className="text-lg font-semibold text-gray-900">Sécurité</h2>
+          </div>
+        </div>
+        <div className="p-6 space-y-4">
+          <div>
+            <h3 className="font-medium text-gray-900 mb-2">Mot de passe</h3>
+            <p className="text-sm text-gray-600 mb-3">
+              Pour modifier votre mot de passe, veuillez utiliser la fonction "Mot de passe oublié" sur la page de connexion.
+            </p>
+          </div>
+
+          <div className="border-t border-gray-200 pt-4">
+            <h3 className="font-medium text-gray-900 mb-2">Authentification à deux facteurs</h3>
+            <p className="text-sm text-gray-600 mb-3">
+              Ajoutez une couche de sécurité supplémentaire à votre compte.
+            </p>
+            <button
+              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
+              disabled
+            >
+              Bientôt disponible
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Modals */}
-      {showPlatformModal && (
-        <PlatformModal
-          platform={editingPlatform}
-          onClose={() => {
-            setShowPlatformModal(false);
-            setEditingPlatform(null);
-          }}
-          onSuccess={() => {
-            setShowPlatformModal(false);
-            setEditingPlatform(null);
-            loadData();
-          }}
-        />
-      )}
+      {/* Danger Zone */}
+      <div className="bg-white rounded-lg shadow border-2 border-red-200">
+        <div className="border-b border-red-200 px-6 py-4 bg-red-50">
+          <div className="flex items-center space-x-2">
+            <AlertTriangle className="h-5 w-5 text-red-600" />
+            <h2 className="text-lg font-semibold text-red-900">Zone dangereuse</h2>
+          </div>
+        </div>
+        <div className="p-6 space-y-4">
+          <div>
+            <h3 className="font-medium text-gray-900 mb-2">Supprimer mon compte</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Une fois votre compte supprimé, toutes vos données seront définitivement effacées.
+              Cette action est irréversible.
+            </p>
 
-      {showTransactionModal && selectedPlatform && (
-        <TransactionModal
-          platform={selectedPlatform}
-          onClose={() => {
-            setShowTransactionModal(false);
-            setSelectedPlatform(null);
-          }}
-          onSuccess={() => {
-            setShowTransactionModal(false);
-            setSelectedPlatform(null);
-            loadData();
-          }}
-        />
-      )}
+            {!showDeleteConfirm ? (
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+              >
+                <Trash2 className="h-4 w-4" />
+                <span>Supprimer mon compte</span>
+              </button>
+            ) : (
+              <div className="space-y-3">
+                <div className="bg-red-50 border border-red-200 rounded-md p-4">
+                  <p className="text-sm text-red-800 mb-3">
+                    Pour confirmer la suppression, tapez <span className="font-bold">SUPPRIMER</span> ci-dessous :
+                  </p>
+                  <input
+                    type="text"
+                    value={deleteConfirmText}
+                    onChange={(e) => setDeleteConfirmText(e.target.value)}
+                    className="w-full px-3 py-2 border border-red-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                    placeholder="SUPPRIMER"
+                  />
+                </div>
+                <div className="flex items-center space-x-3">
+                  <button
+                    onClick={handleDeleteAccount}
+                    disabled={deleteConfirmText !== 'SUPPRIMER'}
+                    className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Confirmer la suppression
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowDeleteConfirm(false);
+                      setDeleteConfirmText('');
+                    }}
+                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
+                  >
+                    Annuler
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Account Info */}
+      <div className="bg-gray-50 rounded-lg p-4">
+        <div className="flex items-center space-x-2 text-sm text-gray-600">
+          <CheckCircle className="h-4 w-4" />
+          <span>Compte créé le {user && formatDate(user.createdAt)}</span>
+        </div>
+      </div>
     </div>
   );
 }

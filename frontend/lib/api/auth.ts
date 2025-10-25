@@ -23,7 +23,7 @@ export const authAPI = {
   },
 
   async getProfile(): Promise<User> {
-    return apiClient.get<User>('/auth/profile');
+    return apiClient.get<User>('/auth/me');
   },
 
   async refreshToken(): Promise<LoginResponse> {

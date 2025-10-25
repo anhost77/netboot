@@ -172,7 +172,26 @@ export class BetsService {
 
     // If status changed from pending to won/lost, or between won/lost
     if (oldStatus !== newStatus && (newStatus === 'won' || newStatus === 'lost') && platform) {
-      const finalProfit = profit !== undefined ? profit : (existingBet.profit?.toNumber() || -newStake);
+      // Determine the profit to use for bankroll update
+      let finalProfit: number;
+
+      if (profit !== undefined) {
+        // New profit calculated from updated payout/stake
+        finalProfit = profit;
+      } else if (existingBet.profit !== null) {
+        // Use existing profit if available
+        finalProfit = existingBet.profit.toNumber();
+      } else {
+        // No profit available - this shouldn't happen for won/lost bets
+        // For won bets, payout should always be provided
+        // For lost bets, profit = -stake
+        if (newStatus === 'lost') {
+          finalProfit = -newStake;
+        } else {
+          throw new Error(`Cannot update bankroll: profit is required for ${newStatus} bets. Please provide payout for won bets.`);
+        }
+      }
+
       await this.updatePlatformBankroll(userId, platform, finalProfit, id);
     }
 

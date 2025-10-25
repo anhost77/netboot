@@ -121,7 +121,41 @@ export default function BetsPage() {
 
   const handleQuickStatus = async (id: string, status: 'won' | 'lost') => {
     try {
-      await betsAPI.updateStatus(id, status);
+      // Trouver le pari pour accéder à stake et odds
+      const bet = bets?.data.find(b => b.id === id);
+      if (!bet) {
+        alert('Pari non trouvé');
+        return;
+      }
+
+      let updateData: any = { status };
+
+      // Pour un pari gagné, calculer le payout depuis les odds
+      if (status === 'won') {
+        const stake = Number(bet.stake);
+        const odds = Number(bet.odds);
+
+        if (!odds || odds <= 1) {
+          // Si pas de cote, demander le payout manuellement
+          const payoutStr = prompt('Les cotes ne sont pas renseignées.\nMontant du gain total (payout en €) :');
+          if (!payoutStr) return; // Annulé
+
+          const payout = parseFloat(payoutStr);
+          if (isNaN(payout) || payout <= 0) {
+            alert('Montant invalide');
+            return;
+          }
+          updateData.payout = payout;
+        } else {
+          // Calculer le payout automatiquement : stake × odds
+          updateData.payout = stake * odds;
+        }
+      } else if (status === 'lost') {
+        // Pour un pari perdu : payout = 0
+        updateData.payout = 0;
+      }
+
+      await betsAPI.update(id, updateData);
       loadBets();
     } catch (error) {
       console.error('Failed to update status:', error);

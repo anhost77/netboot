@@ -49,6 +49,13 @@ export default function SettingsPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
+  // 2FA state
+  const [show2FASetup, setShow2FASetup] = useState(false);
+  const [qrCode, setQrCode] = useState('');
+  const [secret, setSecret] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
+  const [is2FALoading, setIs2FALoading] = useState(false);
+
   useEffect(() => {
     loadData();
   }, []);
@@ -129,6 +136,59 @@ export default function SettingsPage() {
     } catch (error) {
       console.error('Failed to delete account:', error);
       alert('Erreur lors de la suppression du compte');
+    }
+  };
+
+  const handleEnable2FA = async () => {
+    try {
+      setIs2FALoading(true);
+      const result = await authAPI.enable2FA();
+      setQrCode(result.qrCode);
+      setSecret(result.secret);
+      setShow2FASetup(true);
+    } catch (error) {
+      console.error('Failed to enable 2FA:', error);
+      alert('Erreur lors de l\'activation du 2FA');
+    } finally {
+      setIs2FALoading(false);
+    }
+  };
+
+  const handleVerify2FA = async () => {
+    if (!verificationCode || verificationCode.length !== 6) {
+      alert('Veuillez entrer un code à 6 chiffres');
+      return;
+    }
+
+    try {
+      setIs2FALoading(true);
+      await authAPI.verify2FA(verificationCode);
+      alert('2FA activé avec succès !');
+      setShow2FASetup(false);
+      setVerificationCode('');
+      loadData();
+    } catch (error) {
+      console.error('Failed to verify 2FA:', error);
+      alert('Code invalide. Veuillez réessayer.');
+    } finally {
+      setIs2FALoading(false);
+    }
+  };
+
+  const handleDisable2FA = async () => {
+    const code = prompt('Entrez votre code 2FA pour désactiver :');
+    if (!code) return;
+
+    try {
+      setIs2FALoading(true);
+      await authAPI.disable2FA(code);
+      alert('2FA désactivé avec succès');
+      loadData();
+    } catch (error) {
+      console.error('Failed to disable 2FA:', error);
+      alert('Code invalide ou erreur lors de la désactivation');
+    } finally {
+      setIs2FALoading(false);
     }
   };
 
@@ -309,12 +369,29 @@ export default function SettingsPage() {
             <p className="text-sm text-gray-600 mb-3">
               Ajoutez une couche de sécurité supplémentaire à votre compte.
             </p>
-            <button
-              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
-              disabled
-            >
-              Bientôt disponible
-            </button>
+
+            {user?.twoFactorEnabled ? (
+              <div className="flex items-center space-x-3">
+                <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                  Activé
+                </span>
+                <button
+                  onClick={handleDisable2FA}
+                  disabled={is2FALoading}
+                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors disabled:opacity-50"
+                >
+                  {is2FALoading ? 'Chargement...' : 'Désactiver 2FA'}
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={handleEnable2FA}
+                disabled={is2FALoading}
+                className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors disabled:opacity-50"
+              >
+                {is2FALoading ? 'Chargement...' : 'Activer 2FA'}
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -388,6 +465,88 @@ export default function SettingsPage() {
           <span>Compte créé le {user && formatDate(user.createdAt)}</span>
         </div>
       </div>
+
+      {/* 2FA Setup Modal */}
+      {show2FASetup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Configurer l'authentification à deux facteurs
+              </h3>
+              <button
+                onClick={() => {
+                  setShow2FASetup(false);
+                  setQrCode('');
+                  setSecret('');
+                  setVerificationCode('');
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <span className="text-2xl">&times;</span>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm text-gray-600 mb-4">
+                  Scannez ce QR code avec votre application d'authentification (Google Authenticator, Authy, etc.)
+                </p>
+                {qrCode && (
+                  <div className="flex justify-center">
+                    <img src={qrCode} alt="QR Code 2FA" className="border rounded-lg" />
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <p className="text-sm text-gray-600 mb-2">
+                  Ou entrez manuellement ce code secret :
+                </p>
+                <div className="bg-gray-50 p-3 rounded border border-gray-200">
+                  <code className="text-sm font-mono break-all">{secret}</code>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Code de vérification (6 chiffres)
+                </label>
+                <input
+                  type="text"
+                  value={verificationCode}
+                  onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="000000"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 text-center text-2xl tracking-widest font-mono"
+                  maxLength={6}
+                />
+              </div>
+
+              <div className="flex items-center space-x-3 pt-2">
+                <button
+                  onClick={handleVerify2FA}
+                  disabled={is2FALoading || verificationCode.length !== 6}
+                  className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {is2FALoading ? 'Vérification...' : 'Vérifier et activer'}
+                </button>
+                <button
+                  onClick={() => {
+                    setShow2FASetup(false);
+                    setQrCode('');
+                    setSecret('');
+                    setVerificationCode('');
+                  }}
+                  disabled={is2FALoading}
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors disabled:opacity-50"
+                >
+                  Annuler
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

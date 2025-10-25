@@ -46,4 +46,16 @@ export const authAPI = {
   async updateProfile(data: { firstName?: string; lastName?: string }): Promise<User> {
     return apiClient.patch<User>('/auth/me', data);
   },
+
+  async enable2FA(): Promise<{ qrCode: string; secret: string }> {
+    return apiClient.post('/auth/2fa/enable');
+  },
+
+  async verify2FA(code: string): Promise<{ message: string }> {
+    return apiClient.post('/auth/2fa/verify', { code });
+  },
+
+  async disable2FA(code: string): Promise<{ message: string }> {
+    return apiClient.post('/auth/2fa/disable', { code });
+  },
 };

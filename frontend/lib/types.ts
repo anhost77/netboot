@@ -6,6 +6,7 @@ export interface User {
   lastName: string | null;
   role: 'user' | 'admin' | 'moderator';
   emailVerifiedAt: string | null;
+  twoFactorEnabled: boolean;
   createdAt: string;
   updatedAt: string;
 }

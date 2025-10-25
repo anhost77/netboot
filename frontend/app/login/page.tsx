@@ -23,6 +23,7 @@ export default function LoginPage() {
     handleSubmit,
     formState: { errors },
     watch,
+    reset,
   } = useForm<LoginForm>();
 
   const onSubmit = async (data: LoginForm) => {
@@ -46,6 +47,8 @@ export default function LoginPage() {
       if (result.requiresTwoFactor) {
         setRequiresTwoFactor(true);
         setError('');
+        // Clear the form to prevent password from appearing in 2FA field
+        reset({ twoFactorCode: '' });
       }
     } catch (err: any) {
       console.error('Login error:', err);
@@ -178,6 +181,7 @@ export default function LoginPage() {
                   onClick={() => {
                     setRequiresTwoFactor(false);
                     setCredentials({ email: '', password: '' });
+                    reset();
                   }}
                   className="text-sm text-primary-600 hover:text-primary-700"
                 >

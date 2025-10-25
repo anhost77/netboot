@@ -220,7 +220,8 @@ model Bet {
   updatedAt             DateTime        @updatedAt @map("updated_at")
 
   // Relations
-  user                  User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                  User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bankrollTransactions  BankrollTransaction[]
 
   @@index([userId, date])
   @@index([userId, status])
@@ -526,6 +527,7 @@ model BankrollTransaction {
   id                    String            @id @default(uuid())
   userId                String            @map("user_id")
   platformId            String            @map("platform_id")
+  betId                 String?           @map("bet_id")
   type                  TransactionType
   amount                Decimal           @db.Decimal(10, 2)
   balanceAfter          Decimal           @map("balance_after") @db.Decimal(10, 2)
@@ -536,8 +538,10 @@ model BankrollTransaction {
   // Relations
   user                  User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   platform              Platform          @relation(fields: [platformId], references: [id], onDelete: Cascade)
+  bet                   Bet?              @relation(fields: [betId], references: [id], onDelete: SetNull)
 
   @@index([userId, date])
   @@index([platformId])
+  @@index([betId])
   @@map("bankroll_transactions")
 }

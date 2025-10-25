@@ -18,6 +18,8 @@ import {
   TrendingDown,
   Wallet,
   Target,
+  CheckCircle,
+  XCircle,
 } from 'lucide-react';
 
 // Helper function to get bet type label in French
@@ -114,6 +116,16 @@ export default function BetsPage() {
     } catch (error) {
       console.error('Failed to delete bet:', error);
       alert('Erreur lors de la suppression du pari');
+    }
+  };
+
+  const handleQuickStatus = async (id: string, status: 'won' | 'lost') => {
+    try {
+      await betsAPI.updateStatus(id, status);
+      loadBets();
+    } catch (error) {
+      console.error('Failed to update status:', error);
+      alert('Erreur lors de la mise à jour du statut');
     }
   };
 
@@ -395,6 +407,24 @@ export default function BetsPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end space-x-2">
+                        {bet.status === 'pending' && (
+                          <>
+                            <button
+                              onClick={() => handleQuickStatus(bet.id, 'won')}
+                              className="text-green-600 hover:text-green-900"
+                              title="Marquer comme gagné"
+                            >
+                              <CheckCircle className="h-5 w-5" />
+                            </button>
+                            <button
+                              onClick={() => handleQuickStatus(bet.id, 'lost')}
+                              className="text-red-600 hover:text-red-900"
+                              title="Marquer comme perdu"
+                            >
+                              <XCircle className="h-5 w-5" />
+                            </button>
+                          </>
+                        )}
                         <button
                           onClick={() => {
                             setSelectedBet(bet);

@@ -6,6 +6,7 @@ import { BetFiltersDto } from './dto/bet-filters.dto';
 import { BetQueryDto } from './dto/bet-query.dto';
 import { TransactionType } from '../platforms/dto/create-transaction.dto';
 import { Decimal } from '@prisma/client/runtime/library';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class BetsService {
@@ -172,6 +173,41 @@ export class BetsService {
     // If status changed from pending to won/lost, or between won/lost
     if (oldStatus !== newStatus && (newStatus === 'won' || newStatus === 'lost') && platform) {
       const finalProfit = profit !== undefined ? profit : (existingBet.profit?.toNumber() || -newStake);
+      await this.updatePlatformBankroll(userId, platform, finalProfit, id);
+    }
+
+    return updatedBet;
+  }
+
+  async updateStatus(userId: string, id: string, status: string) {
+    // Get existing bet
+    const existingBet = await this.findOne(userId, id);
+
+    // Calculate profit based on new status
+    let profit: number | null = null;
+    if (status === 'won' && existingBet.payout) {
+      profit = existingBet.payout.toNumber() - existingBet.stake.toNumber();
+    } else if (status === 'lost') {
+      profit = -existingBet.stake.toNumber();
+    }
+
+    // Update bet
+    const updatedBet = await this.prisma.bet.update({
+      where: { id },
+      data: {
+        status: status as any,
+        profit: profit !== null ? profit : null,
+      },
+    });
+
+    // Handle bankroll updates when status changes
+    const oldStatus = existingBet.status;
+    const newStatus = status;
+    const platform = existingBet.platform;
+
+    // If status changed to won/lost and platform exists
+    if (oldStatus !== newStatus && (newStatus === 'won' || newStatus === 'lost') && platform) {
+      const finalProfit = profit !== null ? profit : -existingBet.stake.toNumber();
       await this.updatePlatformBankroll(userId, platform, finalProfit, id);
     }
 
@@ -428,6 +464,7 @@ export class BetsService {
 
   /**
    * Update platform bankroll and create transaction when bet is won or lost
+   * Handles multiple status changes by canceling previous transaction
    */
   private async updatePlatformBankroll(
     userId: string,
@@ -449,28 +486,62 @@ export class BetsService {
       return;
     }
 
+    // Check if a transaction already exists for this bet
+    const existingTransaction = await this.prisma.bankrollTransaction.findFirst({
+      where: {
+        betId,
+        platformId: platform.id,
+      },
+    });
+
+    let currentBalance = new Decimal(platform.currentBankroll);
+
+    // If there's an existing transaction, reverse it first
+    if (existingTransaction) {
+      // Calculate the original effect (reverse of what was done)
+      const oldAmount = new Decimal(existingTransaction.amount);
+      const wasDeposit = existingTransaction.type === TransactionType.DEPOSIT;
+
+      // Reverse the old transaction effect
+      currentBalance = wasDeposit
+        ? currentBalance.minus(oldAmount)  // Remove old gain
+        : currentBalance.plus(oldAmount);   // Add back old loss
+    }
+
+    // Apply new transaction
     const amount = new Decimal(Math.abs(profitOrLoss));
     const transactionType = profitOrLoss >= 0 ? TransactionType.DEPOSIT : TransactionType.WITHDRAWAL;
-    const newBalance = new Decimal(platform.currentBankroll).plus(profitOrLoss);
+    const newBalance = currentBalance.plus(profitOrLoss);
 
-    // Create transaction and update platform in a single DB transaction
-    await this.prisma.$transaction([
-      this.prisma.bankrollTransaction.create({
+    // Perform operations in a database transaction
+    await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      // Delete old transaction if exists
+      if (existingTransaction) {
+        await tx.bankrollTransaction.delete({
+          where: { id: existingTransaction.id },
+        });
+      }
+
+      // Create new transaction
+      await tx.bankrollTransaction.create({
         data: {
           userId,
           platformId: platform.id,
+          betId,
           type: transactionType,
           amount,
           balanceAfter: newBalance,
           description: `Pari ${profitOrLoss >= 0 ? 'gagné' : 'perdu'} - ID: ${betId.substring(0, 8)}`,
           date: new Date(),
         },
-      }),
-      this.prisma.platform.update({
+      });
+
+      // Update platform bankroll
+      await tx.platform.update({
         where: { id: platform.id },
         data: { currentBankroll: newBalance },
-      }),
-    ]);
+      });
+    });
   }
 
   private async updateBankroll(userId: string, profitOrLoss: number) {

@@ -19,6 +19,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger'
 import { BetsService } from './bets.service';
 import { CreateBetDto } from './dto/create-bet.dto';
 import { UpdateBetDto } from './dto/update-bet.dto';
+import { UpdateBetStatusDto } from './dto/update-bet-status.dto';
 import { BetFiltersDto } from './dto/bet-filters.dto';
 import { BetQueryDto } from './dto/bet-query.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -105,6 +106,16 @@ export class BetsController {
     @Body() updateBetDto: UpdateBetDto,
   ) {
     return this.betsService.update(req.user.id, id, updateBetDto);
+  }
+
+  @Patch(':id/status')
+  @ApiOperation({ summary: 'Quick update bet status (won/lost/pending)' })
+  updateStatus(
+    @Request() req: any,
+    @Param('id') id: string,
+    @Body() updateStatusDto: UpdateBetStatusDto,
+  ) {
+    return this.betsService.updateStatus(req.user.id, id, updateStatusDto.status);
   }
 
   @Delete(':id')

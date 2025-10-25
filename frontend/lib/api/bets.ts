@@ -36,6 +36,10 @@ export const betsAPI = {
     return apiClient.patch<Bet>(`/bets/${id}`, data);
   },
 
+  async updateStatus(id: string, status: 'won' | 'lost' | 'pending'): Promise<Bet> {
+    return apiClient.patch<Bet>(`/bets/${id}/status`, { status });
+  },
+
   async delete(id: string): Promise<{ message: string }> {
     return apiClient.delete(`/bets/${id}`);
   },

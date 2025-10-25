@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Request,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -47,6 +48,23 @@ export class PlatformsController {
   @ApiResponse({ status: 200, description: 'Bankroll globale' })
   getGlobalBankroll(@Request() req: any) {
     return this.platformsService.getGlobalBankroll(req.user.id);
+  }
+
+  @Get('global-bankroll-evolution')
+  @ApiOperation({ summary: 'Récupérer l\'évolution de la bankroll globale' })
+  @ApiResponse({ status: 200, description: 'Évolution de la bankroll globale' })
+  getGlobalBankrollEvolution(
+    @Request() req: any,
+    @Query('period') period?: 'day' | 'week' | 'month' | 'year',
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.platformsService.getGlobalBankrollEvolution(
+      req.user.id,
+      period || 'day',
+      startDate,
+      endDate,
+    );
   }
 
   @Get(':id')
@@ -100,5 +118,25 @@ export class PlatformsController {
   @ApiResponse({ status: 404, description: 'Plateforme non trouvée' })
   getTransactions(@Request() req: any, @Param('id') id: string) {
     return this.platformsService.getTransactions(req.user.id, id);
+  }
+
+  @Get(':id/bankroll-evolution')
+  @ApiOperation({ summary: 'Récupérer l\'évolution de la bankroll d\'une plateforme' })
+  @ApiResponse({ status: 200, description: 'Évolution de la bankroll' })
+  @ApiResponse({ status: 404, description: 'Plateforme non trouvée' })
+  getBankrollEvolution(
+    @Request() req: any,
+    @Param('id') id: string,
+    @Query('period') period?: 'day' | 'week' | 'month' | 'year',
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.platformsService.getBankrollEvolution(
+      req.user.id,
+      id,
+      period || 'day',
+      startDate,
+      endDate,
+    );
   }
 }

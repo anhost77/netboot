@@ -61,6 +61,12 @@ export interface GlobalBankroll {
   roi: number;
 }
 
+export interface BankrollEvolutionData {
+  period: string;
+  balance: number;
+  date: string;
+}
+
 export const platformsAPI = {
   // Créer une plateforme
   create: async (data: CreatePlatformDto): Promise<Platform> => {
@@ -106,5 +112,34 @@ export const platformsAPI = {
   // Récupérer la bankroll globale
   getGlobalBankroll: async (): Promise<GlobalBankroll> => {
     return await apiClient.get<GlobalBankroll>('/platforms/global-bankroll');
+  },
+
+  // Récupérer l'évolution de la bankroll globale
+  getGlobalBankrollEvolution: async (
+    period: 'day' | 'week' | 'month' | 'year' = 'day',
+    startDate?: string,
+    endDate?: string,
+  ): Promise<BankrollEvolutionData[]> => {
+    const params = new URLSearchParams({ period });
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    return await apiClient.get<BankrollEvolutionData[]>(
+      `/platforms/global-bankroll-evolution?${params.toString()}`
+    );
+  },
+
+  // Récupérer l'évolution de la bankroll d'une plateforme
+  getBankrollEvolution: async (
+    platformId: string,
+    period: 'day' | 'week' | 'month' | 'year' = 'day',
+    startDate?: string,
+    endDate?: string,
+  ): Promise<BankrollEvolutionData[]> => {
+    const params = new URLSearchParams({ period });
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    return await apiClient.get<BankrollEvolutionData[]>(
+      `/platforms/${platformId}/bankroll-evolution?${params.toString()}`
+    );
   },
 };

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { platformsAPI, type Platform, type GlobalBankroll } from '@/lib/api/platforms';
+import { platformsAPI, type Platform, type GlobalBankroll, type BankrollEvolutionData } from '@/lib/api/platforms';
 import { formatCurrency } from '@/lib/utils';
 import {
   Wallet,
@@ -12,9 +12,11 @@ import {
   TrendingDown,
   DollarSign,
   Settings as SettingsIcon,
+  BarChart3,
 } from 'lucide-react';
 import PlatformModal from '@/components/platforms/platform-modal';
 import TransactionModal from '@/components/platforms/transaction-modal';
+import BankrollChart from '@/components/charts/bankroll-chart';
 
 export default function SettingsPage() {
   const [platforms, setPlatforms] = useState<Platform[]>([]);
@@ -25,9 +27,18 @@ export default function SettingsPage() {
   const [selectedPlatform, setSelectedPlatform] = useState<Platform | null>(null);
   const [editingPlatform, setEditingPlatform] = useState<Platform | null>(null);
 
+  // Bankroll evolution
+  const [period, setPeriod] = useState<'day' | 'week' | 'month' | 'year'>('day');
+  const [globalEvolution, setGlobalEvolution] = useState<BankrollEvolutionData[]>([]);
+  const [platformEvolutions, setPlatformEvolutions] = useState<Record<string, BankrollEvolutionData[]>>({});
+
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    loadEvolutionData();
+  }, [period, platforms]);
 
   const loadData = async () => {
     try {
@@ -42,6 +53,26 @@ export default function SettingsPage() {
       console.error('Failed to load platforms:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadEvolutionData = async () => {
+    try {
+      // Load global evolution
+      const globalData = await platformsAPI.getGlobalBankrollEvolution(period);
+      setGlobalEvolution(globalData);
+
+      // Load evolution for each platform
+      const evolutions: Record<string, BankrollEvolutionData[]> = {};
+      await Promise.all(
+        platforms.map(async (platform) => {
+          const data = await platformsAPI.getBankrollEvolution(platform.id, period);
+          evolutions[platform.id] = data;
+        })
+      );
+      setPlatformEvolutions(evolutions);
+    } catch (error) {
+      console.error('Failed to load evolution data:', error);
     }
   };
 
@@ -125,6 +156,59 @@ export default function SettingsPage() {
           </div>
         </div>
       )}
+
+      {/* Bankroll Evolution Section */}
+      <div className="bg-white rounded-lg shadow">
+        <div className="border-b border-gray-200 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <BarChart3 className="h-5 w-5 text-primary-600" />
+              <h2 className="text-lg font-semibold text-gray-900">Évolution des Bankrolls</h2>
+            </div>
+            <select
+              value={period}
+              onChange={(e) => setPeriod(e.target.value as 'day' | 'week' | 'month' | 'year')}
+              className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            >
+              <option value="day">Par jour</option>
+              <option value="week">Par semaine</option>
+              <option value="month">Par mois</option>
+              <option value="year">Par année</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="p-6 space-y-8">
+          {/* Global Evolution */}
+          <div>
+            <BankrollChart
+              data={globalEvolution}
+              title="Évolution Globale"
+              height={250}
+            />
+          </div>
+
+          {/* Platform Evolution */}
+          {platforms.length > 0 && (
+            <div className="space-y-6">
+              <h3 className="text-lg font-semibold text-gray-900 pt-6 border-t">
+                Évolution par Plateforme
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {platforms.map((platform) => (
+                  <div key={platform.id} className="border border-gray-200 rounded-lg p-4">
+                    <BankrollChart
+                      data={platformEvolutions[platform.id] || []}
+                      title={platform.name}
+                      height={200}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Platforms Section */}
       <div className="bg-white rounded-lg shadow">

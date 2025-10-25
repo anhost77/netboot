@@ -41,7 +41,7 @@ export class BetsService {
 
     // Update platform bankroll if bet is won or lost
     if (dto.status === 'won' || dto.status === 'lost') {
-      await this.updatePlatformBankroll(userId, dto.platform, profit || -dto.stake, bet.id);
+      await this.updatePlatformBankroll(userId, dto.platform, profit || -dto.stake, bet.id, bet.date);
     }
 
     return bet;
@@ -192,7 +192,9 @@ export class BetsService {
         }
       }
 
-      await this.updatePlatformBankroll(userId, platform, finalProfit, id);
+      // Use updated date if changed, otherwise use existing date
+      const betDate = dto.date ? new Date(dto.date) : existingBet.date;
+      await this.updatePlatformBankroll(userId, platform, finalProfit, id, betDate);
     }
 
     return updatedBet;
@@ -227,7 +229,7 @@ export class BetsService {
     // If status changed to won/lost and platform exists
     if (oldStatus !== newStatus && (newStatus === 'won' || newStatus === 'lost') && platform) {
       const finalProfit = profit !== null ? profit : -existingBet.stake.toNumber();
-      await this.updatePlatformBankroll(userId, platform, finalProfit, id);
+      await this.updatePlatformBankroll(userId, platform, finalProfit, id, existingBet.date);
     }
 
     return updatedBet;
@@ -490,6 +492,7 @@ export class BetsService {
     platformName: string,
     profitOrLoss: number,
     betId: string,
+    betDate?: Date,
   ) {
     // Find the platform by name
     const platform = await this.prisma.platform.findFirst({
@@ -551,7 +554,7 @@ export class BetsService {
           amount,
           balanceAfter: newBalance,
           description: `Pari ${profitOrLoss >= 0 ? 'gagné' : 'perdu'} - ID: ${betId.substring(0, 8)}`,
-          date: new Date(),
+          date: betDate || new Date(),
         },
       });
 

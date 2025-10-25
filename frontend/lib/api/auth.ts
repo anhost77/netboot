@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import type { LoginResponse, RegisterData, User } from '../types';
+import type { LoginResponse, RegisterData, User, TwoFactorRequiredResponse } from '../types';
 
 export const authAPI = {
   async register(data: RegisterData): Promise<LoginResponse> {
@@ -8,8 +8,19 @@ export const authAPI = {
     return response;
   },
 
-  async login(email: string, password: string): Promise<LoginResponse> {
-    const response = await apiClient.post<LoginResponse>('/auth/login', { email, password });
+  async login(email: string, password: string, twoFactorCode?: string): Promise<LoginResponse | TwoFactorRequiredResponse> {
+    const response = await apiClient.post<LoginResponse | TwoFactorRequiredResponse>('/auth/login', {
+      email,
+      password,
+      twoFactorCode
+    });
+
+    // If 2FA is required, return the response without saving auth
+    if ('requiresTwoFactor' in response) {
+      return response;
+    }
+
+    // Otherwise save auth and return
     apiClient.saveAuth(response.access_token, response.refresh_token, response.user);
     return response;
   },

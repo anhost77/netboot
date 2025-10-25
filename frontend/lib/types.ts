@@ -18,6 +18,11 @@ export interface LoginResponse {
   user: User;
 }
 
+export interface TwoFactorRequiredResponse {
+  requiresTwoFactor: true;
+  message: string;
+}
+
 export interface RegisterData {
   email: string;
   password: string;

@@ -9,7 +9,7 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, twoFactorCode?: string) => Promise<{ requiresTwoFactor?: boolean }>;
   register: (email: string, password: string, firstName?: string, lastName?: string) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -39,11 +39,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkAuth();
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, twoFactorCode?: string) => {
     try {
-      const response = await authAPI.login(email, password);
+      const response = await authAPI.login(email, password, twoFactorCode);
+
+      // Check if 2FA is required
+      if ('requiresTwoFactor' in response && response.requiresTwoFactor) {
+        return { requiresTwoFactor: true };
+      }
+
+      // Login successful
       setUser(response.user);
       router.push('/dashboard');
+      return {};
     } catch (error) {
       throw error;
     }

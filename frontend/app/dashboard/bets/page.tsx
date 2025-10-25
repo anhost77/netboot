@@ -186,8 +186,8 @@ export default function BetsPage() {
     pending: bets?.data.filter((b) => b.status === 'pending').length || 0,
     won: bets?.data.filter((b) => b.status === 'won').length || 0,
     lost: bets?.data.filter((b) => b.status === 'lost').length || 0,
-    totalStake: bets?.data.reduce((sum, b) => sum + b.stake, 0) || 0,
-    totalProfit: bets?.data.reduce((sum, b) => sum + (b.profit || 0), 0) || 0,
+    totalStake: bets?.data.reduce((sum, b) => sum + Number(b.stake), 0) || 0,
+    totalProfit: bets?.data.reduce((sum, b) => sum + Number(b.profit || 0), 0) || 0,
   };
 
   const getStatusBadge = (status: string) => {

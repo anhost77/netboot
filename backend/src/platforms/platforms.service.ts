@@ -200,7 +200,7 @@ export class PlatformsService {
     endDate?: string,
   ) {
     // Vérifier que la plateforme existe et appartient à l'utilisateur
-    await this.findOne(userId, platformId);
+    const platform = await this.findOne(userId, platformId);
 
     // Définir les dates par défaut (30 derniers jours si non spécifié)
     const end = endDate ? new Date(endDate) : new Date();
@@ -266,7 +266,52 @@ export class PlatformsService {
       }))
       .sort((a, b) => a.date.getTime() - b.date.getTime());
 
-    return evolution;
+    // Ajouter un point avec la bankroll actuelle si on demande jusqu'à aujourd'hui
+    const now = new Date();
+    const currentBalance = new Decimal(platform.currentBankroll).toNumber();
+
+    // Vérifier si le dernier point n'est pas déjà à la bankroll actuelle
+    const lastPoint = evolution[evolution.length - 1];
+    if (!lastPoint || Math.abs(lastPoint.balance - currentBalance) > 0.01) {
+      // Ajouter un point actuel
+      let currentPeriodKey: string;
+      switch (period) {
+        case 'day':
+          currentPeriodKey = now.toISOString().split('T')[0];
+          break;
+        case 'week':
+          const weekStart = new Date(now);
+          weekStart.setDate(now.getDate() - now.getDay());
+          currentPeriodKey = weekStart.toISOString().split('T')[0];
+          break;
+        case 'month':
+          currentPeriodKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+          break;
+        case 'year':
+          currentPeriodKey = `${now.getFullYear()}-01-01`;
+          break;
+      }
+
+      // Vérifier si on a déjà un point pour cette période
+      const existingIndex = evolution.findIndex(e => e.period === currentPeriodKey);
+      if (existingIndex >= 0) {
+        // Remplacer le point existant avec la bankroll actuelle
+        evolution[existingIndex] = {
+          period: currentPeriodKey,
+          balance: currentBalance,
+          date: now,
+        };
+      } else {
+        // Ajouter un nouveau point
+        evolution.push({
+          period: currentPeriodKey,
+          balance: currentBalance,
+          date: now,
+        });
+      }
+    }
+
+    return evolution.sort((a, b) => a.date.getTime() - b.date.getTime());
   }
 
   async getGlobalBankrollEvolution(
@@ -366,6 +411,59 @@ export class PlatformsService {
       })
       .sort((a, b) => a.date.getTime() - b.date.getTime());
 
-    return evolution;
+    // Ajouter un point avec la bankroll globale actuelle
+    const platformsWithBalance = await this.prisma.platform.findMany({
+      where: { userId, isActive: true },
+      select: { id: true, currentBankroll: true },
+    });
+
+    const currentGlobalBalance = platformsWithBalance.reduce(
+      (sum: Decimal, p: any) => sum.plus(new Decimal(p.currentBankroll)),
+      new Decimal(0),
+    ).toNumber();
+
+    // Vérifier si le dernier point n'est pas déjà à la bankroll actuelle
+    const now = new Date();
+    const lastPoint = evolution[evolution.length - 1];
+    if (!lastPoint || Math.abs(lastPoint.balance - currentGlobalBalance) > 0.01) {
+      // Ajouter un point actuel
+      let currentPeriodKey: string;
+      switch (period) {
+        case 'day':
+          currentPeriodKey = now.toISOString().split('T')[0];
+          break;
+        case 'week':
+          const weekStart = new Date(now);
+          weekStart.setDate(now.getDate() - now.getDay());
+          currentPeriodKey = weekStart.toISOString().split('T')[0];
+          break;
+        case 'month':
+          currentPeriodKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+          break;
+        case 'year':
+          currentPeriodKey = `${now.getFullYear()}-01-01`;
+          break;
+      }
+
+      // Vérifier si on a déjà un point pour cette période
+      const existingIndex = evolution.findIndex(e => e.period === currentPeriodKey);
+      if (existingIndex >= 0) {
+        // Remplacer le point existant avec la bankroll actuelle
+        evolution[existingIndex] = {
+          period: currentPeriodKey,
+          balance: currentGlobalBalance,
+          date: now,
+        };
+      } else {
+        // Ajouter un nouveau point
+        evolution.push({
+          period: currentPeriodKey,
+          balance: currentGlobalBalance,
+          date: now,
+        });
+      }
+    }
+
+    return evolution.sort((a, b) => a.date.getTime() - b.date.getTime());
   }
 }

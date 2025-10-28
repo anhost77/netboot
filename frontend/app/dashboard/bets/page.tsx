@@ -366,23 +366,52 @@ export default function BetsPage() {
 
     if (status === 'won') {
       // Ouvrir la modal pour confirmer les cotes
+      console.log('🔍 Bet details:', {
+        id: bet.id,
+        platform: bet.platform,
+        platformId: bet.platformId,
+        requiresManualUpdate: bet.requiresManualUpdate,
+        pmuRaceId: bet.pmuRaceId,
+      });
+      
       setBetToUpdate(bet);
       setFinalOdds(bet.odds ? String(bet.odds) : '');
       setShowWinModal(true);
       
-      // Charger automatiquement les cotes PMU si disponible
-      if (bet.pmuRaceId) {
+      // Charger automatiquement les cotes PMU UNIQUEMENT si ce n'est PAS un pari à mise à jour manuelle
+      if (bet.pmuRaceId && !bet.requiresManualUpdate) {
         setTimeout(() => {
           loadPmuOdds(bet);
         }, 100);
       }
+      // Si requiresManualUpdate = true, l'utilisateur doit saisir la cote manuellement
     } else {
-      // Pour un pari perdu, pas besoin de modal
+      // Pour un pari perdu
       try {
-        await betsAPI.update(id, { 
-          status: 'lost',
-          payout: 0 
-        });
+        // Si requiresManualUpdate = true, utiliser l'endpoint spécial
+        if (bet.requiresManualUpdate) {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/bets/${bet.id}/result`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            },
+            body: JSON.stringify({
+              status: 'lost',
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error('Erreur lors de la mise à jour');
+          }
+        } else {
+          // Sinon, utiliser l'endpoint classique
+          await betsAPI.update(id, { 
+            status: 'lost',
+            payout: 0 
+          });
+        }
+
         loadBets();
         loadCurrentMonthBetsCount();
         loadBudgetOverview();
@@ -415,11 +444,21 @@ export default function BetsPage() {
       const payout = stake * odds;
       const profit = payout - stake;
 
-      await betsAPI.update(betToUpdate.id, {
-        status: 'won',
-        odds: odds,
-        payout: payout,
-      });
+      // Si requiresManualUpdate = true, utiliser l'endpoint spécial
+      if (betToUpdate.requiresManualUpdate) {
+        await betsAPI.updateResult(betToUpdate.id, {
+          status: 'won',
+          finalOdds: odds,
+          payout: payout,
+        });
+      } else {
+        // Sinon, utiliser l'endpoint classique
+        await betsAPI.update(betToUpdate.id, {
+          status: 'won',
+          odds: odds,
+          payout: payout,
+        });
+      }
 
       setShowWinModal(false);
       setBetToUpdate(null);
@@ -976,7 +1015,14 @@ export default function BetsPage() {
                     </td>
                     {/* Statut */}
                     <td className="px-4 py-3 whitespace-nowrap text-sm">
-                      {getStatusBadge(bet.status)}
+                      <div className="flex items-center gap-2">
+                        {getStatusBadge(bet.status)}
+                        {bet.status === 'pending' && bet.requiresManualUpdate && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
+                            ⏰ À mettre à jour
+                          </span>
+                        )}
+                      </div>
                     </td>
                     {/* Gain */}
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
@@ -1177,7 +1223,14 @@ export default function BetsPage() {
                   <div className="text-sm font-semibold text-gray-900">{formatDate(bet.date)}</div>
                   <div className="text-xs text-gray-500">{bet.time || '-'}</div>
                 </div>
-                <div>{getStatusBadge(bet.status)}</div>
+                <div className="flex flex-col items-end gap-1">
+                  {getStatusBadge(bet.status)}
+                  {bet.status === 'pending' && bet.requiresManualUpdate && (
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
+                      ⏰ À mettre à jour
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* Course Info */}
@@ -1410,7 +1463,10 @@ export default function BetsPage() {
                 Pari Gagné ! 🎉
               </h2>
               <p className="text-gray-600 text-center mb-6">
-                Confirmez la cote finale pour calculer vos gains
+                {betToUpdate.requiresManualUpdate 
+                  ? 'Saisissez la cote finale affichée par votre bookmaker'
+                  : 'Confirmez la cote finale pour calculer vos gains'
+                }
               </p>
 
               <div className="bg-gray-50 rounded-lg p-4 mb-4">
@@ -1428,8 +1484,30 @@ export default function BetsPage() {
                 </div>
               </div>
 
-              <div className="mb-4">
-                {loadingOdds ? (
+              {betToUpdate.requiresManualUpdate ? (
+                // Pour les paris manuels : champ de saisie direct
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Cote finale réelle *
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="1"
+                    value={finalOdds}
+                    onChange={(e) => setFinalOdds(e.target.value)}
+                    placeholder="Ex: 3.50"
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-lg"
+                    autoFocus
+                  />
+                  <p className="mt-2 text-xs text-gray-500">
+                    💡 Saisissez la cote affichée par {betToUpdate.platform} au moment du résultat
+                  </p>
+                </div>
+              ) : (
+                // Pour les paris PMU : chargement automatique
+                <div className="mb-4">
+                  {loadingOdds ? (
                   <div className="flex items-center justify-center py-8">
                     <svg className="animate-spin h-8 w-8 text-primary-600 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -1456,8 +1534,9 @@ export default function BetsPage() {
                       ⚠️ Cote non disponible. Les rapports PMU ne sont pas encore publiés.
                     </p>
                   </div>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
 
               {finalOdds && parseFloat(finalOdds) > 0 && (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">

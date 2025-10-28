@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { adminAPI, type AdminOverview, type AdminActivity } from '@/lib/api/admin';
 import { formatCurrency, formatDate } from '@/lib/utils';
+import { usePageTitle } from '@/hooks/usePageTitle';
 import {
   Users,
   DollarSign,
@@ -14,6 +15,7 @@ import {
 } from 'lucide-react';
 
 export default function AdminDashboardPage() {
+  usePageTitle('Admin Dashboard');
   const [overview, setOverview] = useState<AdminOverview | null>(null);
   const [activity, setActivity] = useState<AdminActivity | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -47,6 +49,7 @@ export default function AdminDashboardPage() {
   }
 
   return (
+    <>
     <div className="space-y-6">
       {/* Header */}
       <div>
@@ -264,5 +267,6 @@ export default function AdminDashboardPage() {
         </div>
       )}
     </div>
+    </>
   );
 }

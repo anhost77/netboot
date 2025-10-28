@@ -17,6 +17,7 @@ import {
   Shield,
 } from 'lucide-react';
 import { authAPI } from '@/lib/api/auth';
+import { useSettings } from '@/contexts/SettingsContext';
 
 const navigation = [
   { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
@@ -38,6 +39,7 @@ export default function AdminLayout({
   const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { settings } = useSettings();
 
   useEffect(() => {
     checkAuth();
@@ -102,7 +104,7 @@ export default function AdminLayout({
             <Shield className="h-8 w-8 text-primary-500 mr-3" />
             <div>
               <h1 className="text-xl font-bold text-white">Admin</h1>
-              <p className="text-xs text-gray-400">BetTracker Pro</p>
+              <p className="text-xs text-gray-400">{settings?.siteName || 'NetBoot'}</p>
             </div>
           </div>
 
@@ -173,7 +175,7 @@ export default function AdminLayout({
                 <Shield className="h-8 w-8 text-primary-500 mr-3" />
                 <div>
                   <h1 className="text-xl font-bold text-white">Admin</h1>
-                  <p className="text-xs text-gray-400">BetTracker Pro</p>
+                  <p className="text-xs text-gray-400">{settings?.siteName || 'NetBoot'}</p>
                 </div>
               </div>
               <button

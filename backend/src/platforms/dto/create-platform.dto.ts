@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsNumber, IsPositive } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsPositive, IsOptional, IsEnum } from 'class-validator';
 
 export class CreatePlatformDto {
   @ApiProperty({
@@ -9,6 +9,16 @@ export class CreatePlatformDto {
   @IsString()
   @IsNotEmpty()
   name: string;
+
+  @ApiProperty({
+    example: 'PMU',
+    description: 'Type de plateforme (PMU ou OTHER)',
+    enum: ['PMU', 'OTHER'],
+    required: false,
+  })
+  @IsOptional()
+  @IsEnum(['PMU', 'OTHER'])
+  platformType?: string;
 
   @ApiProperty({
     example: 100,

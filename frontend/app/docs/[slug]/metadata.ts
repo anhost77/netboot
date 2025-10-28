@@ -65,6 +65,22 @@ export const seoData: Record<string, Metadata> = {
       description: 'Exemples pratiques d\'utilisation de l\'API BetTracker Pro',
     },
   },
+  'gestion-paris': {
+    title: 'Gestion des Paris Auto/Manuel - Guide Complet | BetTracker Pro',
+    description: 'Comprendre la différence entre les paris PMU (automatiques) et les paris sur autres plateformes (manuels). Guide complet pour les membres et administrateurs.',
+    keywords: 'gestion paris, pmu, betclic, unibet, automatique, manuel, validation, cotes, guide',
+    openGraph: {
+      title: 'Gestion des Paris Auto/Manuel - Guide Complet',
+      description: 'Comprendre la différence entre les paris PMU et les autres plateformes',
+      type: 'article',
+      locale: 'fr_FR',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: 'Gestion des Paris Auto/Manuel',
+      description: 'Guide complet pour les membres et administrateurs',
+    },
+  },
 };
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {

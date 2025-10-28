@@ -133,7 +133,10 @@ export function BetForm({ bet, onSubmit, onCancel, isLoading = false }: BetFormP
     setValue('horsesSelected', data.horsesSelected);
     setValue('betType', (betTypeMapping[data.betType] || 'gagnant') as any);
     setValue('date', data.date);
+    
+    // Envoyer l'ID de la plateforme (le backend va chercher le nom)
     setValue('platform', data.platformId);
+    
     // Store PMU code in notes for reference with full bet type name
     const currentNotes = watch('notes') || '';
     setValue('notes', currentNotes ? `${currentNotes}\n${data.betType} - Code PMU: ${data.pmuCode}` : `${data.betType} - Code PMU: ${data.pmuCode}`);
@@ -196,14 +199,14 @@ export function BetForm({ bet, onSubmit, onCancel, isLoading = false }: BetFormP
               <button
                 type="button"
                 onClick={() => setInputMode('pmu')}
-                className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center justify-center space-x-2 ${
+                className={`flex-1 flex items-center justify-center space-x-2 px-4 py-3 rounded-lg border-2 transition-all ${
                   inputMode === 'pmu'
-                    ? 'bg-white text-primary-600 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'border-primary-600 bg-primary-50 text-primary-700'
+                    : 'border-gray-200 text-gray-600 hover:border-primary-300'
                 }`}
               >
                 <Sparkles className="h-4 w-4" />
-                <span>Sélection PMU</span>
+                <span>Sélection Course</span>
               </button>
               <button
                 type="button"
@@ -573,17 +576,31 @@ export function BetForm({ bet, onSubmit, onCancel, isLoading = false }: BetFormP
                   </p>
                 </div>
               ) : (
-                <select
-                  {...register('platform', { required: 'La plateforme est requise' })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-                >
-                  <option value="">Sélectionnez une plateforme</option>
-                  {platforms.map((platform) => (
-                    <option key={platform.id} value={platform.name}>
-                      {platform.name}
-                    </option>
-                  ))}
-                </select>
+                <>
+                  <select
+                    {...register('platform', { required: 'La plateforme est requise' })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  >
+                    <option value="">Sélectionnez une plateforme</option>
+                    {platforms.map((platform) => (
+                      <option key={platform.id} value={platform.name}>
+                        {platform.name} {platform.platformType === 'PMU' ? '(Auto)' : '(Manuel)'}
+                      </option>
+                    ))}
+                  </select>
+                  {watch('platform') && platforms.find(p => p.name === watch('platform'))?.platformType !== 'PMU' && (
+                    <p className="mt-1 text-xs text-orange-600 flex items-center">
+                      <span className="mr-1">⚠️</span>
+                      Vous devrez saisir manuellement le résultat de ce pari
+                    </p>
+                  )}
+                  {watch('platform') && platforms.find(p => p.name === watch('platform'))?.platformType === 'PMU' && (
+                    <p className="mt-1 text-xs text-green-600 flex items-center">
+                      <span className="mr-1">✅</span>
+                      Le résultat sera mis à jour automatiquement
+                    </p>
+                  )}
+                </>
               )}
               {errors.platform && (
                 <p className="mt-1 text-sm text-red-600">{errors.platform.message}</p>

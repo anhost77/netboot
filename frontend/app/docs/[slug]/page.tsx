@@ -4,10 +4,12 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useEffect, useState, useRef } from 'react';
 import Head from 'next/head';
-import { ArrowLeft, BookOpen, Code, Zap, MessageSquare, Github, Twitter, Mail, Home, Menu, X, ChevronLeft, ChevronRight, Bell, User, Settings, LogOut } from 'lucide-react';
+import { ArrowLeft, BookOpen, Code, Zap, MessageSquare, Github, Twitter, Mail, Home, Menu, X, ChevronLeft, ChevronRight, Bell, User, Settings, LogOut, Target } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { authAPI } from '@/lib/api/auth';
 import { NotificationsDropdown } from '@/components/layout/notifications-dropdown';
+import { useSettings } from '@/contexts/SettingsContext';
+import { getServerSettings } from '@/lib/server-settings';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -942,6 +944,301 @@ Cordialement, [Nom]
 **🚀 Bon support !**
 `,
   },
+  'gestion-paris': {
+    title: 'Gestion des Paris Auto/Manuel',
+    icon: Target,
+    content: `
+# 📚 Gestion des Paris - Auto vs Manuel
+
+> **Documentation réservée aux membres, modérateurs et administrateurs**
+
+---
+
+## 🎯 Vue d'Ensemble
+
+Le système de gestion des paris distingue **deux types de plateformes** :
+
+| Type | Plateforme | Mise à jour | Badge |
+|------|-----------|-------------|-------|
+| **PMU** | PMU | ✅ Automatique | 🟢 Auto |
+| **Autres** | Betclic, Unibet, Zeturf, etc. | ⚠️ Manuelle | 🟠 Manuel |
+
+Cette distinction garantit que **les cotes et résultats sont toujours corrects**, quelle que soit la plateforme utilisée.
+
+---
+
+## 1️⃣ Création d'une Bankroll
+
+### Étapes
+
+1. Aller sur **Dashboard → Bankroll**
+2. Cliquer sur **"Nouvelle plateforme"**
+3. Sélectionner le **type de plateforme** :
+   - **PMU** : Résultats mis à jour automatiquement ✨
+   - **Autre** : Vous devrez saisir le résultat manuellement 📝
+4. Saisir le **nom** (ex: "PMU", "Betclic", "Unibet")
+5. Saisir la **bankroll initiale**
+6. Cliquer sur **"Créer"**
+
+### Badges Visuels
+
+Une fois créée, votre plateforme affichera un badge :
+- 🟢 **Auto** (vert) = PMU → Mise à jour automatique
+- 🟠 **Manuel** (orange) = Autre → Mise à jour manuelle
+
+---
+
+## 2️⃣ Création d'un Pari
+
+### Mode "Sélection Course" (PMU)
+
+1. Cliquer sur **"Nouveau pari"**
+2. Sélectionner **"Sélection Course"**
+3. Choisir le **type de pari** (Simple Gagnant, Couplé, etc.)
+4. Sélectionner votre **bankroll** :
+   - Badge 🟢 **Auto** = Résultats automatiques
+   - Badge 🟠 **Manuel** = Vous devrez mettre à jour
+5. Choisir **hippodrome**, **course** et **chevaux**
+6. Saisir la **mise**
+7. Valider
+
+### Mode "Saisie Manuelle"
+
+1. Cliquer sur **"Nouveau pari"**
+2. Sélectionner **"Saisie Manuelle"**
+3. Choisir la **plateforme** dans le menu déroulant :
+   - **PMU (Auto)** = ✅ Résultat mis à jour automatiquement
+   - **Betclic (Manuel)** = ⚠️ Vous devrez saisir le résultat
+4. Remplir les informations (hippodrome, course, chevaux, mise, cote)
+5. Valider
+
+---
+
+## 3️⃣ Validation Automatique (PMU)
+
+### Comment ça fonctionne ?
+
+Pour les **paris PMU**, un système automatique vérifie les résultats **toutes les 10 minutes** :
+
+\`\`\`
+Cron Job (toutes les 10 min)
+  ↓
+Récupère les paris PMU en attente
+  ↓
+Vérifie les résultats sur l'API PMU
+  ↓
+Met à jour automatiquement :
+  - Statut (Gagné/Perdu)
+  - Cote finale officielle
+  - Gain/Perte
+  ↓
+Envoie notification
+\`\`\`
+
+### Ce qui est mis à jour automatiquement
+
+- ✅ **Statut** : Gagné, Perdu ou Remboursé
+- ✅ **Cote finale** : Cote officielle PMU
+- ✅ **Gain** : Calcul automatique (mise × cote)
+- ✅ **Profit** : Gain - Mise
+- ✅ **Bankroll** : Mise à jour automatique
+
+### Notifications
+
+Vous recevez une notification :
+- 🎉 **"Pari gagné !"** avec le montant du gain
+- 😔 **"Pari perdu"** avec la perte
+
+---
+
+## 4️⃣ Validation Manuelle (Autres Plateformes)
+
+### Comment ça fonctionne ?
+
+Pour les **paris sur autres plateformes** (Betclic, Unibet, etc.), **vous devez saisir le résultat manuellement** :
+
+\`\`\`
+Pari créé sur Betclic
+  ↓
+Badge "⏰ À mettre à jour" affiché
+  ↓
+1h après la course
+  ↓
+Notification : "Mettez à jour votre pari"
+  ↓
+Vous cliquez sur "Gagné" ou "Perdu"
+  ↓
+Vous saisissez la cote finale réelle
+  ↓
+Validation → Bankroll mise à jour
+\`\`\`
+
+### Étapes de mise à jour
+
+#### Si le pari est gagné :
+
+1. Sur la page **Paris**, repérez votre pari avec le badge **"⏰ À mettre à jour"**
+2. Cliquez sur le bouton **✅ Gagné**
+3. Une modal s'ouvre :
+   - **Titre** : "Saisissez la cote finale affichée par votre bookmaker"
+   - **Champ** : Saisissez la **cote réelle** affichée par Betclic/Unibet
+   - **Gain estimé** : Calcul automatique (mise × cote)
+4. Cliquez sur **"Valider le gain"**
+5. ✅ Pari mis à jour, bankroll ajustée, badge disparaît
+
+#### Si le pari est perdu :
+
+1. Cliquez sur le bouton **❌ Perdu**
+2. Confirmation immédiate
+3. ✅ Pari mis à jour, perte enregistrée
+
+### Pourquoi saisir manuellement ?
+
+Les bookmakers comme Betclic, Unibet, Zeturf n'ont **pas d'API publique**. Nous ne pouvons donc pas récupérer automatiquement :
+- Les résultats des courses
+- Les cotes finales
+- Les gains
+
+**C'est pourquoi vous devez saisir ces informations vous-même** pour garantir l'exactitude de vos statistiques.
+
+---
+
+## 5️⃣ Badges et Indicateurs
+
+### Sur les Bankrolls
+
+| Badge | Signification |
+|-------|--------------|
+| 🟢 **Auto** | Plateforme PMU - Résultats automatiques |
+| 🟠 **Manuel** | Autre plateforme - Mise à jour manuelle |
+
+### Sur les Paris
+
+| Badge | Signification |
+|-------|--------------|
+| 🟡 **En cours** | Pari en attente de résultat |
+| 🟢 **Gagné** | Pari gagné |
+| 🔴 **Perdu** | Pari perdu |
+| ⚪ **Remboursé** | Pari annulé/remboursé |
+| ⏰ **À mettre à jour** | Pari manuel nécessitant votre action |
+
+---
+
+## 6️⃣ FAQ et Dépannage
+
+### ❓ Pourquoi mon pari Betclic n'est pas mis à jour automatiquement ?
+
+**Réponse** : Les paris sur Betclic, Unibet et autres bookmakers nécessitent une **mise à jour manuelle** car ces plateformes n'ont pas d'API publique. Seuls les paris PMU sont mis à jour automatiquement.
+
+### ❓ J'ai oublié de mettre à jour mon pari, que faire ?
+
+**Réponse** : Pas de panique ! Vous pouvez mettre à jour un pari à tout moment :
+1. Allez sur la page **Paris**
+2. Trouvez votre pari avec le badge **"⏰ À mettre à jour"**
+3. Cliquez sur **Gagné** ou **Perdu**
+4. Saisissez la cote finale
+
+### ❓ Puis-je modifier le type d'une bankroll existante ?
+
+**Réponse** : Oui ! Allez sur **Bankroll**, cliquez sur **Modifier** (icône crayon), et changez le type. 
+
+⚠️ **Attention** : Cela affectera uniquement les **futurs paris**, pas les paris existants.
+
+### ❓ La cote PMU automatique est différente de ma cote saisie, c'est normal ?
+
+**Réponse** : Oui, c'est normal et c'est justement l'intérêt du système :
+- **Cote saisie** = Cote au moment où vous avez placé le pari
+- **Cote finale PMU** = Cote officielle après la course
+
+Le système utilise la **cote finale** pour calculer vos gains réels.
+
+### ❓ Je ne reçois pas les notifications de mise à jour
+
+**Réponse** : Vérifiez :
+1. Vos **paramètres de notification** dans votre profil
+2. Que votre **email est vérifié**
+3. Que les notifications ne sont pas dans vos **spams**
+
+### ❓ Puis-je avoir plusieurs bankrolls du même type ?
+
+**Réponse** : Oui ! Vous pouvez avoir :
+- Plusieurs bankrolls PMU (ex: "PMU Principal", "PMU Test")
+- Plusieurs bankrolls Betclic (ex: "Betclic FR", "Betclic BE")
+
+Chaque bankroll est indépendante.
+
+---
+
+## 🔧 Pour les Administrateurs
+
+### Vérifier les paris en attente de mise à jour
+
+\`\`\`sql
+SELECT 
+  b.id,
+  b.date,
+  b.platform,
+  p.platform_type,
+  b.status,
+  b.requires_manual_update
+FROM bets b
+LEFT JOIN platforms p ON b.platform_id = p.id
+WHERE b.status = 'pending'
+  AND b.requires_manual_update = true
+ORDER BY b.date DESC;
+\`\`\`
+
+### Forcer la mise à jour d'anciens paris
+
+Si des paris créés avant l'implémentation n'ont pas le flag \`requires_manual_update\`, exécutez :
+
+\`\`\`bash
+cd backend
+npx ts-node scripts/migrate-manual-bets.ts
+\`\`\`
+
+### Logs du Cron Job
+
+Les logs du cron job PMU sont visibles dans la console backend :
+
+\`\`\`
+🔄 Starting automatic bet status update...
+Found 5 pending PMU bets to check (auto-update only)
+✅ Automatic bet status update completed
+\`\`\`
+
+---
+
+## 📊 Statistiques
+
+### Répartition Auto vs Manuel
+
+Pour voir la répartition de vos paris :
+
+1. Allez sur **Dashboard → Statistiques**
+2. Filtrez par **Plateforme**
+3. Comparez les performances entre PMU (auto) et autres (manuel)
+
+---
+
+## ✅ Résumé
+
+| Aspect | PMU (Auto) | Autres (Manuel) |
+|--------|-----------|-----------------|
+| **Création bankroll** | Type "PMU" | Type "Autre" |
+| **Badge** | 🟢 Auto | 🟠 Manuel |
+| **Mise à jour résultat** | ✅ Automatique (10 min) | ⚠️ Manuelle (vous) |
+| **Cote finale** | 📡 API PMU | 📝 Vous saisissez |
+| **Notification** | 🎉 Gagné/Perdu | ⏰ À mettre à jour |
+| **Avantage** | Zéro effort | Fonctionne partout |
+
+---
+
+**🎯 Vous avez maintenant toutes les clés pour gérer vos paris efficacement !**
+
+*Pour toute question, contactez le support ou consultez les autres pages de documentation.*
+`,
+  },
 };
 
 export default function DocPage() {
@@ -954,6 +1251,7 @@ export default function DocPage() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
+  const { settings } = useSettings();
   
   // User & Notifications
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -1150,7 +1448,7 @@ export default function DocPage() {
               <div className="p-2 bg-primary-600 rounded-lg">
                 <Home className="h-5 w-5 text-white" />
               </div>
-              <span className="text-xl font-bold text-gray-900">BetTracker Pro</span>
+              <span className="text-xl font-bold text-gray-900">{settings?.siteName || 'BetTracker'}</span>
             </Link>
             
             {/* Desktop Navigation */}
@@ -1500,10 +1798,10 @@ export default function DocPage() {
                 <div className="p-2 bg-primary-600 rounded-lg">
                   <Home className="h-5 w-5 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-white">BetTracker Pro</h3>
+                <h3 className="text-xl font-bold text-white">{settings?.siteName || 'BetTracker'}</h3>
               </div>
               <p className="text-sm text-gray-400 mb-4">
-                Gérez vos paris hippiques avec intelligence. Statistiques avancées, intégration IA et outils professionnels.
+                {settings?.siteDescription || 'Plateforme de gestion de paris hippiques'}
               </p>
               <div className="flex space-x-3">
                 <a
@@ -1625,10 +1923,10 @@ export default function DocPage() {
           <div className="border-t border-gray-800 pt-8">
             <div className="flex flex-col md:flex-row items-center justify-between text-sm">
               <p className="text-gray-400">
-                © {new Date().getFullYear()} BetTracker Pro. Tous droits réservés.
+                © {new Date().getFullYear()} {settings?.siteName || 'BetTracker'}. Tous droits réservés.
               </p>
               <p className="text-gray-500 mt-2 md:mt-0">
-                Fait avec ❤️ pour les passionnés de turf
+                {settings?.footerText || 'Fait avec ❤️ pour les passionnés de turf'}
               </p>
             </div>
           </div>

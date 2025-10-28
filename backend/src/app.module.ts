@@ -22,6 +22,7 @@ import { PmuModule } from './pmu/pmu.module';
 import { TipstersModule } from './tipsters/tipsters.module';
 import { ApiModule } from './api/api.module';
 import { McpModule } from './mcp/mcp.module';
+import { SettingsModule } from './settings/settings.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { McpModule } from './mcp/mcp.module';
     TipstersModule,
     ApiModule,
     McpModule,
+    SettingsModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

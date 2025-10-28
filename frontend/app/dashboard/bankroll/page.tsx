@@ -342,7 +342,18 @@ export default function BankrollPage() {
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <h3 className="font-semibold text-gray-900">{platform.name}</h3>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold text-gray-900">{platform.name}</h3>
+                          {platform.platformType === 'PMU' ? (
+                            <span className="inline-block px-2 py-1 text-xs bg-green-100 text-green-700 rounded font-medium">
+                              Auto
+                            </span>
+                          ) : (
+                            <span className="inline-block px-2 py-1 text-xs bg-orange-100 text-orange-700 rounded font-medium">
+                              Manuel
+                            </span>
+                          )}
+                        </div>
                         {!platform.isActive && (
                           <span className="inline-block px-2 py-1 text-xs bg-gray-200 text-gray-600 rounded mt-1">
                             Inactif

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { useSettings } from '@/contexts/SettingsContext';
 import {
   LayoutDashboard,
   Ticket,
@@ -38,6 +39,7 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const { settings } = useSettings();
 
   return (
     <>
@@ -62,7 +64,7 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
       <div className="flex h-16 items-center px-6 border-b border-gray-800">
         <Link href="/dashboard" className="flex items-center space-x-2">
           <span className="text-2xl">🏇</span>
-          <span className="text-xl font-bold">BetTracker Pro</span>
+          <span className="text-xl font-bold">{settings?.siteName || 'BetTracker'}</span>
         </Link>
       </div>
 
@@ -92,7 +94,12 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
       <div className="border-t border-gray-800 p-4">
         <div className="text-xs text-gray-400">
           <p className="font-medium">Version 1.0.0</p>
-          <p className="mt-1">© 2025 BetTracker Pro</p>
+          <p className="mt-1">© 2025 {settings?.siteName || 'BetTracker'}</p>
+          {settings?.supportEmail && (
+            <p className="mt-2 text-gray-500">
+              Support: <a href={`mailto:${settings.supportEmail}`} className="text-primary-400 hover:text-primary-300">{settings.supportEmail}</a>
+            </p>
+          )}
         </div>
       </div>
 

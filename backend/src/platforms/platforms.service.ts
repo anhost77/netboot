@@ -18,6 +18,8 @@ export class PlatformsService {
       data: {
         userId,
         name: createPlatformDto.name,
+        platformType: createPlatformDto.platformType || 'OTHER',
+        autoUpdateResults: createPlatformDto.platformType === 'PMU',
         initialBankroll: new Decimal(createPlatformDto.initialBankroll),
         currentBankroll: new Decimal(createPlatformDto.initialBankroll),
       },
@@ -60,9 +62,15 @@ export class PlatformsService {
     // Vérifier que la plateforme existe et appartient à l'utilisateur
     await this.findOne(userId, id);
 
+    // Si le type de plateforme change, mettre à jour autoUpdateResults
+    const updateData: any = { ...updatePlatformDto };
+    if (updatePlatformDto.platformType) {
+      updateData.autoUpdateResults = updatePlatformDto.platformType === 'PMU';
+    }
+
     return this.prisma.platform.update({
       where: { id },
-      data: updatePlatformDto,
+      data: updateData,
     });
   }
 

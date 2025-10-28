@@ -69,6 +69,11 @@ export interface Bet {
   winningHorse?: string | null;
   stake: number;
   odds?: number | null;
+  oddsSource?: string | null;
+  finalOdds?: number | null;
+  finalOddsSource?: string | null;
+  platformId?: string | null;
+  requiresManualUpdate?: boolean;
   status: BetStatus;
   payout?: number | null;
   profit?: number | null;

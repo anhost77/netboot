@@ -6,6 +6,7 @@ import { UsersManagementService } from './users-management.service';
 import { AuditLogService } from './audit-log.service';
 import { PlansManagementService } from './plans-management.service';
 import { BetsManagementService } from './bets-management.service';
+import { SettingsManagementService } from './settings-management.service';
 import { UpdateUserRoleDto } from './dto/update-user-role.dto';
 import { CreatePlanDto } from './dto/create-plan.dto';
 import { UpdatePlanDto } from './dto/update-plan.dto';
@@ -25,6 +26,7 @@ export class AdminController {
     private auditLog: AuditLogService,
     private plansManagement: PlansManagementService,
     private betsManagement: BetsManagementService,
+    private settingsManagement: SettingsManagementService,
   ) {}
 
   @Get('dashboard/overview')
@@ -330,5 +332,30 @@ export class AdminController {
   @ApiOperation({ summary: 'Get bets timeline', description: 'Get bets timeline for last N days (admin only)' })
   getBetsTimeline(@Query('days') days?: string) {
     return this.betsManagement.getBetsTimeline(days ? parseInt(days) : 7);
+  }
+
+  // Settings Management Endpoints
+  @Get('settings')
+  @ApiOperation({ summary: 'Get platform settings', description: 'Get all platform settings (admin only)' })
+  getSettings() {
+    return this.settingsManagement.getSettings();
+  }
+
+  @Patch('settings')
+  @ApiOperation({ summary: 'Update platform settings', description: 'Update platform settings (admin only)' })
+  updateSettings(@Body() settings: any) {
+    return this.settingsManagement.updateSettings(settings);
+  }
+
+  @Post('settings/reset')
+  @ApiOperation({ summary: 'Reset platform settings', description: 'Reset settings to default values (admin only)' })
+  resetSettings() {
+    return this.settingsManagement.resetSettings();
+  }
+
+  @Get('settings/system-info')
+  @ApiOperation({ summary: 'Get system information', description: 'Get system and platform information (admin only)' })
+  getSystemInfo() {
+    return this.settingsManagement.getSystemInfo();
   }
 }

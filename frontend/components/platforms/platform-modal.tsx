@@ -13,6 +13,7 @@ interface PlatformModalProps {
 
 interface FormData {
   name: string;
+  platformType: 'PMU' | 'OTHER';
   initialBankroll: number;
   isActive?: boolean;
 }
@@ -24,14 +25,18 @@ export default function PlatformModal({ platform, onClose, onSuccess }: Platform
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<FormData>({
     defaultValues: {
       name: platform?.name || '',
+      platformType: (platform as any)?.platformType || 'OTHER',
       initialBankroll: platform?.initialBankroll || 0,
       isActive: platform?.isActive ?? true,
     },
   });
+
+  const platformType = watch('platformType');
 
   const onSubmit = async (data: FormData) => {
     try {
@@ -42,12 +47,14 @@ export default function PlatformModal({ platform, onClose, onSuccess }: Platform
         // Mise à jour
         await platformsAPI.update(platform.id, {
           name: data.name,
+          platformType: data.platformType,
           isActive: data.isActive,
         });
       } else {
         // Création
         await platformsAPI.create({
           name: data.name,
+          platformType: data.platformType,
           initialBankroll: Number(data.initialBankroll),
         });
       }
@@ -85,6 +92,30 @@ export default function PlatformModal({ platform, onClose, onSuccess }: Platform
             </div>
           )}
 
+          {/* Type de plateforme */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Type de plateforme *
+            </label>
+            <select
+              {...register('platformType', { required: 'Le type est requis' })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            >
+              <option value="PMU">PMU (Mise à jour automatique)</option>
+              <option value="OTHER">Autre (Betclic, Unibet, Zeturf...)</option>
+            </select>
+            <p className="mt-1 text-xs text-gray-500">
+              {platformType === 'PMU' 
+                ? '✅ Les résultats seront mis à jour automatiquement'
+                : '⚠️ Vous devrez saisir manuellement les résultats des paris'}
+            </p>
+            {platform && (
+              <p className="mt-1 text-xs text-orange-600 font-medium">
+                ⚠️ Attention : Modifier le type affectera les futurs paris uniquement
+              </p>
+            )}
+          </div>
+
           {/* Nom de la plateforme */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -93,7 +124,7 @@ export default function PlatformModal({ platform, onClose, onSuccess }: Platform
             <input
               type="text"
               {...register('name', { required: 'Le nom est requis' })}
-              placeholder="Ex: PMU, Betclic, Zeturf..."
+              placeholder={platformType === 'PMU' ? 'PMU' : 'Ex: Betclic, Unibet, Zeturf...'}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
             {errors.name && (

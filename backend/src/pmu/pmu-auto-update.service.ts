@@ -31,14 +31,24 @@ export class PmuAutoUpdateService {
     this.logger.log('🔄 Starting automatic bet status update...');
 
     try {
-      // 1. Récupérer tous les paris en attente liés à une course PMU
+      // 1. Récupérer tous les paris en attente liés à une course PMU ET sur plateforme PMU
       const pendingBets = await this.prisma.bet.findMany({
         where: {
           status: 'pending',
           pmuRaceId: { not: null },
+          OR: [
+            { platformId: null }, // Anciens paris sans plateforme (considérés comme PMU)
+            {
+              bettingPlatform: {
+                platformType: 'PMU',
+                autoUpdateResults: true,
+              },
+            },
+          ],
         },
         include: {
           user: true,
+          bettingPlatform: true,
           pmuRace: {
             include: {
               horses: true,
@@ -47,7 +57,7 @@ export class PmuAutoUpdateService {
         },
       });
 
-      this.logger.log(`Found ${pendingBets.length} pending bets to check`);
+      this.logger.log(`Found ${pendingBets.length} pending PMU bets to check (auto-update only)`);
 
       for (const bet of pendingBets) {
         try {
@@ -59,8 +69,108 @@ export class PmuAutoUpdateService {
       }
 
       this.logger.log('✅ Automatic bet status update completed');
+      
+      // 2. Notifier les utilisateurs pour les paris manuels (non-PMU)
+      await this.notifyManualBetsUpdate();
     } catch (error) {
       this.logger.error(`Error in checkPendingBets: ${error.message}`, error.stack);
+    }
+  }
+
+  /**
+   * Notifie les utilisateurs qu'ils doivent mettre à jour manuellement leurs paris
+   */
+  private async notifyManualBetsUpdate() {
+    try {
+      // Récupérer les paris en attente sur plateformes non-PMU qui nécessitent une mise à jour manuelle
+      const manualBets = await this.prisma.bet.findMany({
+        where: {
+          status: 'pending',
+          requiresManualUpdate: true,
+          bettingPlatform: {
+            platformType: { not: 'PMU' },
+          },
+          // Course passée depuis au moins 1 heure
+          date: {
+            lte: new Date(Date.now() - 60 * 60 * 1000),
+          },
+        },
+        include: {
+          user: true,
+          bettingPlatform: true,
+        },
+      });
+
+      this.logger.log(`Found ${manualBets.length} manual bets requiring user update`);
+
+      for (const bet of manualBets) {
+        try {
+          await this.sendManualUpdateNotification(bet);
+          
+          // Marquer comme notifié pour ne pas spammer
+          await this.prisma.bet.update({
+            where: { id: bet.id },
+            data: { requiresManualUpdate: false },
+          });
+        } catch (error) {
+          this.logger.error(`Error notifying manual bet ${bet.id}: ${error.message}`);
+        }
+      }
+    } catch (error) {
+      this.logger.error(`Error in notifyManualBetsUpdate: ${error.message}`, error.stack);
+    }
+  }
+
+  /**
+   * Envoie une notification pour demander à l'utilisateur de mettre à jour son pari
+   */
+  private async sendManualUpdateNotification(bet: any) {
+    const platformName = bet.bettingPlatform?.name || 'votre plateforme';
+    const subject = '⏰ Mise à jour de pari requise';
+    const message = `Votre pari sur ${platformName} (${bet.hippodrome || 'la course'}) nécessite une mise à jour manuelle. Veuillez indiquer le résultat et la cote finale.`;
+
+    // Envoyer un email
+    if (bet.user?.email) {
+      try {
+        await this.emailService.sendEmail({
+          to: bet.user.email,
+          subject: subject,
+          html: `
+            <h2>${subject}</h2>
+            <p>${message}</p>
+            <p><strong>Détails du pari:</strong></p>
+            <ul>
+              <li>Plateforme: ${platformName}</li>
+              <li>Hippodrome: ${bet.hippodrome || 'N/A'}</li>
+              <li>Course: ${bet.raceNumber || 'N/A'}</li>
+              <li>Chevaux: ${bet.horsesSelected || 'N/A'}</li>
+              <li>Mise: ${bet.stake}€</li>
+              <li>Cote saisie: ${bet.odds || 'N/A'}</li>
+            </ul>
+            <p><a href="${process.env.FRONTEND_URL}/dashboard/bets" style="display: inline-block; padding: 10px 20px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 5px;">Mettre à jour le pari</a></p>
+          `,
+        });
+        this.logger.log(`📧 Manual update email sent to ${bet.user.email} for bet ${bet.id}`);
+      } catch (error) {
+        this.logger.error(`Error sending email for manual bet ${bet.id}: ${error.message}`);
+      }
+    }
+
+    // Envoyer une notification push
+    try {
+      await this.pushNotificationService.sendToUser(
+        bet.userId,
+        subject,
+        message,
+        {
+          type: 'manual_bet_update',
+          betId: bet.id,
+          action: 'update_bet',
+        },
+      );
+      this.logger.log(`📱 Manual update push sent to user ${bet.userId} for bet ${bet.id}`);
+    } catch (error) {
+      this.logger.error(`Error sending push for manual bet ${bet.id}: ${error.message}`);
     }
   }
 

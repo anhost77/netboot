@@ -14,8 +14,10 @@ import ProfitChartCard from '@/components/dashboard/profit-chart-card';
 import BankrollChart from '@/components/charts/bankroll-chart';
 import BudgetAlertModal from '@/components/budget/budget-alert-modal';
 import { DetailedMetrics } from '@/components/dashboard/detailed-metrics';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 export default function DashboardPage() {
+  usePageTitle('Dashboard');
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
   const [recentBets, setRecentBets] = useState<Bet[]>([]);
   const [globalBankroll, setGlobalBankroll] = useState<GlobalBankroll | null>(null);

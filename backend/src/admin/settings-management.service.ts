@@ -4,6 +4,8 @@ import { PrismaService } from '../prisma.service';
 export interface PlatformSettings {
   siteName: string;
   siteDescription: string;
+  siteTagline: string;
+  footerText: string;
   maintenanceMode: boolean;
   registrationEnabled: boolean;
   emailVerificationRequired: boolean;
@@ -41,8 +43,10 @@ export class SettingsManagementService {
   constructor(private prisma: PrismaService) {}
 
   private defaultSettings: PlatformSettings = {
-    siteName: 'NetBoot',
-    siteDescription: 'Plateforme de gestion de paris hippiques',
+    siteName: 'BetTracker',
+    siteDescription: 'Gérez vos paris hippiques avec intelligence. Statistiques avancées, intégration IA et outils professionnels.',
+    siteTagline: 'Plateforme de gestion de paris hippiques',
+    footerText: 'Fait avec ❤️ pour les passionnés de turf',
     maintenanceMode: false,
     registrationEnabled: true,
     emailVerificationRequired: false,
@@ -50,8 +54,8 @@ export class SettingsManagementService {
     maxBetsPerMonth: 3000,
     minBetAmount: 1,
     maxBetAmount: 10000,
-    supportEmail: 'support@netboot.fr',
-    contactEmail: 'contact@netboot.fr',
+    supportEmail: 'support@bettracker.fr',
+    contactEmail: 'contact@bettracker.fr',
     termsUrl: '/terms',
     privacyUrl: '/privacy',
     faqUrl: '/faq',
@@ -85,13 +89,13 @@ export class SettingsManagementService {
       const created = await this.prisma.platformSetting.create({
         data: {
           key: 'platform_config',
-          value: this.defaultSettings,
+          value: this.defaultSettings as any,
         },
       });
-      return created.value as PlatformSettings;
+      return created.value as unknown as PlatformSettings;
     }
 
-    return setting.value as PlatformSettings;
+    return setting.value as unknown as PlatformSettings;
   }
 
   async updateSettings(settings: Partial<PlatformSettings>): Promise<PlatformSettings> {
@@ -103,17 +107,17 @@ export class SettingsManagementService {
     if (setting) {
       const result = await this.prisma.platformSetting.update({
         where: { id: setting.id },
-        data: { value: updated },
+        data: { value: updated as any },
       });
-      return result.value as PlatformSettings;
+      return result.value as unknown as PlatformSettings;
     } else {
       const result = await this.prisma.platformSetting.create({
         data: {
           key: 'platform_config',
-          value: updated,
+          value: updated as any,
         },
       });
-      return result.value as PlatformSettings;
+      return result.value as unknown as PlatformSettings;
     }
   }
 
@@ -123,17 +127,17 @@ export class SettingsManagementService {
     if (setting) {
       const result = await this.prisma.platformSetting.update({
         where: { id: setting.id },
-        data: { value: this.defaultSettings },
+        data: { value: this.defaultSettings as any },
       });
-      return result.value as PlatformSettings;
+      return result.value as unknown as PlatformSettings;
     } else {
       const result = await this.prisma.platformSetting.create({
         data: {
           key: 'platform_config',
-          value: this.defaultSettings,
+          value: this.defaultSettings as any,
         },
       });
-      return result.value as PlatformSettings;
+      return result.value as unknown as PlatformSettings;
     }
   }
 

@@ -10,7 +10,7 @@ import { HorsePerformanceCard } from './horse-performance-card';
 import { type PMUBetType, formatPMUBetCode, formatSelectionsDisplay } from '@/lib/pmu-bet-types';
 
 interface PMUSelectorProps {
-  platforms: Array<{ id: string; name: string; isActive: boolean }>;
+  platforms: Array<{ id: string; name: string; isActive: boolean; platformType?: string; autoUpdateResults?: boolean }>;
   onSelect: (data: {
     hippodrome: string;
     hippodromeCode: string;
@@ -254,7 +254,25 @@ export default function PMUSelector({ platforms, onSelect }: PMUSelectorProps) {
                         {platform.name.charAt(0).toUpperCase()}
                       </span>
                     </div>
-                    <p className="font-semibold text-gray-900">{platform.name}</p>
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-gray-900">{platform.name}</p>
+                        {platform.platformType === 'PMU' ? (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">
+                            Auto
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-700">
+                            Manuel
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {platform.platformType === 'PMU' 
+                          ? 'Résultats mis à jour automatiquement'
+                          : 'Vous devrez saisir le résultat'}
+                      </p>
+                    </div>
                   </div>
                   {selectedPlatform === platform.id && (
                     <Check className="h-5 w-5 text-primary-600" />

@@ -9,6 +9,8 @@ export interface Platform {
   id: string;
   userId: string;
   name: string;
+  platformType: 'PMU' | 'OTHER';
+  autoUpdateResults: boolean;
   initialBankroll: number;
   currentBankroll: number;
   isActive: boolean;
@@ -33,11 +35,13 @@ export interface BankrollTransaction {
 
 export interface CreatePlatformDto {
   name: string;
+  platformType?: 'PMU' | 'OTHER';
   initialBankroll: number;
 }
 
 export interface UpdatePlatformDto {
   name?: string;
+  platformType?: 'PMU' | 'OTHER';
   isActive?: boolean;
 }
 

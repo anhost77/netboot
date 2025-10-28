@@ -339,7 +339,14 @@ model Bet {
   horsesSelected        String?         @map("horses_selected")
   winningHorse          String?         @map("winning_horse")
   stake                 Decimal         @db.Decimal(10, 2)
-  odds                  Decimal?        @db.Decimal(10, 2)
+  odds                  Decimal?        @db.Decimal(10, 2)  // Cote ORIGINALE saisie par l'utilisateur
+  oddsSource            String?         @map("odds_source")  // Source de la cote originale (PMU, Betclic, Unibet, manual)
+  finalOdds             Decimal?        @db.Decimal(10, 2) @map("final_odds")  // Cote FINALE utilisée pour le calcul du payout
+  finalOddsSource       String?         @map("final_odds_source")  // Source de la cote finale
+  oddsUpdatedAt         DateTime?       @map("odds_updated_at")  // Date de dernière mise à jour des cotes
+  useOriginalOdds       Boolean         @default(false) @map("use_original_odds")  // Forcer l'utilisation de la cote originale
+  platformId            String?         @map("platform_id") // Link to betting platform (bankroll)
+  requiresManualUpdate  Boolean         @default(false) @map("requires_manual_update") // Nécessite une mise à jour manuelle
   status                BetStatus       @default(pending)
   payout                Decimal?        @db.Decimal(10, 2)
   profit                Decimal?        @db.Decimal(10, 2)
@@ -356,6 +363,7 @@ model Bet {
   user                  User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
   pmuRace               PmuRace?                @relation(fields: [pmuRaceId], references: [id], onDelete: SetNull)
   tipster               Tipster?                @relation(fields: [tipsterId], references: [id], onDelete: SetNull)
+  bettingPlatform       Platform?               @relation(fields: [platformId], references: [id], onDelete: SetNull)
   bankrollTransactions  BankrollTransaction[]
 
   @@index([userId, date])
@@ -666,6 +674,8 @@ model Platform {
   id                    String                @id @default(uuid())
   userId                String                @map("user_id")
   name                  String
+  platformType          String                @default("OTHER") @map("platform_type") // "PMU" ou "OTHER" (Betclic, Unibet, etc.)
+  autoUpdateResults     Boolean               @default(false) @map("auto_update_results") // Mise à jour auto des résultats
   initialBankroll       Decimal               @map("initial_bankroll") @db.Decimal(10, 2)
   currentBankroll       Decimal               @map("current_bankroll") @db.Decimal(10, 2)
   isActive              Boolean               @default(true) @map("is_active")
@@ -675,8 +685,10 @@ model Platform {
   // Relations
   user                  User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions          BankrollTransaction[]
+  bets                  Bet[]
 
   @@index([userId])
+  @@index([platformType])
   @@map("platforms")
 }
 

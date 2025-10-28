@@ -100,18 +100,74 @@ export class BetsService {
       }
     }
 
+    // Déterminer si le pari nécessite une mise à jour manuelle
+    let requiresManualUpdate = false;
+    let platformId: string | null = null;
+    let oddsSource = 'manual';
+    
+    if (dto.platform) {
+      // Chercher la plateforme (bankroll) correspondante par ID ou par nom (fallback)
+      let platform = await this.prisma.platform.findFirst({
+        where: {
+          userId,
+          id: dto.platform,
+        },
+      });
+      
+      // Si pas trouvé par ID, essayer par nom (pour rétrocompatibilité)
+      if (!platform) {
+        platform = await this.prisma.platform.findFirst({
+          where: {
+            userId,
+            name: dto.platform,
+          },
+        });
+      }
+      
+      console.log('🔍 Platform lookup:', {
+        userId,
+        platformIdOrName: dto.platform,
+        found: !!platform,
+        platformName: platform?.name,
+        platformType: platform?.platformType,
+        status: dto.status,
+      });
+      
+      if (platform) {
+        platformId = platform.id;
+        oddsSource = platform.name;
+        
+        // Si plateforme non-PMU et pari en attente, marquer pour mise à jour manuelle
+        if (platform.platformType !== 'PMU' && dto.status === 'pending') {
+          requiresManualUpdate = true;
+          console.log('✅ requiresManualUpdate set to TRUE for', platform.name);
+        } else {
+          console.log('ℹ️ requiresManualUpdate remains FALSE:', {
+            platformName: platform.name,
+            platformType: platform.platformType,
+            status: dto.status,
+          });
+        }
+      } else {
+        console.log('⚠️ Platform not found for id/name:', dto.platform);
+      }
+    }
+
     const bet = await this.prisma.bet.create({
       data: {
         userId,
         date: new Date(dto.date),
         time: raceTime,
-        platform: dto.platform,
+        platform: oddsSource, // Stocker le nom de la plateforme, pas l'ID
         hippodrome: dto.hippodrome,
         raceNumber: dto.raceNumber,
         betType: dto.betType,
         horsesSelected: dto.horsesSelected,
         stake: dto.stake,
         odds: dto.odds,
+        oddsSource,
+        platformId,
+        requiresManualUpdate,
         status: dto.status,
         payout: dto.payout,
         profit,
@@ -1076,5 +1132,108 @@ export class BetsService {
         currentBankroll: Math.max(0, newBankroll),
       },
     });
+  }
+
+  /**
+   * Update bet result manually (for non-PMU platforms)
+   */
+  async updateBetResult(
+    betId: string,
+    userId: string,
+    updateDto: { status: 'won' | 'lost' | 'refunded'; finalOdds?: number; payout?: number },
+  ) {
+    // Vérifier que le pari appartient à l'utilisateur
+    const bet = await this.prisma.bet.findFirst({
+      where: { id: betId, userId },
+      include: { bettingPlatform: true },
+    });
+
+    if (!bet) {
+      throw new NotFoundException('Pari non trouvé');
+    }
+
+    // Vérifier que le pari est en attente
+    if (bet.status !== 'pending') {
+      throw new ForbiddenException('Ce pari a déjà été mis à jour');
+    }
+
+    // Calculer le profit et le payout
+    let profit: number | null = null;
+    let payout: number | null = updateDto.payout || null;
+    let finalOdds = updateDto.finalOdds || bet.odds?.toNumber() || null;
+
+    if (updateDto.status === 'won') {
+      // Si payout fourni, l'utiliser
+      if (payout) {
+        profit = payout - bet.stake.toNumber();
+      } 
+      // Sinon calculer avec finalOdds
+      else if (finalOdds) {
+        payout = bet.stake.toNumber() * finalOdds;
+        profit = payout - bet.stake.toNumber();
+      }
+    } else if (updateDto.status === 'lost') {
+      profit = -bet.stake.toNumber();
+      payout = 0;
+    } else if (updateDto.status === 'refunded') {
+      profit = 0;
+      payout = bet.stake.toNumber(); // Remboursement
+    }
+
+    // Mettre à jour le pari
+    const updatedBet = await this.prisma.bet.update({
+      where: { id: betId },
+      data: {
+        status: updateDto.status,
+        finalOdds: finalOdds,
+        finalOddsSource: 'user_manual',
+        oddsUpdatedAt: new Date(),
+        payout: payout,
+        profit: profit,
+        requiresManualUpdate: false,
+      },
+    });
+
+    // Mettre à jour la bankroll si nécessaire
+    if (bet.platform && profit !== null) {
+      const settings = await this.prisma.userSettings.findUnique({
+        where: { userId },
+      });
+      const bankrollMode = settings?.bankrollMode || 'immediate';
+
+      if (bankrollMode === 'immediate') {
+        // En mode immédiat, on a déjà déduit la mise, donc on ajoute le payout
+        if (payout && payout > 0) {
+          await this.updatePlatformBankroll(userId, bet.platform, payout, bet.id, bet.date);
+        }
+      } else {
+        // En mode "on loss", on met à jour avec le profit/perte
+        await this.updatePlatformBankroll(userId, bet.platform, profit, bet.id, bet.date);
+      }
+    }
+
+    // Log de l'action
+    await this.auditLog.log(userId, 'BET_UPDATE_RESULT', 'Bet', betId, {
+      status: updateDto.status,
+      finalOdds,
+      payout,
+      profit,
+    });
+
+    // Notification
+    const message = updateDto.status === 'won' 
+      ? `Félicitations ! Votre pari est gagné. Gain: ${profit?.toFixed(2)}€`
+      : updateDto.status === 'lost'
+      ? `Votre pari est perdu. Perte: ${Math.abs(profit || 0).toFixed(2)}€`
+      : `Votre pari a été annulé. Mise remboursée: ${bet.stake}€`;
+
+    await this.notificationsService.notifySuccess(
+      userId,
+      'Pari mis à jour',
+      message,
+      '/dashboard/bets'
+    );
+
+    return updatedBet;
   }
 }

@@ -94,4 +94,9 @@ export class CreateBetDto {
   @IsString({ each: true })
   @IsOptional()
   tags?: string[];
+
+  @ApiPropertyOptional({ example: 'uuid-tipster-id', description: 'ID du tipster (optionnel)' })
+  @IsString()
+  @IsOptional()
+  tipsterId?: string;
 }

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '@/lib/auth-context';
+import { notificationService } from '@/lib/notification-service';
 
 interface LoginForm {
   email: string;
@@ -49,6 +50,16 @@ export default function LoginPage() {
         setError('');
         // Clear the form to prevent password from appearing in 2FA field
         reset({ twoFactorCode: '' });
+        notificationService.info(
+          'Authentification à deux facteurs',
+          'Veuillez entrer votre code 2FA pour continuer'
+        );
+      } else {
+        // Login successful
+        notificationService.success(
+          'Connexion réussie !',
+          'Bienvenue sur BetTracker Pro'
+        );
       }
     } catch (err: any) {
       console.error('Login error:', err);

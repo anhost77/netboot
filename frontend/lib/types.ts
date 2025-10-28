@@ -9,6 +9,11 @@ export interface User {
   twoFactorEnabled: boolean;
   createdAt: string;
   updatedAt: string;
+  phone?: string | null;
+  address?: string | null;
+  city?: string | null;
+  postalCode?: string | null;
+  country?: string | null;
 }
 
 // Auth Types
@@ -41,6 +46,8 @@ export type HorseBetType =
   | 'couple_ordre'
   | 'trio'
   | 'trio_ordre'
+  | 'tierce'
+  | 'tierce_ordre'
   | 'quarte'
   | 'quarte_ordre'
   | 'quinte'
@@ -67,6 +74,7 @@ export interface Bet {
   profit?: number | null;
   notes?: string | null;
   tags?: string[] | null;
+  pmuRaceId?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -87,6 +95,7 @@ export interface CreateBetData {
   profit?: number;
   notes?: string;
   tags?: string[];
+  tipsterId?: string;
 }
 
 // Statistics Types

@@ -43,4 +43,9 @@ export class BetFiltersDto extends BetQueryDto {
   @IsString()
   @IsOptional()
   search?: string;
+
+  @ApiPropertyOptional({ example: 'uuid-tipster-id' })
+  @IsString()
+  @IsOptional()
+  tipsterId?: string;
 }

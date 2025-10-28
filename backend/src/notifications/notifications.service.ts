@@ -1,11 +1,19 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { NotificationFiltersDto } from './dto/notification-filters.dto';
+import { PushNotificationService } from './push-notification.service';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class NotificationsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    @Inject(forwardRef(() => PushNotificationService))
+    private pushService: PushNotificationService,
+    @Inject(forwardRef(() => EmailService))
+    private emailService: EmailService,
+  ) {}
 
   /**
    * Create a new notification
@@ -186,6 +194,7 @@ export class NotificationsService {
 
   /**
    * Send a notification to a user (helper for other modules)
+   * Handles web notification creation + push notifications + email based on user preferences
    */
   async notify(
     userId: string,
@@ -194,7 +203,49 @@ export class NotificationsService {
     message: string,
     link?: string,
   ) {
-    return this.create(userId, { type, title, message, link });
+    // Get user settings and user info to check notification preferences
+    const settings = await this.prisma.userSettings.findUnique({
+      where: { userId },
+    });
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true },
+    });
+
+    const notificationPreference = settings?.notificationPreference || 'web_only';
+    const pushEnabled = settings?.pushNotificationsEnabled || false;
+
+    // Create web notification if preference allows
+    if (notificationPreference !== 'none' && notificationPreference !== 'email_only') {
+      await this.create(userId, { type, title, message, link });
+    }
+
+    // Send push notification if enabled and preference allows
+    if (pushEnabled && notificationPreference !== 'none' && notificationPreference !== 'email_only') {
+      try {
+        await this.pushService.sendToUser(userId, title, message, { url: link });
+      } catch (error) {
+        console.error('Failed to send push notification:', error);
+      }
+    }
+
+    // Send email notification if preference is 'email_only' or 'both'
+    if (user && (notificationPreference === 'email_only' || notificationPreference === 'both')) {
+      try {
+        await this.emailService.sendNotificationEmail(
+          user.email,
+          type,
+          title,
+          message,
+          link,
+        );
+      } catch (error) {
+        console.error('Failed to send email notification:', error);
+      }
+    }
+
+    return { message: 'Notification sent successfully' };
   }
 
   /**

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -8,10 +8,13 @@ import { PrismaService } from '../prisma.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
+import { NotificationsModule } from '../notifications/notifications.module';
+import { AuditLogService } from '../admin/audit-log.service';
 
 @Module({
   imports: [
     PassportModule,
+    forwardRef(() => NotificationsModule),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -30,6 +33,7 @@ import { LocalStrategy } from './strategies/local.strategy';
     JwtStrategy,
     JwtRefreshStrategy,
     LocalStrategy,
+    AuditLogService,
   ],
   exports: [AuthService],
 })

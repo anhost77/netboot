@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { authAPI } from '@/lib/api/auth';
 import { subscriptionsAPI } from '@/lib/api/subscriptions';
+import { userSettingsAPI } from '@/lib/api/user-settings';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import {
   User,
@@ -13,7 +14,14 @@ import {
   Save,
   Trash2,
   CheckCircle,
+  Wallet,
+  TrendingDown,
+  TrendingUp,
+  Bell,
+  ChevronRight,
 } from 'lucide-react';
+import Link from 'next/link';
+import { ApiKeySection } from '@/components/settings/api-key-section';
 
 interface UserProfile {
   id: string;
@@ -22,6 +30,12 @@ interface UserProfile {
   lastName: string | null;
   role: string;
   createdAt: string;
+  twoFactorEnabled?: boolean;
+  phone?: string | null;
+  address?: string | null;
+  city?: string | null;
+  postalCode?: string | null;
+  country?: string | null;
 }
 
 interface Subscription {
@@ -46,8 +60,16 @@ export default function SettingsPage() {
   // Form state
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [address, setAddress] = useState('');
+  const [city, setCity] = useState('');
+  const [postalCode, setPostalCode] = useState('');
+  const [country, setCountry] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
+
+  // Bankroll preference state
+  const [bankrollMode, setBankrollMode] = useState<'immediate' | 'on_loss'>('immediate');
 
   // 2FA state
   const [show2FASetup, setShow2FASetup] = useState(false);
@@ -58,7 +80,19 @@ export default function SettingsPage() {
 
   useEffect(() => {
     loadData();
+    loadBankrollMode();
   }, []);
+
+  const loadBankrollMode = async () => {
+    try {
+      const settings = await userSettingsAPI.getSettings();
+      setBankrollMode(settings.bankrollMode);
+    } catch (error) {
+      console.error('Failed to load bankroll mode:', error);
+      // Default to immediate if error
+      setBankrollMode('immediate');
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -70,6 +104,11 @@ export default function SettingsPage() {
       setUser(userData);
       setFirstName(userData.firstName || '');
       setLastName(userData.lastName || '');
+      setPhone(userData.phone || '');
+      setAddress(userData.address || '');
+      setCity(userData.city || '');
+      setPostalCode(userData.postalCode || '');
+      setCountry(userData.country || '');
       setSubscription(subData);
     } catch (error) {
       console.error('Failed to load settings:', error);
@@ -81,12 +120,33 @@ export default function SettingsPage() {
   const handleSaveProfile = async () => {
     try {
       setIsSaving(true);
-      await authAPI.updateProfile({ firstName, lastName });
+      await authAPI.updateProfile({ 
+        firstName, 
+        lastName,
+        phone,
+        address,
+        city,
+        postalCode,
+        country
+      });
       alert('Profil mis à jour avec succès !');
       loadData();
     } catch (error) {
       console.error('Failed to save profile:', error);
       alert('Erreur lors de la mise à jour du profil');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSaveBankrollMode = async () => {
+    try {
+      setIsSaving(true);
+      await userSettingsAPI.updateBankrollMode(bankrollMode);
+      alert('Préférence de bankroll sauvegardée !');
+    } catch (error) {
+      console.error('Failed to save bankroll mode:', error);
+      alert('Erreur lors de la sauvegarde de la préférence');
     } finally {
       setIsSaving(false);
     }
@@ -275,6 +335,71 @@ export default function SettingsPage() {
             <p className="mt-1 text-xs text-gray-500">L'email ne peut pas être modifié</p>
           </div>
 
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Téléphone
+            </label>
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+              placeholder="Votre numéro de téléphone"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Adresse
+            </label>
+            <input
+              type="text"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+              placeholder="Votre adresse"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Code postal
+              </label>
+              <input
+                type="text"
+                value={postalCode}
+                onChange={(e) => setPostalCode(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                placeholder="75001"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Ville
+              </label>
+              <input
+                type="text"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                placeholder="Paris"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Pays
+              </label>
+              <input
+                type="text"
+                value={country}
+                onChange={(e) => setCountry(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                placeholder="France"
+              />
+            </div>
+          </div>
+
           <div className="pt-4">
             <button
               onClick={handleSaveProfile}
@@ -285,6 +410,136 @@ export default function SettingsPage() {
               <span>{isSaving ? 'Enregistrement...' : 'Enregistrer les modifications'}</span>
             </button>
           </div>
+        </div>
+      </div>
+
+      {/* Bankroll Management Preferences */}
+      <div className="bg-white rounded-lg shadow">
+        <div className="border-b border-gray-200 px-6 py-4">
+          <div className="flex items-center space-x-2">
+            <Wallet className="h-5 w-5 text-primary-600" />
+            <h2 className="text-lg font-semibold text-gray-900">Gestion de la Bankroll</h2>
+          </div>
+        </div>
+        <div className="p-6 space-y-4">
+          <div>
+            <h3 className="font-medium text-gray-900 mb-2">Mode de déduction de la mise</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Choisissez comment votre bankroll doit être mise à jour lors de la création d'un pari.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            {/* Option 1: Déduction immédiate */}
+            <label className={`flex items-start p-4 border-2 rounded-lg cursor-pointer transition-all ${
+              bankrollMode === 'immediate' 
+                ? 'border-primary-600 bg-primary-50' 
+                : 'border-gray-200 hover:border-gray-300'
+            }`}>
+              <input
+                type="radio"
+                name="bankrollMode"
+                value="immediate"
+                checked={bankrollMode === 'immediate'}
+                onChange={(e) => setBankrollMode(e.target.value as 'immediate')}
+                className="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500"
+              />
+              <div className="ml-3 flex-1">
+                <div className="flex items-center space-x-2">
+                  <TrendingDown className="h-5 w-5 text-primary-600" />
+                  <span className="font-semibold text-gray-900">Déduction immédiate</span>
+                  <span className="px-2 py-0.5 bg-green-100 text-green-800 text-xs font-medium rounded-full">
+                    Recommandé
+                  </span>
+                </div>
+                <p className="mt-1 text-sm text-gray-600">
+                  La mise est déduite de votre bankroll dès la création du pari. 
+                  Le gain est ajouté uniquement si vous gagnez.
+                </p>
+                <div className="mt-2 text-xs text-gray-500 bg-gray-50 p-2 rounded">
+                  <strong>Exemple :</strong> Bankroll 1000€ → Pari -50€ → Bankroll 950€<br/>
+                  Si gagné (+75€) → 1025€ | Si perdu → reste 950€
+                </div>
+              </div>
+            </label>
+
+            {/* Option 2: Déduction à la perte */}
+            <label className={`flex items-start p-4 border-2 rounded-lg cursor-pointer transition-all ${
+              bankrollMode === 'on_loss' 
+                ? 'border-primary-600 bg-primary-50' 
+                : 'border-gray-200 hover:border-gray-300'
+            }`}>
+              <input
+                type="radio"
+                name="bankrollMode"
+                value="on_loss"
+                checked={bankrollMode === 'on_loss'}
+                onChange={(e) => setBankrollMode(e.target.value as 'on_loss')}
+                className="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500"
+              />
+              <div className="ml-3 flex-1">
+                <div className="flex items-center space-x-2">
+                  <TrendingUp className="h-5 w-5 text-orange-600" />
+                  <span className="font-semibold text-gray-900">Déduction à la perte</span>
+                </div>
+                <p className="mt-1 text-sm text-gray-600">
+                  La bankroll reste inchangée lors de la création. 
+                  Elle est mise à jour uniquement quand le pari est gagné ou perdu.
+                </p>
+                <div className="mt-2 text-xs text-gray-500 bg-gray-50 p-2 rounded">
+                  <strong>Exemple :</strong> Bankroll 1000€ → Pari créé → Bankroll 1000€<br/>
+                  Si gagné (+25€) → 1025€ | Si perdu (-50€) → 950€
+                </div>
+              </div>
+            </label>
+          </div>
+
+          <div className="pt-4 border-t border-gray-200">
+            <div className="flex items-start space-x-2 text-sm text-gray-600 mb-4">
+              <AlertTriangle className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+              <p>
+                <strong>Note :</strong> Le mode "Déduction immédiate" est utilisé par tous les sites de paris professionnels 
+                et reflète mieux la réalité de votre bankroll disponible.
+              </p>
+            </div>
+            <button
+              onClick={handleSaveBankrollMode}
+              className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors"
+            >
+              <Save className="h-4 w-4" />
+              <span>Enregistrer la préférence</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Notifications Section */}
+      <div className="bg-white rounded-lg shadow">
+        <div className="border-b border-gray-200 px-6 py-4">
+          <div className="flex items-center space-x-2">
+            <Bell className="h-5 w-5 text-primary-600" />
+            <h2 className="text-lg font-semibold text-gray-900">Notifications</h2>
+          </div>
+        </div>
+        <div className="p-6">
+          <p className="text-sm text-gray-600 mb-4">
+            Gérez vos préférences de notifications (Web, Email, Push)
+          </p>
+          <Link
+            href="/dashboard/settings/notifications"
+            className="inline-flex items-center justify-between w-full px-4 py-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg transition-colors group"
+          >
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-primary-100 rounded-lg">
+                <Bell className="h-5 w-5 text-primary-600" />
+              </div>
+              <div>
+                <p className="font-medium text-gray-900">Paramètres de notifications</p>
+                <p className="text-sm text-gray-500">Choisir comment recevoir les notifications</p>
+              </div>
+            </div>
+            <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-gray-600 transition-colors" />
+          </Link>
         </div>
       </div>
 
@@ -395,6 +650,9 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+
+      {/* API Key Section */}
+      <ApiKeySection />
 
       {/* Danger Zone */}
       <div className="bg-white rounded-lg shadow border-2 border-red-200">

@@ -8,6 +8,8 @@ import {
   Request,
   HttpCode,
   HttpStatus,
+  Ip,
+  Headers,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
@@ -27,15 +29,15 @@ export class AuthController {
 
   @Post('register')
   @ApiOperation({ summary: 'Register a new user' })
-  async register(@Body() dto: RegisterDto) {
-    return this.authService.register(dto);
+  async register(@Body() dto: RegisterDto, @Ip() ipAddress: string, @Headers('user-agent') userAgent: string) {
+    return this.authService.register(dto, ipAddress, userAgent);
   }
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Login' })
-  async login(@Body() dto: LoginDto) {
-    return this.authService.login(dto);
+  async login(@Body() dto: LoginDto, @Ip() ipAddress: string, @Headers('user-agent') userAgent: string) {
+    return this.authService.login(dto, ipAddress, userAgent);
   }
 
   @Post('logout')
@@ -43,8 +45,8 @@ export class AuthController {
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Logout' })
-  async logout(@Request() req: any, @Body() body: { refreshToken: string }) {
-    return this.authService.logout(req.user.id, body.refreshToken);
+  async logout(@Request() req: any, @Body() body: { refreshToken: string }, @Ip() ipAddress: string, @Headers('user-agent') userAgent: string) {
+    return this.authService.logout(req.user.id, body.refreshToken, ipAddress, userAgent);
   }
 
   @Post('refresh')

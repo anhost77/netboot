@@ -66,6 +66,22 @@ export interface BetSummary {
 }
 
 // Breakdowns
+export interface HorseStats {
+  horseName: string;
+  horseNumber: number;
+  totalBets: number;
+  wonBets: number;
+  lostBets: number;
+  pendingBets: number;
+  totalStake: number;
+  totalProfit: number;
+  totalPayout: number;
+  winRate: number;
+  roi: number;
+  avgStake: number;
+  avgProfit: number;
+}
+
 export interface Breakdowns {
   byBetType: BreakdownItem[];
   byStatus: BreakdownItem[];
@@ -73,6 +89,7 @@ export interface Breakdowns {
   byOddsRange: BreakdownItem[];
   byHippodrome: BreakdownItem[];
   byPlatform: BreakdownItem[];
+  byHorse: HorseStats[];
 }
 
 export interface BreakdownItem {

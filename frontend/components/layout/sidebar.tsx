@@ -12,11 +12,16 @@ import {
   HelpCircle,
   Settings,
   CreditCard,
+  Users,
+  Trophy,
+  X,
 } from 'lucide-react';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Paris', href: '/dashboard/bets', icon: Ticket },
+  { name: 'Tipsters', href: '/dashboard/tipsters', icon: Users },
+  { name: 'PMU', href: '/dashboard/pmu', icon: Trophy },
   { name: 'Statistiques', href: '/dashboard/statistics', icon: BarChart3 },
   { name: 'Bankroll', href: '/dashboard/bankroll', icon: Wallet },
   { name: 'Budget', href: '/dashboard/budget', icon: CreditCard },
@@ -26,11 +31,34 @@ const navigation = [
   { name: 'Paramètres', href: '/dashboard/settings', icon: Settings },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
   const pathname = usePathname();
 
   return (
-    <div className="flex h-full w-64 flex-col bg-gray-900 text-white">
+    <>
+      {/* Overlay pour mobile */}
+      {isOpen && onClose && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={onClose}
+        />
+      )}
+
+      {/* Sidebar */}
+      <div className={cn(
+        "flex h-full w-64 flex-col bg-gray-900 text-white z-50",
+        // Sur desktop (lg+) : toujours visible, position relative
+        "lg:relative lg:translate-x-0",
+        // Sur mobile : position fixe, slide depuis la gauche
+        "fixed inset-y-0 left-0 transition-transform duration-300 ease-in-out lg:transition-none",
+        // Animation sur mobile uniquement
+        isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+      )}>
       <div className="flex h-16 items-center px-6 border-b border-gray-800">
         <Link href="/dashboard" className="flex items-center space-x-2">
           <span className="text-2xl">🏇</span>
@@ -67,6 +95,17 @@ export function Sidebar() {
           <p className="mt-1">© 2025 BetTracker Pro</p>
         </div>
       </div>
+
+      {/* Bouton fermer pour mobile */}
+      {onClose && (
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white lg:hidden"
+        >
+          <X className="h-6 w-6" />
+        </button>
+      )}
     </div>
+    </>
   );
 }

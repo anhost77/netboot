@@ -13,6 +13,8 @@ import {
   HttpStatus,
   Header,
   Res,
+  Ip,
+  Headers,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
@@ -33,8 +35,8 @@ export class BetsController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new bet' })
-  create(@Request() req: any, @Body() createBetDto: CreateBetDto) {
-    return this.betsService.create(req.user.id, createBetDto);
+  create(@Request() req: any, @Body() createBetDto: CreateBetDto, @Ip() ipAddress: string, @Headers('user-agent') userAgent: string) {
+    return this.betsService.create(req.user.id, createBetDto, ipAddress, userAgent);
   }
 
   @Get()
@@ -68,6 +70,12 @@ export class BetsController {
   @ApiOperation({ summary: 'Get statistics by bet type' })
   getStatsByBetType(@Request() req: any) {
     return this.betsService.getStatsByBetType(req.user.id);
+  }
+
+  @Post('enrich-pmu-data')
+  @ApiOperation({ summary: 'Enrich existing bets with PMU data (jockey, trainer)' })
+  async enrichBetsWithPmuData(@Request() req: any) {
+    return this.betsService.enrichExistingBetsWithPmuData(req.user.id);
   }
 
   @Get('export/:format')
@@ -104,8 +112,10 @@ export class BetsController {
     @Request() req: any,
     @Param('id') id: string,
     @Body() updateBetDto: UpdateBetDto,
+    @Ip() ipAddress: string,
+    @Headers('user-agent') userAgent: string,
   ) {
-    return this.betsService.update(req.user.id, id, updateBetDto);
+    return this.betsService.update(req.user.id, id, updateBetDto, ipAddress, userAgent);
   }
 
   @Patch(':id/status')
@@ -114,14 +124,16 @@ export class BetsController {
     @Request() req: any,
     @Param('id') id: string,
     @Body() updateStatusDto: UpdateBetStatusDto,
+    @Ip() ipAddress: string,
+    @Headers('user-agent') userAgent: string,
   ) {
-    return this.betsService.updateStatus(req.user.id, id, updateStatusDto.status);
+    return this.betsService.updateStatus(req.user.id, id, updateStatusDto.status, ipAddress, userAgent);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a bet' })
-  remove(@Request() req: any, @Param('id') id: string) {
-    return this.betsService.remove(req.user.id, id);
+  remove(@Request() req: any, @Param('id') id: string, @Ip() ipAddress: string, @Headers('user-agent') userAgent: string) {
+    return this.betsService.remove(req.user.id, id, ipAddress, userAgent);
   }
 }

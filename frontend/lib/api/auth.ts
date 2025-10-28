@@ -54,7 +54,15 @@ export const authAPI = {
     return apiClient.post('/auth/verify-email', { token });
   },
 
-  async updateProfile(data: { firstName?: string; lastName?: string }): Promise<User> {
+  async updateProfile(data: { 
+    firstName?: string; 
+    lastName?: string;
+    phone?: string;
+    address?: string;
+    city?: string;
+    postalCode?: string;
+    country?: string;
+  }): Promise<User> {
     return apiClient.patch<User>('/auth/me', data);
   },
 

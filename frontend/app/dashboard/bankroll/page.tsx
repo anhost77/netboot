@@ -13,7 +13,9 @@ import {
   DollarSign,
   Settings as SettingsIcon,
   BarChart3,
+  Download,
 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import PlatformModal from '@/components/platforms/platform-modal';
 import TransactionModal from '@/components/platforms/transaction-modal';
 import BankrollChart from '@/components/charts/bankroll-chart';
@@ -100,6 +102,56 @@ export default function BankrollPage() {
     setShowPlatformModal(true);
   };
 
+  const exportToCSV = () => {
+    if (!platforms.length) {
+      toast.error('Aucune donnée à exporter');
+      return;
+    }
+    const csv = [
+      'Plateforme,Statut,Bankroll Initiale (€),Bankroll Actuelle (€),Profit/Perte (€),ROI (%)',
+      ...platforms.map(p => {
+        const initial = Number(p.initialBankroll) || 0;
+        const current = Number(p.currentBankroll) || 0;
+        const profit = current - initial;
+        const roi = initial > 0 ? (profit / initial) * 100 : 0;
+        return `${p.name},${p.isActive ? 'Actif' : 'Inactif'},${initial.toFixed(2)},${current.toFixed(2)},${profit.toFixed(2)},${roi.toFixed(2)}`;
+      })
+    ].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'bankrolls.csv';
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success('Export CSV réussi');
+  };
+
+  const exportToExcel = () => {
+    if (!platforms.length) {
+      toast.error('Aucune donnée à exporter');
+      return;
+    }
+    const tsv = [
+      'Plateforme\tStatut\tBankroll Initiale (€)\tBankroll Actuelle (€)\tProfit/Perte (€)\tROI (%)',
+      ...platforms.map(p => {
+        const initial = Number(p.initialBankroll) || 0;
+        const current = Number(p.currentBankroll) || 0;
+        const profit = current - initial;
+        const roi = initial > 0 ? (profit / initial) * 100 : 0;
+        return `${p.name}\t${p.isActive ? 'Actif' : 'Inactif'}\t${initial.toFixed(2)}\t${current.toFixed(2)}\t${profit.toFixed(2)}\t${roi.toFixed(2)}`;
+      })
+    ].join('\n');
+    const blob = new Blob([tsv], { type: 'application/vnd.ms-excel' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'bankrolls.xls';
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success('Export Excel réussi');
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -116,6 +168,13 @@ export default function BankrollPage() {
           <h1 className="text-3xl font-bold text-gray-900">Gestion de Bankroll</h1>
           <p className="mt-2 text-gray-600">Gérez vos plateformes et suivez l'évolution de votre bankroll</p>
         </div>
+        <a
+          href="/dashboard/bankroll/statistics"
+          className="flex items-center space-x-2 bg-white border-2 border-primary-600 text-primary-600 px-4 py-2 rounded-lg hover:bg-primary-50 transition-colors"
+        >
+          <BarChart3 className="h-5 w-5" />
+          <span>Statistiques</span>
+        </a>
       </div>
 
       {/* Global Bankroll Summary */}
@@ -213,18 +272,40 @@ export default function BankrollPage() {
       {/* Platforms Section */}
       <div className="bg-white rounded-lg shadow">
         <div className="border-b border-gray-200 px-6 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <h2 className="text-lg font-semibold text-gray-900">Mes Plateformes</h2>
-            <button
-              onClick={() => {
-                setEditingPlatform(null);
-                setShowPlatformModal(true);
-              }}
-              className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors"
-            >
-              <Plus className="h-4 w-4" />
-              <span>Ajouter une plateforme</span>
-            </button>
+            <div className="flex flex-wrap gap-2">
+              {platforms.length > 0 && (
+                <>
+                  <button
+                    onClick={exportToCSV}
+                    className="flex items-center space-x-1 px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+                    title="Export CSV"
+                  >
+                    <Download className="h-4 w-4" />
+                    <span>CSV</span>
+                  </button>
+                  <button
+                    onClick={exportToExcel}
+                    className="flex items-center space-x-1 px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+                    title="Export Excel"
+                  >
+                    <Download className="h-4 w-4" />
+                    <span>Excel</span>
+                  </button>
+                </>
+              )}
+              <button
+                onClick={() => {
+                  setEditingPlatform(null);
+                  setShowPlatformModal(true);
+                }}
+                className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Ajouter une plateforme</span>
+              </button>
+            </div>
           </div>
         </div>
 

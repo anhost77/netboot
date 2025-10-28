@@ -43,7 +43,12 @@ export const subscriptionsAPI = {
 
   // Get current subscription
   async getCurrentSubscription(): Promise<Subscription> {
-    return apiClient.get<Subscription>('/subscriptions/current');
+    const response = await apiClient.get<Subscription | { subscription?: Subscription; demoMode?: boolean }>('/subscriptions/current');
+    // Check if response has subscription property (wrapped) or is direct subscription
+    if (response && typeof response === 'object' && 'subscription' in response) {
+      return (response as any).subscription;
+    }
+    return response as Subscription;
   },
 
   // Create checkout session
@@ -68,16 +73,22 @@ export const subscriptionsAPI = {
 
   // Get invoices
   async getInvoices(): Promise<Invoice[]> {
-    return apiClient.get<Invoice[]>('/subscriptions/invoices');
+    const response = await apiClient.get<{ invoices: Invoice[]; demoMode?: boolean }>('/subscriptions/invoices');
+    // Backend returns { invoices: [...], demoMode: true } in demo mode
+    return response.invoices || response as any;
   },
 
   // Get specific invoice
   async getInvoice(id: string): Promise<Invoice> {
-    return apiClient.get<Invoice>(`/subscriptions/invoices/${id}`);
+    const response = await apiClient.get<{ invoice: Invoice; demoMode?: boolean }>(`/subscriptions/invoices/${id}`);
+    // Backend returns { invoice: {...}, demoMode: true } in demo mode
+    return response.invoice || response as any;
   },
 
   // Demo: simulate payment
   async demoPayment(planId: string, billingCycle: 'monthly' | 'yearly'): Promise<Subscription> {
-    return apiClient.post<Subscription>('/subscriptions/demo/payment', { planId, billingCycle });
+    const response = await apiClient.post<{ subscription: Subscription; demoMode?: boolean; message?: string }>('/subscriptions/demo/payment', { planId, billingCycle });
+    // Backend returns { subscription: {...}, demoMode: true, message: '...' }
+    return response.subscription || response as any;
   },
 };

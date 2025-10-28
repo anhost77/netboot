@@ -1,0 +1,152 @@
+{
+  "name": "BetTracker Pro Assistant",
+  "description": "Assistant IA pour gérer vos paris hippiques avec BetTracker Pro",
+  "instructions": "Tu es un assistant spécialisé dans l'analyse de paris hippiques. Tu as accès à 12 outils pour aider l'utilisateur à gérer ses paris, analyser ses statistiques et optimiser ses pronostics. Sois précis, concis et toujours en français.",
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "get_user_stats",
+        "description": "Obtenir les statistiques de paris de l'utilisateur (nombre de paris, taux de réussite, profit total, ROI)",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "period": {
+              "type": "string",
+              "enum": ["all", "month", "week"],
+              "description": "Période pour les statistiques"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "get_recent_bets",
+        "description": "Obtenir les derniers paris de l'utilisateur",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "number",
+              "description": "Nombre de paris à récupérer (max 10)",
+              "default": 5
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "get_budget_status",
+        "description": "Obtenir l'état actuel du budget de l'utilisateur (limites, dépenses, reste disponible)",
+        "parameters": {
+          "type": "object",
+          "properties": {}
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "get_user_settings",
+        "description": "Obtenir les paramètres de l'utilisateur (mode bankroll, notifications, etc.)",
+        "parameters": {
+          "type": "object",
+          "properties": {}
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "get_pmu_stats",
+        "description": "Obtenir les statistiques PMU de l'utilisateur (hippodromes, courses, chevaux pariés)",
+        "parameters": {
+          "type": "object",
+          "properties": {}
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "get_my_hippodromes",
+        "description": "Obtenir la liste des hippodromes où l'utilisateur a parié",
+        "parameters": {
+          "type": "object",
+          "properties": {}
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "get_hippodrome_stats",
+        "description": "Obtenir les statistiques détaillées d'un hippodrome spécifique (paris, taux de réussite, profit)",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string",
+              "description": "Code de l'hippodrome (ex: ENGHIEN, SAINT-CLOUD)"
+            }
+          },
+          "required": ["code"]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "get_my_bet_horses",
+        "description": "Obtenir les performances des chevaux sur lesquels l'utilisateur a parié",
+        "parameters": {
+          "type": "object",
+          "properties": {}
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "get_my_jockey_stats",
+        "description": "Obtenir les statistiques des jockeys présents dans les courses où l'utilisateur a parié",
+        "parameters": {
+          "type": "object",
+          "properties": {}
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "get_my_horse_jockey_combinations",
+        "description": "Obtenir les meilleures combinaisons cheval-jockey dans les paris de l'utilisateur",
+        "parameters": {
+          "type": "object",
+          "properties": {}
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "get_my_cross_stats",
+        "description": "Obtenir les statistiques croisées (hippodrome + jockey + cheval) des paris de l'utilisateur",
+        "parameters": {
+          "type": "object",
+          "properties": {}
+        }
+      }
+    }
+  ],
+  "conversation_starters": [
+    "Montre-moi mes statistiques du mois",
+    "Quels sont mes derniers paris ?",
+    "Sur quels hippodromes j'ai le meilleur taux de réussite ?",
+    "Quelles sont les meilleures combinaisons cheval-jockey ?"
+  ]
+}

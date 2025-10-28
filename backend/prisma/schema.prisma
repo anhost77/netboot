@@ -44,6 +44,8 @@ enum HorseBetType {
   couple_ordre   // Couplé ordre
   trio           // Trio
   trio_ordre     // Trio ordre
+  tierce         // Tiercé
+  tierce_ordre   // Tiercé ordre
   quarte         // Quarté
   quarte_ordre   // Quarté ordre
   quinte         // Quinté
@@ -51,6 +53,109 @@ enum HorseBetType {
   multi          // Multi
   pick5          // Pick 5
   autre          // Autre
+}
+
+// PMU Data Models for statistics
+model PmuHippodrome {
+  id          String   @id @default(uuid())
+  code        String   @unique // e.g., "COM", "BOU"
+  name        String   // e.g., "COMPIEGNE"
+  fullName    String   // e.g., "HIPPODROME DE COMPIEGNE"
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  races       PmuRace[]
+  
+  @@map("pmu_hippodromes")
+}
+
+model PmuRace {
+  id              String        @id @default(uuid())
+  hippodromeCode  String        @map("hippodrome_code")
+  hippodrome      PmuHippodrome @relation(fields: [hippodromeCode], references: [code])
+  reunionNumber   Int           @map("reunion_number") // R1, R2, etc.
+  raceNumber      Int           @map("race_number") // C1, C2, etc.
+  date            DateTime
+  name            String?       // Race name
+  startTime       BigInt?       @map("start_time") // Timestamp
+  discipline      String?       // PLAT, ATTELE, HAIE, etc.
+  distance        Int?          // Distance in meters
+  prize           Int?          // Prize money
+  horses          PmuHorse[]
+  reports         PmuReport[]
+  bets            Bet[]
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+  
+  @@unique([hippodromeCode, date, reunionNumber, raceNumber])
+  @@map("pmu_races")
+}
+
+model PmuHorse {
+  id              String    @id @default(uuid())
+  raceId          String    @map("race_id")
+  race            PmuRace   @relation(fields: [raceId], references: [id], onDelete: Cascade)
+  number          Int       // Horse number (1-20)
+  name            String    // Horse name
+  arrivalOrder    Int?      @map("arrival_order") // Final position
+  recentForm      String?   @map("recent_form") // Musique (e.g., "1p2p3p")
+  blinkers        Boolean   @default(false) // Oeilleres
+  unshod          String?   // Deferre (DEFERRE_ANTERIEURS_POSTERIEURS, etc.)
+  firstTime       Boolean   @default(false) @map("first_time") // Inedit
+  odds            Decimal?  @db.Decimal(10, 2) // Cote du cheval
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  
+  // Relations
+  performances    PmuHorsePerformance[]
+  
+  @@unique([raceId, number])
+  @@map("pmu_horses")
+}
+
+// Historical performances for each horse
+model PmuHorsePerformance {
+  id                    String    @id @default(uuid())
+  horseId               String    @map("horse_id")
+  horse                 PmuHorse  @relation(fields: [horseId], references: [id], onDelete: Cascade)
+  date                  DateTime  // Date of the race
+  hippodrome            String    // Hippodrome name
+  raceName              String?   @map("race_name") // Prix name
+  discipline            String?   // ATTELE, MONTE, etc.
+  distance              Int?      // Distance in meters
+  prize                 Int?      // Allocation (prize money)
+  nbParticipants        Int?      @map("nb_participants") // Number of participants
+  arrivalPosition       Int?      @map("arrival_position") // Final position (1, 2, 3, etc.)
+  status                String?   // PLACE, NON_PLACE, DISQUALIFIE
+  jockey                String?   // Jockey name
+  trainer               String?   // Trainer name (Entraîneur)
+  reductionKilometrique Int?      @map("reduction_kilometrique") // Time in ms
+  distanceParcourue     Int?      @map("distance_parcourue") // Distance actually run
+  winnerTime            Int?      @map("winner_time") // Winner's time in ms
+  rawData               Json?     @map("raw_data") // Complete raw JSON data from PMU API
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+  
+  @@unique([horseId, date, hippodrome])
+  @@index([horseId])
+  @@index([date])
+  @@map("pmu_horse_performances")
+}
+
+model PmuReport {
+  id              String    @id @default(uuid())
+  raceId          String    @map("race_id")
+  race            PmuRace   @relation(fields: [raceId], references: [id], onDelete: Cascade)
+  betType         String    @map("bet_type") // SIMPLE_GAGNANT, COUPLE_GAGNANT, etc.
+  betFamily       String    @map("bet_family") // Simple, Couple, Trio, etc.
+  baseStake       Int       @map("base_stake") // Mise de base en centimes
+  refunded        Boolean   @default(false) // Remboursé
+  reports         Json      // Array of reports with dividends and combinations
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  
+  @@unique([raceId, betType])
+  @@map("pmu_reports")
 }
 
 enum TicketStatus {
@@ -137,6 +242,7 @@ model User {
   documents           Document[]
   notifications       Notification[]
   userSettings        UserSettings?
+  pushSubscriptions   PushSubscription[]
   refreshTokens       RefreshToken[]
   apiKeys             ApiKey[]
   assignedTickets     SupportTicket[] @relation("AssignedToAdmin")
@@ -144,6 +250,7 @@ model User {
   cmsPageHistory      CmsPageHistory[]
   platforms           Platform[]
   bankrollTransactions BankrollTransaction[]
+  tipsters            Tipster[]
 
   @@map("users")
 }
@@ -197,6 +304,28 @@ model Subscription {
   @@map("subscriptions")
 }
 
+// Tipsters table
+model Tipster {
+  id                    String          @id @default(uuid())
+  userId                String          @map("user_id")
+  name                  String
+  description           String?
+  website               String?
+  socialMedia           Json?           @map("social_media") // Twitter, Telegram, etc.
+  color                 String?         // Couleur pour l'UI
+  isActive              Boolean         @default(true) @map("is_active")
+  createdAt             DateTime        @default(now()) @map("created_at")
+  updatedAt             DateTime        @updatedAt @map("updated_at")
+
+  // Relations
+  user                  User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bets                  Bet[]
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("tipsters")
+}
+
 // Bets table
 model Bet {
   id                    String          @id @default(uuid())
@@ -214,17 +343,25 @@ model Bet {
   status                BetStatus       @default(pending)
   payout                Decimal?        @db.Decimal(10, 2)
   profit                Decimal?        @db.Decimal(10, 2)
+  jockey                String?         // Jockey name
+  trainer               String?         // Trainer name (Entraîneur)
   notes                 String?
   tags                  Json?
+  pmuRaceId             String?         @map("pmu_race_id") // Link to PMU race data
+  tipsterId             String?         @map("tipster_id") // Link to tipster
   createdAt             DateTime        @default(now()) @map("created_at")
   updatedAt             DateTime        @updatedAt @map("updated_at")
 
   // Relations
   user                  User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pmuRace               PmuRace?                @relation(fields: [pmuRaceId], references: [id], onDelete: SetNull)
+  tipster               Tipster?                @relation(fields: [tipsterId], references: [id], onDelete: SetNull)
   bankrollTransactions  BankrollTransaction[]
 
   @@index([userId, date])
   @@index([userId, status])
+  @@index([pmuRaceId])
+  @@index([tipsterId])
   @@map("bets")
 }
 
@@ -403,11 +540,15 @@ model UserSettings {
   weeklyLimit               Decimal?    @map("weekly_limit") @db.Decimal(10, 2)
   monthlyLimit              Decimal?    @map("monthly_limit") @db.Decimal(10, 2)
   alertThreshold            Decimal?    @map("alert_threshold") @db.Decimal(5, 2)
+  bankrollMode              String      @default("immediate") @map("bankroll_mode")
   favoriteHippodromes       Json?       @map("favorite_hippodromes")
   notificationsEnabled      Boolean     @default(true) @map("notifications_enabled")
   emailNotifications        Json?       @map("email_notifications")
+  pushNotificationsEnabled  Boolean     @default(false) @map("push_notifications_enabled")
+  notificationPreference    String      @default("web_only") @map("notification_preference") // web_only, email_only, both, none
   theme                     String      @default("auto")
   currency                  String      @default("EUR")
+  apiKey                    String?     @unique @map("api_key") // API key for external integrations
   createdAt                 DateTime    @default(now()) @map("created_at")
   updatedAt                 DateTime    @updatedAt @map("updated_at")
 
@@ -415,6 +556,23 @@ model UserSettings {
   user                      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_settings")
+}
+
+// Push Subscriptions table
+model PushSubscription {
+  id                    String      @id @default(uuid())
+  userId                String      @map("user_id")
+  endpoint              String      @unique
+  p256dh                String      @map("p256dh")
+  auth                  String
+  userAgent             String?     @map("user_agent")
+  createdAt             DateTime    @default(now()) @map("created_at")
+  updatedAt             DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  user                  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("push_subscriptions")
 }
 
 // Refresh Tokens table
@@ -544,4 +702,15 @@ model BankrollTransaction {
   @@index([platformId])
   @@index([betId])
   @@map("bankroll_transactions")
+}
+
+// Platform Settings table
+model PlatformSetting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     Json
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("platform_settings")
 }

@@ -14,10 +14,12 @@ import {
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { UserRole } from '@prisma/client';
 import { SupportService } from './support.service';
+import { AiChatService } from './ai-chat.service';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { UpdateTicketDto } from './dto/update-ticket.dto';
 import { AddMessageDto } from './dto/add-message.dto';
 import { TicketFiltersDto } from './dto/ticket-filters.dto';
+import { ChatMessageDto } from './dto/chat-message.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -27,7 +29,10 @@ import { RolesGuard } from '../common/guards/roles.guard';
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class SupportController {
-  constructor(private readonly supportService: SupportService) {}
+  constructor(
+    private readonly supportService: SupportService,
+    private readonly aiChatService: AiChatService,
+  ) {}
 
   @Post('tickets')
   @ApiOperation({
@@ -114,5 +119,20 @@ export class SupportController {
   })
   getStatistics() {
     return this.supportService.getStatistics();
+  }
+
+  @Post('chat')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Chat with AI support assistant',
+    description: 'Send a message to the AI chatbot and get a response',
+  })
+  async chat(@Request() req: any, @Body() dto: ChatMessageDto) {
+    const response = await this.aiChatService.chat(
+      dto.message,
+      dto.conversationHistory || [],
+      req.user.id, // Pass userId for function calling
+    );
+    return response;
   }
 }

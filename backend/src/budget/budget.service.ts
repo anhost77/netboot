@@ -174,9 +174,17 @@ export class BudgetService {
       alerts.push(`Vous avez consommé ${monthly.percentage.toFixed(1)}% de votre budget mensuel`);
     }
 
-    // Bankroll status
-    const currentBankroll = settings.currentBankroll ? Number(settings.currentBankroll) : 0;
-    const initialBankroll = settings.initialBankroll ? Number(settings.initialBankroll) : 0;
+    // Bankroll status - Récupérer depuis les plateformes
+    const platforms = await this.prisma.platform.findMany({
+      where: { userId },
+      select: {
+        initialBankroll: true,
+        currentBankroll: true,
+      },
+    });
+
+    const initialBankroll = platforms.reduce((sum, p) => sum + Number(p.initialBankroll || 0), 0);
+    const currentBankroll = platforms.reduce((sum, p) => sum + Number(p.currentBankroll || 0), 0);
     const bankrollChange = currentBankroll - initialBankroll;
     const bankrollChangePercent = initialBankroll > 0 ? (bankrollChange / initialBankroll) * 100 : 0;
 
@@ -340,14 +348,32 @@ export class BudgetService {
           totalStake: 0,
           totalProfit: 0,
           betsCount: 0,
+          wonBets: 0,
         };
       }
 
       monthlyData[monthKey].totalStake += Number(bet.stake);
       monthlyData[monthKey].totalProfit += bet.profit ? Number(bet.profit) : 0;
       monthlyData[monthKey].betsCount += 1;
+      
+      // Compter les paris gagnés (status 'won' ou profit > 0)
+      if (bet.status === 'won' || (bet.profit && Number(bet.profit) > 0)) {
+        monthlyData[monthKey].wonBets += 1;
+      }
     });
 
-    return Object.values(monthlyData).sort((a, b) => a.month.localeCompare(b.month));
+    // Calculer winRate et ROI pour chaque mois
+    const result = Object.values(monthlyData).map((data: any) => {
+      const winRate = data.betsCount > 0 ? (data.wonBets / data.betsCount) * 100 : 0;
+      const roi = data.totalStake > 0 ? (data.totalProfit / data.totalStake) * 100 : 0;
+      
+      return {
+        ...data,
+        winRate: Number(winRate.toFixed(2)),
+        roi: Number(roi.toFixed(2)),
+      };
+    });
+
+    return result.sort((a, b) => a.month.localeCompare(b.month));
   }
 }

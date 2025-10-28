@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import * as Handlebars from 'handlebars';
@@ -25,10 +25,22 @@ export class EmailService {
 
   constructor(
     private config: ConfigService,
+    @Inject(forwardRef(() => NotificationsService))
     private notificationsService: NotificationsService,
   ) {
     this.templatesDir = path.join(__dirname, '..', '..', 'email-templates');
+    this.registerHandlebarsHelpers();
     this.initializeTransporter();
+  }
+
+  /**
+   * Register Handlebars helpers
+   */
+  private registerHandlebarsHelpers() {
+    // Register 'eq' helper for equality comparison
+    Handlebars.registerHelper('eq', function(a, b) {
+      return a === b;
+    });
   }
 
   private initializeTransporter() {
@@ -102,7 +114,10 @@ export class EmailService {
       this.logger.log(`✅ Email sent successfully to ${options.to}`);
       return true;
     } catch (error) {
-      this.logger.error(`❌ Failed to send email to ${options.to}:`, error.message);
+      this.logger.error(`❌ Failed to send email to ${options.to}:`);
+      this.logger.error(`   Error: ${error.message}`);
+      this.logger.error(`   Code: ${error.code}`);
+      this.logger.error(`   Response: ${error.response}`);
       return false;
     }
   }
@@ -353,6 +368,49 @@ export class EmailService {
     }
 
     return sent;
+  }
+
+  /**
+   * Send notification email
+   */
+  async sendNotificationEmail(
+    to: string,
+    type: 'info' | 'success' | 'warning' | 'error',
+    title: string,
+    message: string,
+    link?: string,
+  ): Promise<boolean> {
+    const appUrl = this.config.get('APP_URL', 'http://localhost:3000');
+    
+    return this.sendEmail({
+      to,
+      subject: `${this.getTypeEmoji(type)} ${title}`,
+      template: 'notification',
+      context: {
+        type,
+        title,
+        message,
+        link: link ? `${appUrl}${link}` : null,
+        appUrl,
+        year: new Date().getFullYear(),
+      },
+    });
+  }
+
+  /**
+   * Get emoji for notification type
+   */
+  private getTypeEmoji(type: string): string {
+    switch (type) {
+      case 'success':
+        return '✅';
+      case 'error':
+        return '❌';
+      case 'warning':
+        return '⚠️';
+      default:
+        return 'ℹ️';
+    }
   }
 
   /**

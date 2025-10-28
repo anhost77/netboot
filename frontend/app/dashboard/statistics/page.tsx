@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { statisticsAPI, type DashboardStats, type TimeSeriesData, type PerformanceMetrics, type Breakdowns, type PredefinedPeriods } from '@/lib/api/statistics';
+import { platformsAPI } from '@/lib/api/platforms';
 import { formatCurrency } from '@/lib/utils';
+import { formatLocalDate } from '@/lib/date-utils';
+import { OverviewTab } from '@/components/statistics/overview-tab';
 import {
   TrendingUp,
   TrendingDown,
@@ -14,27 +17,26 @@ import {
   Calendar,
   Filter,
   Clock,
+  Trophy,
+  Download,
 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
+
+type TabType = 'overview' | 'charts' | 'analysis';
 
 export default function StatisticsPage() {
+  const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
   const [periods, setPeriods] = useState<PredefinedPeriods | null>(null);
   const [timeSeries, setTimeSeries] = useState<TimeSeriesData[]>([]);
   const [performance, setPerformance] = useState<PerformanceMetrics | null>(null);
   const [breakdowns, setBreakdowns] = useState<Breakdowns | null>(null);
+  const [bankrolls, setBankrolls] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [period, setPeriod] = useState<'day' | 'week' | 'month'>('day');
   const [dateRange, setDateRange] = useState(() => {
     const today = new Date();
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-
-    // Format dates in local timezone YYYY-MM-DD
-    const formatLocalDate = (date: Date) => {
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    };
 
     return {
       start: formatLocalDate(thirtyDaysAgo),
@@ -44,7 +46,21 @@ export default function StatisticsPage() {
 
   useEffect(() => {
     loadData();
+    loadBankrolls();
   }, [period, dateRange]);
+
+  const loadBankrolls = async () => {
+    try {
+      const platforms = await platformsAPI.getAll();
+      const mapping: Record<string, string> = {};
+      platforms.forEach(platform => {
+        mapping[platform.id] = platform.name;
+      });
+      setBankrolls(mapping);
+    } catch (error) {
+      console.error('Failed to load bankrolls:', error);
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -85,6 +101,328 @@ export default function StatisticsPage() {
     }
   };
 
+  const exportToCSV = () => {
+    if (!dashboardStats || !timeSeries.length) {
+      toast.error('Aucune donnée à exporter');
+      return;
+    }
+
+    const separator = ',';
+    let csvContent = '';
+    const stats = dashboardStats as any;
+    const perf = performance as any;
+    
+    // Section 1: Résumé global
+    csvContent += '=== RÉSUMÉ GLOBAL ===\n';
+    csvContent += `Période,${dateRange.start} - ${dateRange.end}\n`;
+    csvContent += `Total Paris,${stats.totalBets || 0}\n`;
+    csvContent += `Paris Gagnés,${stats.wonBets || 0}\n`;
+    csvContent += `Paris Perdus,${stats.lostBets || 0}\n`;
+    csvContent += `Taux de Réussite,${(stats.winRate || 0).toFixed(2)}%\n`;
+    csvContent += `Mise Totale,${(stats.totalStake || 0).toFixed(2)} €\n`;
+    csvContent += `Profit Total,${(stats.totalProfit || 0).toFixed(2)} €\n`;
+    csvContent += `ROI,${(stats.roi || 0).toFixed(2)}%\n\n`;
+    
+    // Section 2: Métriques de performance
+    if (perf) {
+      csvContent += '=== MÉTRIQUES DE PERFORMANCE ===\n';
+      csvContent += `Série Actuelle,${perf.currentStreak?.count || 0} ${perf.currentStreak?.type === 'win' ? 'victoires' : 'défaites'}\n`;
+      csvContent += `Plus Longue Série Gagnante,${perf.longestWinStreak || 0}\n`;
+      csvContent += `Plus Longue Série Perdante,${perf.longestLossStreak || 0}\n`;
+      csvContent += `Profit Moyen,${(perf.avgProfit || perf.averageProfit || 0).toFixed(2)} €\n`;
+      csvContent += `Volatilité,${(perf.volatility || 0).toFixed(2)}\n`;
+      csvContent += `Ratio de Sharpe,${(perf.sharpeRatio || 0).toFixed(2)}\n`;
+      csvContent += `Score de Cohérence,${(perf.consistency || 0).toFixed(0)}%\n`;
+      if (perf.bestBet) csvContent += `Meilleur Pari,${perf.bestBet.profit.toFixed(2)} € (Cote: ${perf.bestBet.odds})\n`;
+      if (perf.worstBet) csvContent += `Pire Pari,${perf.worstBet.profit.toFixed(2)} € (Cote: ${perf.worstBet.odds})\n`;
+      csvContent += '\n';
+    }
+    
+    // Section 3: Séries temporelles
+    csvContent += '=== ÉVOLUTION TEMPORELLE ===\n';
+    csvContent += ['Date', 'Paris', 'Gagnés', 'Perdus', 'Taux (%)', 'Mise (€)', 'Profit (€)', 'ROI (%)'].join(separator) + '\n';
+    timeSeries.forEach(day => {
+      csvContent += [
+        day.period,
+        day.totalBets,
+        day.wonBets,
+        day.lostBets,
+        day.winRate.toFixed(2),
+        day.totalStake.toFixed(2),
+        day.totalProfit.toFixed(2),
+        day.roi.toFixed(2),
+      ].join(separator) + '\n';
+    });
+    csvContent += '\n';
+    
+    // Section 4: Analyses par catégorie
+    if (breakdowns) {
+      const bd = breakdowns as any;
+      
+      // Par statut
+      if (bd.byStatus?.length) {
+        csvContent += '=== PAR STATUT ===\n';
+        csvContent += ['Statut', 'Paris', 'Profit (€)', 'ROI (%)'].join(separator) + '\n';
+        bd.byStatus.forEach((item: any) => {
+          csvContent += [
+            item.status || 'N/A',
+            item.count || 0,
+            (item.profit || 0).toFixed(2),
+            (item.roi || 0).toFixed(2)
+          ].join(separator) + '\n';
+        });
+        csvContent += '\n';
+      }
+      
+      // Par type de pari
+      if (bd.byBetType?.length) {
+        csvContent += '=== PAR TYPE DE PARI ===\n';
+        csvContent += ['Type', 'Paris', 'Profit (€)', 'ROI (%)'].join(separator) + '\n';
+        bd.byBetType.forEach((item: any) => {
+          csvContent += [
+            item.betType || 'N/A',
+            item.count || 0,
+            (item.profit || 0).toFixed(2),
+            (item.roi || 0).toFixed(2)
+          ].join(separator) + '\n';
+        });
+        csvContent += '\n';
+      }
+      
+      // Par montant de mise
+      if (bd.byStakeRange?.length) {
+        csvContent += '=== PAR MONTANT DE MISE ===\n';
+        csvContent += ['Plage', 'Paris', 'Profit (€)', 'Taux (%)'].join(separator) + '\n';
+        bd.byStakeRange.forEach((item: any) => {
+          csvContent += [
+            item.range || 'N/A',
+            item.count || 0,
+            (item.profit || 0).toFixed(2),
+            (item.winRate || 0).toFixed(2)
+          ].join(separator) + '\n';
+        });
+        csvContent += '\n';
+      }
+      
+      // Par plage de cotes
+      if (bd.byOddsRange?.length) {
+        csvContent += '=== PAR PLAGE DE COTES ===\n';
+        csvContent += ['Plage', 'Paris', 'Profit (€)', 'Taux (%)'].join(separator) + '\n';
+        bd.byOddsRange.forEach((item: any) => {
+          csvContent += [
+            item.range || 'N/A',
+            item.count || 0,
+            (item.profit || 0).toFixed(2),
+            (item.winRate || 0).toFixed(2)
+          ].join(separator) + '\n';
+        });
+        csvContent += '\n';
+      }
+      
+      // Par hippodrome
+      if (bd.byHippodrome?.length) {
+        csvContent += '=== PAR HIPPODROME ===\n';
+        csvContent += ['Hippodrome', 'Paris', 'Profit (€)', 'ROI (%)'].join(separator) + '\n';
+        bd.byHippodrome.forEach((item: any) => {
+          csvContent += [
+            item.hippodrome || 'N/A',
+            item.count || 0,
+            (item.profit || 0).toFixed(2),
+            (item.roi || 0).toFixed(2)
+          ].join(separator) + '\n';
+        });
+        csvContent += '\n';
+      }
+      
+      // Par plateforme
+      if (bd.byPlatform?.length) {
+        csvContent += '=== PAR PLATEFORME ===\n';
+        csvContent += ['Plateforme', 'Paris', 'Profit (€)', 'ROI (%)'].join(separator) + '\n';
+        bd.byPlatform.forEach((item: any) => {
+          csvContent += [
+            getBankrollName(item.platform || item.category || 'N/A'),
+            item.count || item.totalBets || 0,
+            (item.profit || item.totalProfit || 0).toFixed(2),
+            (item.roi || 0).toFixed(2)
+          ].join(separator) + '\n';
+        });
+      }
+    }
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `statistiques_completes_${dateRange.start}_${dateRange.end}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    
+    toast.success('Export CSV complet réussi');
+  };
+
+  const exportToExcel = () => {
+    if (!dashboardStats || !timeSeries.length) {
+      toast.error('Aucune donnée à exporter');
+      return;
+    }
+
+    const separator = '\t';
+    let tsvContent = '';
+    const stats = dashboardStats as any;
+    const perf = performance as any;
+    
+    // Section 1: Résumé global
+    tsvContent += '=== RÉSUMÉ GLOBAL ===\n';
+    tsvContent += `Période${separator}${dateRange.start} - ${dateRange.end}\n`;
+    tsvContent += `Total Paris${separator}${stats.totalBets || 0}\n`;
+    tsvContent += `Paris Gagnés${separator}${stats.wonBets || 0}\n`;
+    tsvContent += `Paris Perdus${separator}${stats.lostBets || 0}\n`;
+    tsvContent += `Taux de Réussite${separator}${(stats.winRate || 0).toFixed(2)}%\n`;
+    tsvContent += `Mise Totale${separator}${(stats.totalStake || 0).toFixed(2)} €\n`;
+    tsvContent += `Profit Total${separator}${(stats.totalProfit || 0).toFixed(2)} €\n`;
+    tsvContent += `ROI${separator}${(stats.roi || 0).toFixed(2)}%\n\n`;
+    
+    // Section 2: Métriques de performance
+    if (perf) {
+      tsvContent += '=== MÉTRIQUES DE PERFORMANCE ===\n';
+      tsvContent += `Série Actuelle${separator}${perf.currentStreak?.count || 0} ${perf.currentStreak?.type === 'win' ? 'victoires' : 'défaites'}\n`;
+      tsvContent += `Plus Longue Série Gagnante${separator}${perf.longestWinStreak || 0}\n`;
+      tsvContent += `Plus Longue Série Perdante${separator}${perf.longestLossStreak || 0}\n`;
+      tsvContent += `Profit Moyen${separator}${(perf.avgProfit || perf.averageProfit || 0).toFixed(2)} €\n`;
+      tsvContent += `Volatilité${separator}${(perf.volatility || 0).toFixed(2)}\n`;
+      tsvContent += `Ratio de Sharpe${separator}${(perf.sharpeRatio || 0).toFixed(2)}\n`;
+      tsvContent += `Score de Cohérence${separator}${(perf.consistency || 0).toFixed(0)}%\n`;
+      if (perf.bestBet) tsvContent += `Meilleur Pari${separator}${perf.bestBet.profit.toFixed(2)} € (Cote: ${perf.bestBet.odds})\n`;
+      if (perf.worstBet) tsvContent += `Pire Pari${separator}${perf.worstBet.profit.toFixed(2)} € (Cote: ${perf.worstBet.odds})\n`;
+      tsvContent += '\n';
+    }
+    
+    // Section 3: Séries temporelles
+    tsvContent += '=== ÉVOLUTION TEMPORELLE ===\n';
+    tsvContent += ['Date', 'Paris', 'Gagnés', 'Perdus', 'Taux (%)', 'Mise (€)', 'Profit (€)', 'ROI (%)'].join(separator) + '\n';
+    timeSeries.forEach(day => {
+      tsvContent += [
+        day.period,
+        day.totalBets,
+        day.wonBets,
+        day.lostBets,
+        day.winRate.toFixed(2),
+        day.totalStake.toFixed(2),
+        day.totalProfit.toFixed(2),
+        day.roi.toFixed(2),
+      ].join(separator) + '\n';
+    });
+    tsvContent += '\n';
+    
+    // Section 4: Analyses par catégorie
+    if (breakdowns) {
+      const bd = breakdowns as any;
+      
+      // Par statut
+      if (bd.byStatus?.length) {
+        tsvContent += '=== PAR STATUT ===\n';
+        tsvContent += ['Statut', 'Paris', 'Profit (€)', 'ROI (%)'].join(separator) + '\n';
+        bd.byStatus.forEach((item: any) => {
+          tsvContent += [
+            item.status || 'N/A',
+            item.count || 0,
+            (item.profit || 0).toFixed(2),
+            (item.roi || 0).toFixed(2)
+          ].join(separator) + '\n';
+        });
+        tsvContent += '\n';
+      }
+      
+      // Par type de pari
+      if (bd.byBetType?.length) {
+        tsvContent += '=== PAR TYPE DE PARI ===\n';
+        tsvContent += ['Type', 'Paris', 'Profit (€)', 'ROI (%)'].join(separator) + '\n';
+        bd.byBetType.forEach((item: any) => {
+          tsvContent += [
+            item.betType || 'N/A',
+            item.count || 0,
+            (item.profit || 0).toFixed(2),
+            (item.roi || 0).toFixed(2)
+          ].join(separator) + '\n';
+        });
+        tsvContent += '\n';
+      }
+      
+      // Par montant de mise
+      if (bd.byStakeRange?.length) {
+        tsvContent += '=== PAR MONTANT DE MISE ===\n';
+        tsvContent += ['Plage', 'Paris', 'Profit (€)', 'Taux (%)'].join(separator) + '\n';
+        bd.byStakeRange.forEach((item: any) => {
+          tsvContent += [
+            item.range || 'N/A',
+            item.count || 0,
+            (item.profit || 0).toFixed(2),
+            (item.winRate || 0).toFixed(2)
+          ].join(separator) + '\n';
+        });
+        tsvContent += '\n';
+      }
+      
+      // Par plage de cotes
+      if (bd.byOddsRange?.length) {
+        tsvContent += '=== PAR PLAGE DE COTES ===\n';
+        tsvContent += ['Plage', 'Paris', 'Profit (€)', 'Taux (%)'].join(separator) + '\n';
+        bd.byOddsRange.forEach((item: any) => {
+          tsvContent += [
+            item.range || 'N/A',
+            item.count || 0,
+            (item.profit || 0).toFixed(2),
+            (item.winRate || 0).toFixed(2)
+          ].join(separator) + '\n';
+        });
+        tsvContent += '\n';
+      }
+      
+      // Par hippodrome
+      if (bd.byHippodrome?.length) {
+        tsvContent += '=== PAR HIPPODROME ===\n';
+        tsvContent += ['Hippodrome', 'Paris', 'Profit (€)', 'ROI (%)'].join(separator) + '\n';
+        bd.byHippodrome.forEach((item: any) => {
+          tsvContent += [
+            item.hippodrome || 'N/A',
+            item.count || 0,
+            (item.profit || 0).toFixed(2),
+            (item.roi || 0).toFixed(2)
+          ].join(separator) + '\n';
+        });
+        tsvContent += '\n';
+      }
+      
+      // Par plateforme
+      if (bd.byPlatform?.length) {
+        tsvContent += '=== PAR PLATEFORME ===\n';
+        tsvContent += ['Plateforme', 'Paris', 'Profit (€)', 'ROI (%)'].join(separator) + '\n';
+        bd.byPlatform.forEach((item: any) => {
+          tsvContent += [
+            getBankrollName(item.platform || item.category || 'N/A'),
+            item.count || item.totalBets || 0,
+            (item.profit || item.totalProfit || 0).toFixed(2),
+            (item.roi || 0).toFixed(2)
+          ].join(separator) + '\n';
+        });
+      }
+    }
+    
+    const blob = new Blob([tsvContent], { type: 'application/vnd.ms-excel' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `statistiques_completes_${dateRange.start}_${dateRange.end}.xls`;
+    link.click();
+    URL.revokeObjectURL(url);
+    
+    toast.success('Export Excel complet réussi');
+  };
+
+  const getBankrollName = (platformId: string) => {
+    return bankrolls[platformId] || platformId;
+  };
+
   const getTrendIcon = (value: number) => {
     if (value > 0) return <TrendingUp className="h-4 w-4 text-green-500" />;
     if (value < 0) return <TrendingDown className="h-4 w-4 text-red-500" />;
@@ -105,19 +443,82 @@ export default function StatisticsPage() {
     );
   }
 
+  const tabs = [
+    { id: 'overview' as TabType, name: 'Vue d\'ensemble', icon: BarChart3, description: 'Résumé global' },
+    { id: 'charts' as TabType, name: 'Graphiques', icon: TrendingUp, description: 'Évolution temporelle' },
+    { id: 'analysis' as TabType, name: 'Analyses', icon: Target, description: 'Métriques détaillées' },
+  ];
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Statistiques</h1>
-          <p className="mt-2 text-gray-600">Analysez vos performances de paris</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Statistiques</h1>
+          <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600">Analysez vos performances de paris</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={exportToCSV}
+            className="flex items-center space-x-2 bg-white border border-gray-300 text-gray-700 px-3 sm:px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm"
+          >
+            <Download className="h-4 w-4" />
+            <span className="hidden sm:inline">Export CSV</span>
+            <span className="sm:hidden">CSV</span>
+          </button>
+          <button
+            onClick={exportToExcel}
+            className="flex items-center space-x-2 bg-white border border-gray-300 text-gray-700 px-3 sm:px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm"
+          >
+            <Download className="h-4 w-4" />
+            <span className="hidden sm:inline">Export Excel</span>
+            <span className="sm:hidden">Excel</span>
+          </button>
+          <a
+            href="/dashboard/pmu/statistics"
+            className="flex items-center space-x-2 bg-white border-2 border-primary-600 text-primary-600 px-3 sm:px-4 py-2 rounded-lg hover:bg-primary-50 transition-colors text-sm"
+          >
+            <Trophy className="h-4 sm:h-5 w-4 sm:w-5" />
+            <span className="hidden sm:inline">Statistiques PMU</span>
+            <span className="sm:hidden">PMU</span>
+          </a>
         </div>
       </div>
 
-      {/* Period Selector & Filters */}
-      <div className="bg-white rounded-lg shadow p-4">
-        <div className="flex flex-wrap gap-4 items-center">
+      {/* Tabs Navigation */}
+      <div className="bg-white rounded-lg shadow">
+        <div className="border-b border-gray-200">
+          <nav className="flex -mb-px">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`group relative min-w-0 flex-1 overflow-hidden py-4 px-4 text-center text-sm font-medium hover:bg-gray-50 focus:z-10 transition-colors ${
+                    activeTab === tab.id
+                      ? 'border-b-2 border-primary-600 text-primary-600'
+                      : 'border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="flex items-center justify-center space-x-2">
+                    <Icon className={`h-5 w-5 ${
+                      activeTab === tab.id ? 'text-primary-600' : 'text-gray-400 group-hover:text-gray-500'
+                    }`} />
+                    <span className="hidden sm:inline">{tab.name}</span>
+                  </div>
+                  <span className="hidden md:block text-xs text-gray-500 mt-1">{tab.description}</span>
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+      </div>
+
+      {/* Period Selector & Filters - Only for charts and analysis */}
+      {(activeTab === 'charts' || activeTab === 'analysis') && (
+        <div className="bg-white rounded-lg shadow p-4">
+          <div className="flex flex-wrap gap-4 items-center">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Période graphique</label>
             <select
@@ -150,121 +551,40 @@ export default function StatisticsPage() {
               className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>
-        </div>
-      </div>
-
-      {/* Période Stats - Aujourd'hui, Hier, Semaine, etc. */}
-      {periods && (
-        <div>
-          <div className="flex items-center space-x-2 mb-4">
-            <Clock className="h-5 w-5 text-primary-600" />
-            <h2 className="text-xl font-semibold text-gray-900">Statistiques par période</h2>
-          </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {[
-              { title: "Aujourd'hui", stats: periods.today, icon: '📅' },
-              { title: 'Hier', stats: periods.yesterday, icon: '📆' },
-              { title: 'Cette semaine', stats: periods.thisWeek, icon: '📊' },
-              { title: 'Semaine dernière', stats: periods.lastWeek, icon: '📈' },
-              { title: 'Ce mois', stats: periods.thisMonth, icon: '📋' },
-              { title: 'Mois dernier', stats: periods.lastMonth, icon: '📁' },
-            ].map((item, index) => (
-              <div key={index} className="bg-white rounded-lg shadow p-4 border-l-4 border-primary-500">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-medium text-gray-900">{item.title}</h3>
-                  <span className="text-2xl">{item.icon}</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div>
-                    <p className="text-gray-500">Paris</p>
-                    <p className="font-semibold">{item.stats.totalBets}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Taux</p>
-                    <p className="font-semibold">{item.stats.winRate.toFixed(0)}%</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Mise</p>
-                    <p className="font-semibold">{formatCurrency(item.stats.totalStake)}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Profit</p>
-                    <p className={`font-semibold ${item.stats.totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {formatCurrency(item.stats.totalProfit)}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       )}
 
-      {/* Dashboard Stats */}
-      {dashboardStats && (
-        <div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Vue d'ensemble</h2>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              {
-                title: 'Mois en cours',
-                stats: dashboardStats.currentMonth,
-                trend: dashboardStats.trends.totalProfit,
-              },
-              {
-                title: 'Mois dernier',
-                stats: dashboardStats.lastMonth,
-                trend: 0,
-              },
-              {
-                title: 'Année en cours',
-                stats: dashboardStats.yearToDate,
-                trend: 0,
-              },
-              {
-                title: 'Total',
-                stats: dashboardStats.allTime,
-                trend: 0,
-              },
-            ].map((item, index) => (
-              <div key={index} className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-sm font-medium text-gray-600 mb-4">{item.title}</h3>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">Paris</span>
-                    <span className="text-sm font-semibold">{item.stats.totalBets}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">Mise totale</span>
-                    <span className="text-sm font-semibold">{formatCurrency(item.stats.totalStake)}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">Profit</span>
-                    <span className={`text-sm font-semibold ${item.stats.totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {formatCurrency(item.stats.totalProfit)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">Taux réussite</span>
-                    <span className="text-sm font-semibold">{item.stats.winRate.toFixed(1)}%</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">ROI</span>
-                    <span className={`text-sm font-semibold ${item.stats.roi >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {item.stats.roi.toFixed(1)}%
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+      {/* TAB: Vue d'ensemble */}
+      {activeTab === 'overview' && (
+        <OverviewTab dashboardStats={dashboardStats} periods={periods} />
       )}
 
-      {/* Time Series Chart */}
-      {timeSeries.length > 0 && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Évolution des profits</h2>
+      {/* TAB: Graphiques */}
+      {activeTab === 'charts' && (
+        <>
+          {/* Explanation Banner */}
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg shadow border-l-4 border-green-500 p-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">📈 Comment lire ce graphique ?</h3>
+            <div className="text-sm text-gray-700 space-y-2">
+              <p>
+                <strong>Barres vertes :</strong> Jours où vous avez réalisé un profit. Plus la barre est haute, plus le profit est important.
+              </p>
+              <p>
+                <strong>Barres rouges :</strong> Jours où vous avez subi une perte. Identifiez les périodes difficiles pour ajuster votre stratégie.
+              </p>
+              <p>
+                <strong>Ligne horizontale :</strong> Représente le seuil de rentabilité (0€). L'objectif est de rester au-dessus le plus souvent possible.
+              </p>
+              <p className="text-green-700 font-medium">
+                💡 Astuce : Une courbe régulièrement positive indique une stratégie gagnante. Des variations importantes suggèrent de mieux gérer votre bankroll.
+              </p>
+            </div>
+          </div>
+
+          {timeSeries.length > 0 && (
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Évolution des profits</h2>
           <div className="relative h-64">
             {/* Check if we have any data */}
             {(() => {
@@ -369,10 +689,37 @@ export default function StatisticsPage() {
             })()}
           </div>
         </div>
+          )}
+        </>
       )}
 
-      {/* Performance Metrics */}
-      {performance && (
+      {/* TAB: Analyses */}
+      {activeTab === 'analysis' && (
+        <>
+          {/* Explanation Banner */}
+          <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg shadow border-l-4 border-purple-500 p-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">🎯 Comprendre les analyses détaillées</h3>
+            <div className="text-sm text-gray-700 space-y-2">
+              <p>
+                <strong>Séries :</strong> Suivez vos séquences de victoires/défaites. Une longue série perdante peut indiquer qu'il faut revoir votre stratégie.
+              </p>
+              <p>
+                <strong>Volatilité :</strong> Mesure la variation de vos résultats. Une volatilité élevée signifie des résultats irréguliers.
+              </p>
+              <p>
+                <strong>Ratio de Sharpe :</strong> Indique si vos gains justifient les risques pris. Plus il est élevé, mieux c'est (>1 = bon, >2 = excellent).
+              </p>
+              <p>
+                <strong>Analyses par catégorie :</strong> Identifiez quels types de paris, cotes ou hippodromes sont les plus rentables pour vous.
+              </p>
+              <p className="text-purple-700 font-medium">
+                💡 Astuce : Concentrez-vous sur les catégories avec le meilleur ROI et réduisez les paris sur celles qui sont déficitaires.
+              </p>
+            </div>
+          </div>
+
+          {/* Performance Metrics */}
+          {performance && (
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Métriques de performance</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -632,7 +979,7 @@ export default function StatisticsPage() {
                   <div key={idx} className="flex items-center justify-between">
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium text-gray-700">{item.category || 'Non spécifié'}</span>
+                        <span className="text-sm font-medium text-gray-700">{getBankrollName(item.category || '')}</span>
                         <span className="text-sm text-gray-600">{item.totalBets} paris</span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
@@ -654,6 +1001,8 @@ export default function StatisticsPage() {
             </div>
           )}
         </div>
+      )}
+        </>
       )}
     </div>
   );

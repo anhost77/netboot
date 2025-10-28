@@ -4,10 +4,14 @@ import {
   UnauthorizedException,
   BadRequestException,
   NotFoundException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { AuditLogService } from '../admin/audit-log.service';
 import * as bcrypt from 'bcrypt';
 import * as speakeasy from 'speakeasy';
 import * as QRCode from 'qrcode';
@@ -20,9 +24,12 @@ export class AuthService {
     private prisma: PrismaService,
     private jwt: JwtService,
     private config: ConfigService,
+    @Inject(forwardRef(() => NotificationsService))
+    private notificationsService: NotificationsService,
+    private auditLog: AuditLogService,
   ) {}
 
-  async register(dto: RegisterDto) {
+  async register(dto: RegisterDto, ipAddress?: string, userAgent?: string) {
     // Check if user exists
     const existingUser = await this.prisma.user.findUnique({
       where: { email: dto.email },
@@ -86,6 +93,9 @@ export class AuthService {
     // Generate tokens
     const tokens = await this.generateTokens(user.id, user.email);
 
+    // Log registration
+    await this.auditLog.log(user.id, 'REGISTER', 'User', user.id, { email: user.email }, ipAddress, userAgent);
+
     // TODO: Send verification email
 
     return {
@@ -94,7 +104,7 @@ export class AuthService {
     };
   }
 
-  async login(dto: LoginDto) {
+  async login(dto: LoginDto, ipAddress?: string, userAgent?: string) {
     // Validate user
     const user = await this.validateUser(dto.email, dto.password);
     if (!user) {
@@ -130,7 +140,16 @@ export class AuthService {
     // Generate tokens
     const tokens = await this.generateTokens(user.id, user.email);
 
-    // TODO: Log login (IP, user agent)
+    // Log login
+    await this.auditLog.log(user.id, 'LOGIN', 'User', user.id, { email: user.email }, ipAddress, userAgent);
+
+    // Send login notification
+    await this.notificationsService.notifyInfo(
+      user.id,
+      'Nouvelle connexion',
+      `Vous vous êtes connecté à votre compte`,
+      '/dashboard'
+    );
 
     return {
       user: {
@@ -144,13 +163,16 @@ export class AuthService {
     };
   }
 
-  async logout(userId: string, refreshToken: string) {
+  async logout(userId: string, refreshToken: string, ipAddress?: string, userAgent?: string) {
     await this.prisma.refreshToken.deleteMany({
       where: {
         userId,
         token: refreshToken,
       },
     });
+
+    // Log logout
+    await this.auditLog.log(userId, 'LOGOUT', 'User', userId, {}, ipAddress, userAgent);
 
     return { message: 'Logged out successfully' };
   }
@@ -406,12 +428,25 @@ export class AuthService {
     return user;
   }
 
-  async updateProfile(userId: string, dto: { firstName?: string; lastName?: string }) {
+  async updateProfile(userId: string, dto: { 
+    firstName?: string; 
+    lastName?: string;
+    phone?: string;
+    address?: string;
+    city?: string;
+    postalCode?: string;
+    country?: string;
+  }) {
     const user = await this.prisma.user.update({
       where: { id: userId },
       data: {
         firstName: dto.firstName,
         lastName: dto.lastName,
+        phone: dto.phone,
+        address: dto.address,
+        city: dto.city,
+        postalCode: dto.postalCode,
+        country: dto.country,
       },
       select: {
         id: true,

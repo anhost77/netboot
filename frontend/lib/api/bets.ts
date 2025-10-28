@@ -51,4 +51,20 @@ export const betsAPI = {
     });
     return response as any;
   },
+
+  async getStatsByBetType(): Promise<any> {
+    return apiClient.get('/bets/stats/bet-type');
+  },
+
+  async getStatsByPlatform(): Promise<any> {
+    return apiClient.get('/bets/stats/platform');
+  },
+
+  async getStats(startDate?: string, endDate?: string): Promise<any> {
+    return apiClient.get('/bets/stats', { params: { startDate, endDate } });
+  },
+
+  async enrichPmuData(): Promise<{ message: string; totalBets: number; enrichedCount: number; errorCount: number }> {
+    return apiClient.post('/bets/enrich-pmu-data');
+  },
 };

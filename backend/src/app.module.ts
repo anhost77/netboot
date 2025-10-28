@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaService } from './prisma.service';
@@ -16,6 +17,11 @@ import { CmsModule } from './cms/cms.module';
 import { BudgetModule } from './budget/budget.module';
 import { AdminModule } from './admin/admin.module';
 import { PlatformsModule } from './platforms/platforms.module';
+import { UserSettingsModule } from './user-settings/user-settings.module';
+import { PmuModule } from './pmu/pmu.module';
+import { TipstersModule } from './tipsters/tipsters.module';
+import { ApiModule } from './api/api.module';
+import { McpModule } from './mcp/mcp.module';
 
 @Module({
   imports: [
@@ -26,6 +32,7 @@ import { PlatformsModule } from './platforms/platforms.module';
       ttl: parseInt(process.env.THROTTLE_TTL || '60') * 1000,
       limit: parseInt(process.env.THROTTLE_LIMIT || '100'),
     }]),
+    ScheduleModule.forRoot(),
     AuthModule,
     BetsModule,
     StorageModule,
@@ -38,6 +45,11 @@ import { PlatformsModule } from './platforms/platforms.module';
     BudgetModule,
     AdminModule,
     PlatformsModule,
+    UserSettingsModule,
+    PmuModule,
+    TipstersModule,
+    ApiModule,
+    McpModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

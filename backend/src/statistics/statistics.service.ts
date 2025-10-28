@@ -234,6 +234,9 @@ export class StatisticsService {
     // Breakdown by platform
     const byPlatform = this.groupAndAggregate(bets, 'platform');
 
+    // Breakdown by horse (for PMU bets)
+    const byHorse = await this.groupByHorse(bets);
+
     return {
       byBetType,
       byStatus,
@@ -241,7 +244,79 @@ export class StatisticsService {
       byOddsRange,
       byHippodrome,
       byPlatform,
+      byHorse,
     };
+  }
+
+  /**
+   * Group bets by horse and calculate performance stats
+   */
+  private async groupByHorse(bets: any[]) {
+    const horseStatsMap = new Map();
+
+    // Filter only PMU bets with horses selected
+    const pmuBets = bets.filter(bet => bet.pmuRaceId && bet.horsesSelected);
+
+    for (const bet of pmuBets) {
+      // Extract horse numbers from the bet
+      const horseNumbers = bet.horsesSelected
+        .split(',')
+        .map((h: string) => {
+          const match = h.trim().match(/^(\d+)/);
+          return match ? parseInt(match[1]) : 0;
+        })
+        .filter((n: number) => n > 0);
+
+      // For each horse in the bet
+      for (const horseNum of horseNumbers) {
+        // Extract horse name if present
+        const horseMatch = bet.horsesSelected.match(new RegExp(`${horseNum}\\s*-\\s*([^,]+)`));
+        const horseName = horseMatch ? horseMatch[1].trim() : `Cheval ${horseNum}`;
+        
+        const key = `${horseName}-${horseNum}`;
+        
+        if (!horseStatsMap.has(key)) {
+          horseStatsMap.set(key, {
+            horseName,
+            horseNumber: horseNum,
+            totalBets: 0,
+            wonBets: 0,
+            lostBets: 0,
+            pendingBets: 0,
+            totalStake: 0,
+            totalProfit: 0,
+            totalPayout: 0,
+          });
+        }
+
+        const stats = horseStatsMap.get(key);
+        stats.totalBets++;
+        stats.totalStake += Number(bet.stake);
+        
+        if (bet.status === 'won') {
+          stats.wonBets++;
+          stats.totalPayout += Number(bet.payout || 0);
+          stats.totalProfit += Number(bet.profit || 0);
+        } else if (bet.status === 'lost') {
+          stats.lostBets++;
+          stats.totalProfit += Number(bet.profit || 0);
+        } else {
+          stats.pendingBets++;
+        }
+      }
+    }
+
+    // Convert map to array and calculate derived stats
+    const horseStats = Array.from(horseStatsMap.values()).map(stats => ({
+      ...stats,
+      winRate: stats.totalBets > 0 ? (stats.wonBets / stats.totalBets) * 100 : 0,
+      roi: stats.totalStake > 0 ? (stats.totalProfit / stats.totalStake) * 100 : 0,
+      avgStake: stats.totalBets > 0 ? stats.totalStake / stats.totalBets : 0,
+      avgProfit: stats.totalBets > 0 ? stats.totalProfit / stats.totalBets : 0,
+    }));
+
+    // Sort by total bets (most bet on horses first)
+    return horseStats.sort((a, b) => b.totalBets - a.totalBets);
   }
 
   /**
@@ -398,9 +473,9 @@ export class StatisticsService {
     const groupedMap = new Map(grouped.map(g => [g.period, g.bets]));
 
     const current = new Date(startDate);
-    current.setHours(0, 0, 0, 0);
+    current.setUTCHours(0, 0, 0, 0);
     const end = new Date(endDate);
-    end.setHours(23, 59, 59, 999);
+    end.setUTCHours(23, 59, 59, 999);
 
     while (current <= end) {
       let key: string;
@@ -412,27 +487,27 @@ export class StatisticsService {
             period: key,
             bets: groupedMap.get(key) || [],
           });
-          current.setDate(current.getDate() + 1);
+          current.setUTCDate(current.getUTCDate() + 1);
           break;
 
         case 'weekly':
           const weekStart = new Date(current);
-          weekStart.setDate(current.getDate() - current.getDay());
+          weekStart.setUTCDate(current.getUTCDate() - current.getUTCDay());
           key = weekStart.toISOString().split('T')[0];
           result.push({
             period: key,
             bets: groupedMap.get(key) || [],
           });
-          current.setDate(current.getDate() + 7);
+          current.setUTCDate(current.getUTCDate() + 7);
           break;
 
         case 'monthly':
-          key = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}`;
+          key = `${current.getUTCFullYear()}-${String(current.getUTCMonth() + 1).padStart(2, '0')}`;
           result.push({
             period: key,
             bets: groupedMap.get(key) || [],
           });
-          current.setMonth(current.getMonth() + 1);
+          current.setUTCMonth(current.getUTCMonth() + 1);
           break;
       }
     }

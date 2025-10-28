@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "pmu_horses" ALTER COLUMN "unshod" DROP NOT NULL,
+ALTER COLUMN "unshod" DROP DEFAULT,
+ALTER COLUMN "unshod" SET DATA TYPE TEXT;

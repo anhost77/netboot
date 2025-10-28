@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { authAPI } from '@/lib/api';
+import { notificationService } from '@/lib/notification-service';
 import type { User } from '@/lib/types';
 
 interface AuthContextType {
@@ -49,8 +50,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Login successful
-      setUser(response.user);
-      router.push('/dashboard');
+      if ('user' in response) {
+        setUser(response.user);
+        router.push('/dashboard');
+      }
       return {};
     } catch (error) {
       throw error;
@@ -61,7 +64,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const response = await authAPI.register({ email, password, firstName, lastName });
       setUser(response.user);
-      router.push('/dashboard');
+      // Redirect to onboarding for new users
+      router.push('/onboarding');
     } catch (error) {
       throw error;
     }
@@ -70,6 +74,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     try {
       await authAPI.logout();
+      notificationService.info(
+        'Déconnexion réussie',
+        'À bientôt sur BetTracker Pro !'
+      );
     } catch (error) {
       console.error('Logout error:', error);
     } finally {

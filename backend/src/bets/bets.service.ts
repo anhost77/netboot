@@ -486,8 +486,8 @@ export class BetsService {
     return { message: 'Bet deleted successfully' };
   }
 
-  async getStats(userId: string, startDate?: string, endDate?: string) {
-    const where: any = { userId };
+  async getStats(userId: string, startDate?: string, endDate?: string, mode: string = 'real') {
+    const where: any = { userId, mode };
 
     if (startDate || endDate) {
       where.date = {};
@@ -571,9 +571,9 @@ export class BetsService {
     };
   }
 
-  async getStatsByPlatform(userId: string) {
+  async getStatsByPlatform(userId: string, mode: string = 'real') {
     const bets = await this.prisma.bet.findMany({
-      where: { userId, platform: { not: null } },
+      where: { userId, mode, platform: { not: null } },
       select: {
         platform: true,
         stake: true,
@@ -662,9 +662,9 @@ export class BetsService {
     });
   }
 
-  async getStatsByBetType(userId: string) {
+  async getStatsByBetType(userId: string, mode: string = 'real') {
     const bets = await this.prisma.bet.findMany({
-      where: { userId, betType: { not: null } },
+      where: { userId, mode, betType: { not: null } },
       select: {
         betType: true,
         stake: true,

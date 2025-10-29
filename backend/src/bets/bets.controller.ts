@@ -57,22 +57,23 @@ export class BetsController {
   @ApiQuery({ name: 'endDate', required: false, example: '2025-10-31' })
   getStats(
     @Request() req: any,
+    @Mode() mode: string,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
   ) {
-    return this.betsService.getStats(req.user.id, startDate, endDate);
+    return this.betsService.getStats(req.user.id, startDate, endDate, mode);
   }
 
   @Get('stats/platform')
   @ApiOperation({ summary: 'Get statistics by platform' })
-  getStatsByPlatform(@Request() req: any) {
-    return this.betsService.getStatsByPlatform(req.user.id);
+  getStatsByPlatform(@Request() req: any, @Mode() mode: string) {
+    return this.betsService.getStatsByPlatform(req.user.id, mode);
   }
 
   @Get('stats/bet-type')
   @ApiOperation({ summary: 'Get statistics by bet type' })
-  getStatsByBetType(@Request() req: any) {
-    return this.betsService.getStatsByBetType(req.user.id);
+  getStatsByBetType(@Request() req: any, @Mode() mode: string) {
+    return this.betsService.getStatsByBetType(req.user.id, mode);
   }
 
   @Post('enrich-pmu-data')

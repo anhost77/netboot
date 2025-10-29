@@ -47,7 +47,7 @@ export default function RegisterPage() {
           errorMessage = err.response.data.message;
         }
       } else if (err.message === 'Network Error' || !err.response) {
-        errorMessage = 'Impossible de se connecter au serveur. Vérifiez que le backend est lancé sur http://localhost:3001';
+        errorMessage = 'Impossible de se connecter au serveur. Vérifiez que le backend est accessible.';
       } else if (err.response?.status === 409) {
         errorMessage = 'Cet email est déjà utilisé.';
       } else if (err.response?.status >= 500) {

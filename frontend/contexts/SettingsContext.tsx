@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { type PlatformSettings } from '@/lib/api/admin-settings';
+import { API_URL } from '@/lib/config';
 
 interface SettingsContextType {
   settings: PlatformSettings | null;
@@ -15,7 +16,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   const loadSettings = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/settings/public`, {
+      const response = await fetch(`${API_URL}/settings/public`, {
         cache: 'no-store',
       });
       

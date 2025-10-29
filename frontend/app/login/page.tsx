@@ -70,7 +70,7 @@ export default function LoginPage() {
       if (err.response?.data?.message) {
         errorMessage = err.response.data.message;
       } else if (err.message === 'Network Error' || !err.response) {
-        errorMessage = 'Impossible de se connecter au serveur. Vérifiez que le backend est lancé sur http://localhost:3001';
+        errorMessage = 'Impossible de se connecter au serveur. Vérifiez que le backend est accessible.';
       } else if (err.response?.status === 401) {
         errorMessage = requiresTwoFactor ? 'Code 2FA invalide.' : 'Email ou mot de passe incorrect.';
       } else if (err.response?.status >= 500) {

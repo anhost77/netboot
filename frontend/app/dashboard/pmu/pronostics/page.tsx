@@ -148,7 +148,7 @@ export default function PmuPronosticsPage() {
       toast.loading('Chargement des détails...', { id: 'sync-race' });
       
       // Synchroniser la course pour obtenir un ID
-      const syncedRace = await apiClient.post(
+      const syncedRace = await apiClient.post<{ id: string }>(
         `/pmu/data/races/${selectedDate}/${selectedMeeting.number}/${selectedRace.number}/sync`
       );
       

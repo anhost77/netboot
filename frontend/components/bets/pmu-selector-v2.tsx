@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { pmuAPI, type PMUMeeting, type PMURace, type PMUParticipant } from '@/lib/api/pmu';
-import { ChevronRight, Calendar, MapPin, Trophy, Clock, Check, ArrowRight, TrendingUp } from 'lucide-react';
+import { ChevronRight, Calendar, MapPin, Trophy, Clock, Check, ArrowRight, TrendingUp, Info } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { getLocalDateString } from '@/lib/date-utils';
 import BetTypeSelector from './bet-type-selector';
@@ -181,7 +181,7 @@ export default function PMUSelector({ platforms, onSelect }: PMUSelectorProps) {
                 step === 'platform' ? 'font-semibold text-primary-600' : 'text-gray-600'
               }`}
             >
-              Portefeuille
+              Bookmaker
             </button>
           </>
         )}
@@ -232,7 +232,18 @@ export default function PMUSelector({ platforms, onSelect }: PMUSelectorProps) {
       {/* Step 2: Select Platform */}
       {step === 'platform' && (
         <div className="space-y-3">
-          <h3 className="font-semibold text-gray-900">Sélectionnez un portefeuille</h3>
+          <div className="flex items-start space-x-2 mb-3">
+            <h3 className="font-semibold text-gray-900">Sélectionnez votre bookmaker</h3>
+          </div>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+            <div className="flex items-start space-x-2">
+              <Info className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-blue-900">
+                <p className="font-medium mb-1">💡 Pourquoi lier à un bookmaker ?</p>
+                <p className="text-blue-800">Associer votre pari à un bookmaker (PMU, Betclic, Unibet...) permet de suivre vos performances par site et de gérer votre bankroll de manière indépendante sur chaque plateforme.</p>
+              </div>
+            </div>
+          </div>
           <div className="space-y-2 max-h-96 overflow-y-auto">
             {platforms.filter(p => p.isActive).map((platform) => (
               <button
@@ -307,6 +318,16 @@ export default function PMUSelector({ platforms, onSelect }: PMUSelectorProps) {
 
           <h3 className="font-semibold text-gray-900">Sélectionnez un hippodrome</h3>
           
+          <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+            <div className="flex items-start space-x-2">
+              <Info className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-green-900">
+                <p className="font-medium mb-1">🏇 Choisissez votre réunion</p>
+                <p className="text-green-800">Sélectionnez l'hippodrome où se déroule la course qui vous intéresse. Chaque réunion (R1, R2...) regroupe plusieurs courses.</p>
+              </div>
+            </div>
+          </div>
+          
           {isLoading ? (
             <div className="text-center py-8">
               <div className="inline-block h-6 w-6 animate-spin rounded-full border-4 border-solid border-primary-600 border-r-transparent"></div>
@@ -352,6 +373,17 @@ export default function PMUSelector({ platforms, onSelect }: PMUSelectorProps) {
           <h3 className="font-semibold text-gray-900">
             Sélectionnez une course - {selectedMeeting.hippodrome.name}
           </h3>
+          
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-4">
+            <div className="flex items-start space-x-2">
+              <Info className="h-5 w-5 text-purple-600 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-purple-900">
+                <p className="font-medium mb-1">🏆 Sélectionnez la course</p>
+                <p className="text-purple-800">Choisissez la course (C1, C2...) sur laquelle vous souhaitez parier. Vérifiez l'heure de départ et le montant des gains.</p>
+              </div>
+            </div>
+          </div>
+          
           <div className="space-y-2 max-h-96 overflow-y-auto">
             {selectedMeeting.races.map((race) => (
               <button
@@ -399,6 +431,16 @@ export default function PMUSelector({ platforms, onSelect }: PMUSelectorProps) {
             <span className="text-sm text-gray-600">
               {selectedHorses.length}/{selectedBetType.maxSelections || selectedBetType.minSelections} sélectionné(s)
             </span>
+          </div>
+
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-4">
+            <div className="flex items-start space-x-2">
+              <Info className="h-5 w-5 text-orange-600 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-orange-900">
+                <p className="font-medium mb-1">🎯 Faites votre pronostic</p>
+                <p className="text-orange-800">Sélectionnez les chevaux selon votre type de pari ({selectedBetType.name}). Consultez les performances récentes pour vous aider dans votre choix.</p>
+              </div>
+            </div>
           </div>
 
           {isLoading ? (

@@ -274,7 +274,7 @@ export function BetForm({ bet, onSubmit, onCancel, isLoading = false }: BetFormP
                   <p className="font-semibold text-gray-900">{watch('notes')?.split(' - Code PMU:')[0]}</p>
                 </div>
                 <div>
-                  <p className="text-gray-600">Portefeuille</p>
+                  <p className="text-gray-600">Bookmaker</p>
                   <p className="font-semibold text-gray-900">
                     {platforms.find(p => p.id === watch('platform'))?.name}
                   </p>

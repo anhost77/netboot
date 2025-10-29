@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { pmuAPI, type PMUMeeting, type PMURace, type PMUParticipant } from '@/lib/api/pmu';
-import { ChevronRight, Calendar, MapPin, Trophy, Clock, Check } from 'lucide-react';
+import { ChevronRight, Calendar, MapPin, Trophy, Clock, Check, Info, HelpCircle } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { getLocalDateString } from '@/lib/date-utils';
 import BetTypeSelector from './bet-type-selector';

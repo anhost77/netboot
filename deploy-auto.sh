@@ -105,10 +105,15 @@ sudo -u postgres psql -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity
 # Supprimer la base si elle existe
 sudo -u postgres psql -c "DROP DATABASE IF EXISTS ${DB_NAME};" 2>/dev/null || true
 
-# Supprimer l'utilisateur si il existe
-sudo -u postgres psql -c "DROP USER IF EXISTS ${DB_USER};" 2>/dev/null || true
+# Réaffecter tous les objets de l'utilisateur à postgres puis supprimer
+sudo -u postgres psql << EOF 2>/dev/null || true
+REASSIGN OWNED BY ${DB_USER} TO postgres;
+DROP OWNED BY ${DB_USER};
+DROP USER IF EXISTS ${DB_USER};
+EOF
 
-# Créer l'utilisateur
+# Créer l'utilisateur (ou le recréer s'il existe déjà)
+sudo -u postgres psql -c "DROP USER IF EXISTS ${DB_USER};" 2>/dev/null || true
 sudo -u postgres psql -c "CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASSWORD}';"
 
 # Créer la base de données
@@ -119,7 +124,6 @@ sudo -u postgres psql -d ${DB_NAME} << EOF
 GRANT ALL ON SCHEMA public TO ${DB_USER};
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO ${DB_USER};
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO ${DB_USER};
-\q
 EOF
 
 echo -e "${GREEN}✓${NC} Base de données créée"

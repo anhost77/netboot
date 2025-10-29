@@ -32,8 +32,8 @@ export class TipstersController {
   @Get('statistics')
   @ApiOperation({ summary: 'Récupérer les statistiques de tous les tipsters' })
   @ApiResponse({ status: 200, description: 'Statistiques de tous les tipsters' })
-  getAllStatistics(@Request() req: any) {
-    return this.tipstersService.getAllStatistics(req.user.id);
+  getAllStatistics(@Request() req: any, @Mode() mode: string) {
+    return this.tipstersService.getAllStatistics(req.user.id, mode);
   }
 
   @Get('export/all')

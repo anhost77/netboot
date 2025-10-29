@@ -220,8 +220,8 @@ export class TipstersService {
     }));
   }
 
-  async getAllStatistics(userId: string) {
-    const tipsters = await this.findAll(userId);
+  async getAllStatistics(userId: string, mode: string = 'real') {
+    const tipsters = await this.findAll(userId, mode);
     
     const statsPromises = tipsters.map(async (tipster) => {
       const stats = await this.getStatistics(tipster.id, userId);

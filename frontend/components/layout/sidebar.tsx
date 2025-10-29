@@ -135,18 +135,7 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
             )}
           </div>
           {!isCollapsed && (
-            <div className="flex flex-col">
-              <span className="text-xl font-bold">{settings?.siteName || 'BetTracker'}</span>
-              {subscription && (
-                <span className={cn(
-                  "text-[10px] font-semibold px-2 py-0.5 rounded-full inline-block w-fit",
-                  getPlanBadgeColor(subscription.plan?.name),
-                  "text-white shadow-sm"
-                )}>
-                  {subscription.plan?.name || 'Plan'}
-                </span>
-              )}
-            </div>
+            <span className="text-xl font-bold">{settings?.siteName || 'BetTracker'}</span>
           )}
         </Link>
         

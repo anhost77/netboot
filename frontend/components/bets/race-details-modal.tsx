@@ -411,9 +411,9 @@ export function RaceDetailsModal({ raceId, onClose, selectedHorses, refreshKey }
                     <span>💰 Rapports PMU détaillés</span>
                   </h3>
 
-                  {race.reports && race.reports.length > 0 ? (
+                  {(race as any).reports && (race as any).reports.length > 0 ? (
                     <div className="space-y-4">
-                      {race.reports.map((report: any) => (
+                      {(race as any).reports.map((report: any) => (
                         <div key={report.id} className="border border-gray-200 rounded-lg overflow-hidden">
                           {/* Report Header */}
                           <div className="bg-gradient-to-r from-green-50 to-blue-50 px-4 py-3 border-b border-gray-200">

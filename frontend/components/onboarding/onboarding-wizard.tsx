@@ -138,7 +138,6 @@ export default function OnboardingWizard({ onComplete, onSkip }: OnboardingWizar
             onComplete={handleComplete}
             onSkip={onSkip}
             isFirst={currentStep === 0}
-            isLast={currentStep === steps.length - 1}
             isSubmitting={isSubmitting}
           />
         </div>

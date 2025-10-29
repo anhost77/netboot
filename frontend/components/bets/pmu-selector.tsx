@@ -139,7 +139,7 @@ export default function PMUSelector({ onSelect }: PMUSelectorProps) {
     });
   };
 
-  const formatTime = (timestamp: number) => {
+  const formatTime = (timestamp: number | string) => {
     const date = new Date(timestamp);
     return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
   };
@@ -292,7 +292,7 @@ export default function PMUSelector({ onSelect }: PMUSelectorProps) {
             participants.map((participant) => (
               <button
                 key={participant.number}
-                onClick={() => handleSelectHorse(participant)}
+                onClick={() => handleToggleHorse(participant.number)}
                 className="w-full p-4 border border-gray-200 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-all text-left"
               >
                 <div className="flex items-center justify-between">

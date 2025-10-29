@@ -98,25 +98,30 @@ echo -e "${GREEN}✓${NC} PM2 installé"
 
 # 7. Configuration PostgreSQL
 echo -e "\n${YELLOW}[7/12]${NC} Configuration de la base de données..."
-sudo -u postgres psql << EOF
--- Supprimer l'utilisateur s'il existe
-DROP USER IF EXISTS ${DB_USER};
--- Créer la base de données
-CREATE DATABASE ${DB_NAME};
--- Créer l'utilisateur
-CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASSWORD}';
--- Donner tous les privilèges
-GRANT ALL PRIVILEGES ON DATABASE ${DB_NAME} TO ${DB_USER};
-ALTER DATABASE ${DB_NAME} OWNER TO ${DB_USER};
--- Donner les privilèges sur le schéma public
-\c ${DB_NAME}
+
+# Terminer toutes les connexions à la base
+sudo -u postgres psql -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '${DB_NAME}';" 2>/dev/null || true
+
+# Supprimer la base si elle existe
+sudo -u postgres psql -c "DROP DATABASE IF EXISTS ${DB_NAME};" 2>/dev/null || true
+
+# Supprimer l'utilisateur si il existe
+sudo -u postgres psql -c "DROP USER IF EXISTS ${DB_USER};" 2>/dev/null || true
+
+# Créer l'utilisateur
+sudo -u postgres psql -c "CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASSWORD}';"
+
+# Créer la base de données
+sudo -u postgres psql -c "CREATE DATABASE ${DB_NAME} OWNER ${DB_USER};"
+
+# Donner tous les privilèges
+sudo -u postgres psql -d ${DB_NAME} << EOF
 GRANT ALL ON SCHEMA public TO ${DB_USER};
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO ${DB_USER};
-GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO ${DB_USER};
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO ${DB_USER};
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO ${DB_USER};
 \q
 EOF
+
 echo -e "${GREEN}✓${NC} Base de données créée"
 
 # 8. Clonage du projet
@@ -170,22 +175,47 @@ EOF
 echo -e "${GREEN}✓${NC} Fichier .env backend créé"
 
 # Installation des dépendances backend
-echo "Installation des dépendances backend..."
-npm install --silent
+echo -e "${YELLOW}Installation des dépendances backend...${NC}"
+npm install --silent 2>&1 | grep -v "npm warn" || true
+echo -e "${GREEN}✓${NC} Dépendances installées"
 
 # Prisma
-echo "Génération du client Prisma..."
-npx prisma generate
+echo -e "${YELLOW}Génération du client Prisma...${NC}"
+if npx prisma generate 2>&1 | tee /tmp/prisma-generate.log; then
+    echo -e "${GREEN}✓${NC} Client Prisma généré"
+else
+    echo -e "${RED}✗${NC} Erreur lors de la génération Prisma:"
+    cat /tmp/prisma-generate.log
+    exit 1
+fi
 
-echo "Exécution des migrations..."
-npx prisma migrate deploy
+echo -e "${YELLOW}Exécution des migrations...${NC}"
+if npx prisma migrate deploy 2>&1 | tee /tmp/prisma-migrate.log; then
+    echo -e "${GREEN}✓${NC} Migrations appliquées"
+else
+    echo -e "${RED}✗${NC} Erreur lors des migrations:"
+    cat /tmp/prisma-migrate.log
+    exit 1
+fi
 
-echo "Peuplement de la base de données..."
-npm run seed
+echo -e "${YELLOW}Peuplement de la base de données...${NC}"
+if npm run seed 2>&1 | tee /tmp/seed.log; then
+    echo -e "${GREEN}✓${NC} Base de données peuplée"
+else
+    echo -e "${RED}✗${NC} Erreur lors du seed:"
+    cat /tmp/seed.log
+    exit 1
+fi
 
 # Build backend
-echo "Build du backend..."
-npm run build
+echo -e "${YELLOW}Build du backend...${NC}"
+if npm run build 2>&1 | grep -v "npm warn" | tee /tmp/build-backend.log; then
+    echo -e "${GREEN}✓${NC} Backend compilé"
+else
+    echo -e "${RED}✗${NC} Erreur lors du build:"
+    cat /tmp/build-backend.log
+    exit 1
+fi
 
 echo -e "${GREEN}✓${NC} Backend configuré"
 

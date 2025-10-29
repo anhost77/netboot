@@ -707,7 +707,7 @@ export default function StatisticsPage() {
                 <strong>Volatilité :</strong> Mesure la variation de vos résultats. Une volatilité élevée signifie des résultats irréguliers.
               </p>
               <p>
-                <strong>Ratio de Sharpe :</strong> Indique si vos gains justifient les risques pris. Plus il est élevé, mieux c'est (>1 = bon, >2 = excellent).
+                <strong>Ratio de Sharpe :</strong> Indique si vos gains justifient les risques pris. Plus il est élevé, mieux c&apos;est (&gt;1 = bon, &gt;2 = excellent).
               </p>
               <p>
                 <strong>Analyses par catégorie :</strong> Identifiez quels types de paris, cotes ou hippodromes sont les plus rentables pour vous.

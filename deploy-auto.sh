@@ -99,10 +99,22 @@ echo -e "${GREEN}✓${NC} PM2 installé"
 # 7. Configuration PostgreSQL
 echo -e "\n${YELLOW}[7/12]${NC} Configuration de la base de données..."
 sudo -u postgres psql << EOF
+-- Supprimer l'utilisateur s'il existe
+DROP USER IF EXISTS ${DB_USER};
+-- Créer la base de données
 CREATE DATABASE ${DB_NAME};
+-- Créer l'utilisateur
 CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASSWORD}';
+-- Donner tous les privilèges
 GRANT ALL PRIVILEGES ON DATABASE ${DB_NAME} TO ${DB_USER};
 ALTER DATABASE ${DB_NAME} OWNER TO ${DB_USER};
+-- Donner les privilèges sur le schéma public
+\c ${DB_NAME}
+GRANT ALL ON SCHEMA public TO ${DB_USER};
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO ${DB_USER};
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO ${DB_USER};
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO ${DB_USER};
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO ${DB_USER};
 \q
 EOF
 echo -e "${GREEN}✓${NC} Base de données créée"
@@ -159,17 +171,21 @@ echo -e "${GREEN}✓${NC} Fichier .env backend créé"
 
 # Installation des dépendances backend
 echo "Installation des dépendances backend..."
-npm install --silent > /dev/null 2>&1
+npm install --silent
 
 # Prisma
-echo "Configuration Prisma..."
-npx prisma generate > /dev/null 2>&1
-npx prisma migrate deploy > /dev/null 2>&1
-npm run seed > /dev/null 2>&1
+echo "Génération du client Prisma..."
+npx prisma generate
+
+echo "Exécution des migrations..."
+npx prisma migrate deploy
+
+echo "Peuplement de la base de données..."
+npm run seed
 
 # Build backend
 echo "Build du backend..."
-npm run build > /dev/null 2>&1
+npm run build
 
 echo -e "${GREEN}✓${NC} Backend configuré"
 

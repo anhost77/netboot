@@ -308,6 +308,7 @@ model Subscription {
 model Tipster {
   id                    String          @id @default(uuid())
   userId                String          @map("user_id")
+  mode                  String          @default("real") // 'real' ou 'simulation'
   name                  String
   description           String?
   website               String?
@@ -321,8 +322,9 @@ model Tipster {
   user                  User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   bets                  Bet[]
 
-  @@unique([userId, name])
+  @@unique([userId, name, mode])
   @@index([userId])
+  @@index([userId, mode])
   @@map("tipsters")
 }
 
@@ -330,6 +332,7 @@ model Tipster {
 model Bet {
   id                    String          @id @default(uuid())
   userId                String          @map("user_id")
+  mode                  String          @default("real") // 'real' ou 'simulation'
   date                  DateTime
   time                  String?
   platform              String?
@@ -368,6 +371,7 @@ model Bet {
 
   @@index([userId, date])
   @@index([userId, status])
+  @@index([userId, mode])
   @@index([pmuRaceId])
   @@index([tipsterId])
   @@map("bets")
@@ -696,6 +700,7 @@ model Platform {
 model BankrollTransaction {
   id                    String            @id @default(uuid())
   userId                String            @map("user_id")
+  mode                  String            @default("real") // 'real' ou 'simulation'
   platformId            String            @map("platform_id")
   betId                 String?           @map("bet_id")
   type                  TransactionType
@@ -711,6 +716,7 @@ model BankrollTransaction {
   bet                   Bet?              @relation(fields: [betId], references: [id], onDelete: SetNull)
 
   @@index([userId, date])
+  @@index([userId, mode])
   @@index([platformId])
   @@index([betId])
   @@map("bankroll_transactions")

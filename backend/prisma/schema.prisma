@@ -677,6 +677,7 @@ model EmailQueue {
 model Platform {
   id                    String                @id @default(uuid())
   userId                String                @map("user_id")
+  mode                  String                @default("real") // 'real' ou 'simulation'
   name                  String
   platformType          String                @default("OTHER") @map("platform_type") // "PMU" ou "OTHER" (Betclic, Unibet, etc.)
   autoUpdateResults     Boolean               @default(false) @map("auto_update_results") // Mise à jour auto des résultats
@@ -692,6 +693,7 @@ model Platform {
   bets                  Bet[]
 
   @@index([userId])
+  @@index([userId, mode])
   @@index([platformType])
   @@map("platforms")
 }

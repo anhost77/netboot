@@ -28,9 +28,9 @@ export class PlatformsService {
     return platform;
   }
 
-  async findAll(userId: string) {
+  async findAll(userId: string, mode: string = 'real') {
     return this.prisma.platform.findMany({
-      where: { userId },
+      where: { userId, mode },
       orderBy: { createdAt: 'desc' },
       include: {
         _count: {

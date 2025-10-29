@@ -39,9 +39,9 @@ export class TipstersService {
     return this.prisma.tipster.create({ data });
   }
 
-  async findAll(userId: string) {
+  async findAll(userId: string, mode: string = 'real') {
     return this.prisma.tipster.findMany({
-      where: { userId },
+      where: { userId, mode },
       orderBy: { name: 'asc' },
       include: {
         _count: {

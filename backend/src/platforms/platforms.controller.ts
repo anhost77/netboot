@@ -21,6 +21,7 @@ import { CreatePlatformDto } from './dto/create-platform.dto';
 import { UpdatePlatformDto } from './dto/update-platform.dto';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { Mode } from '../common/decorators/mode.decorator';
 
 @ApiTags('platforms')
 @ApiBearerAuth()
@@ -39,8 +40,8 @@ export class PlatformsController {
   @Get()
   @ApiOperation({ summary: 'Récupérer toutes les plateformes de l\'utilisateur' })
   @ApiResponse({ status: 200, description: 'Liste des plateformes' })
-  findAll(@Request() req: any) {
-    return this.platformsService.findAll(req.user.id);
+  findAll(@Request() req: any, @Mode() mode: string) {
+    return this.platformsService.findAll(req.user.id, mode);
   }
 
   @Get('global-bankroll')

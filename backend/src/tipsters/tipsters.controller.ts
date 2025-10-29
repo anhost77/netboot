@@ -5,6 +5,7 @@ import { TipstersService } from './tipsters.service';
 import { CreateTipsterDto } from './dto/create-tipster.dto';
 import { UpdateTipsterDto } from './dto/update-tipster.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { Mode } from '../common/decorators/mode.decorator';
 
 @ApiTags('Tipsters')
 @ApiBearerAuth()
@@ -24,8 +25,8 @@ export class TipstersController {
   @Get()
   @ApiOperation({ summary: 'Récupérer tous les tipsters de l\'utilisateur' })
   @ApiResponse({ status: 200, description: 'Liste des tipsters' })
-  findAll(@Request() req: any) {
-    return this.tipstersService.findAll(req.user.id);
+  findAll(@Request() req: any, @Mode() mode: string) {
+    return this.tipstersService.findAll(req.user.id, mode);
   }
 
   @Get('statistics')

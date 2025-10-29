@@ -33,8 +33,8 @@ export class PlatformsController {
   @Post()
   @ApiOperation({ summary: 'Créer une nouvelle plateforme' })
   @ApiResponse({ status: 201, description: 'Plateforme créée avec succès' })
-  create(@Request() req: any, @Body() createPlatformDto: CreatePlatformDto) {
-    return this.platformsService.create(req.user.id, createPlatformDto);
+  create(@Request() req: any, @Body() createPlatformDto: CreatePlatformDto, @Mode() mode: string) {
+    return this.platformsService.create(req.user.id, createPlatformDto, mode);
   }
 
   @Get()

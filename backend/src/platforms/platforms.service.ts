@@ -13,10 +13,11 @@ import { Decimal } from '@prisma/client/runtime/library';
 export class PlatformsService {
   constructor(private prisma: PrismaService) {}
 
-  async create(userId: string, createPlatformDto: CreatePlatformDto) {
+  async create(userId: string, createPlatformDto: CreatePlatformDto, mode: string = 'real') {
     const platform = await this.prisma.platform.create({
       data: {
         userId,
+        mode, // Ajouter le mode
         name: createPlatformDto.name,
         platformType: createPlatformDto.platformType || 'OTHER',
         autoUpdateResults: createPlatformDto.platformType === 'PMU',

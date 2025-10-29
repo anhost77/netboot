@@ -18,8 +18,8 @@ export class TipstersController {
   @ApiOperation({ summary: 'Créer un nouveau tipster' })
   @ApiResponse({ status: 201, description: 'Tipster créé avec succès' })
   @ApiResponse({ status: 409, description: 'Un tipster avec ce nom existe déjà' })
-  create(@Request() req: any, @Body() createTipsterDto: CreateTipsterDto) {
-    return this.tipstersService.create(req.user.id, createTipsterDto);
+  create(@Request() req: any, @Body() createTipsterDto: CreateTipsterDto, @Mode() mode: string) {
+    return this.tipstersService.create(req.user.id, createTipsterDto, mode);
   }
 
   @Get()

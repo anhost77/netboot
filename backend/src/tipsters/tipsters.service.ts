@@ -8,12 +8,13 @@ import { Decimal } from '@prisma/client/runtime/library';
 export class TipstersService {
   constructor(private prisma: PrismaService) {}
 
-  async create(userId: string, createTipsterDto: CreateTipsterDto) {
-    // Vérifier si un tipster avec ce nom existe déjà pour cet utilisateur
+  async create(userId: string, createTipsterDto: CreateTipsterDto, mode: string = 'real') {
+    // Vérifier si un tipster avec ce nom existe déjà pour cet utilisateur dans ce mode
     const existing = await this.prisma.tipster.findFirst({
       where: {
         userId,
         name: createTipsterDto.name,
+        mode,
       },
     });
 
@@ -24,6 +25,7 @@ export class TipstersService {
     // Nettoyer les données avant insertion
     const data: any = {
       userId,
+      mode, // Ajouter le mode
       name: createTipsterDto.name,
       description: createTipsterDto.description || null,
       website: createTipsterDto.website || null,

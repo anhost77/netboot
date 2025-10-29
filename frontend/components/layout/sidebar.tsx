@@ -53,15 +53,17 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
       try {
         const user = apiClient.getUser();
         if (user) {
-          // Récupérer l'abonnement actif
-          const response = await fetch('/api/subscriptions/active');
-          if (response.ok) {
-            const data = await response.json();
-            setSubscription(data);
-          }
+          // Récupérer l'abonnement depuis l'API
+          const response = await apiClient.get('/subscriptions/current');
+          setSubscription(response);
         }
       } catch (error) {
         console.error('Erreur lors du chargement de l\'abonnement:', error);
+        // En cas d'erreur, utiliser un plan par défaut si disponible dans user
+        const user = apiClient.getUser();
+        if (user?.subscription) {
+          setSubscription(user.subscription);
+        }
       }
     };
     loadSubscription();

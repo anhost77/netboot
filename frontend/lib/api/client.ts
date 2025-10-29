@@ -24,16 +24,54 @@ class APIClient {
       (error) => Promise.reject(error)
     );
 
-    // Response interceptor to handle errors
+    // Response interceptor to handle errors and auto-refresh token
     this.client.interceptors.response.use(
       (response) => response,
       async (error: AxiosError) => {
+        const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
+        
+        // Si erreur 401 et pas déjà tenté de refresh
+        if (error.response?.status === 401 && !originalRequest._retry) {
+          originalRequest._retry = true;
+          
+          try {
+            // Tenter de rafraîchir le token
+            const refreshToken = typeof window !== 'undefined' ? localStorage.getItem('refresh_token') : null;
+            
+            if (refreshToken) {
+              const response = await axios.post(`${API_URL}/auth/refresh`, {
+                refresh_token: refreshToken
+              });
+              
+              const { access_token, refresh_token: newRefreshToken, user } = response.data;
+              
+              // Sauvegarder les nouveaux tokens
+              this.saveAuth(access_token, newRefreshToken, user);
+              
+              // Réessayer la requête originale avec le nouveau token
+              if (originalRequest.headers) {
+                originalRequest.headers.Authorization = `Bearer ${access_token}`;
+              }
+              return this.client(originalRequest);
+            }
+          } catch (refreshError) {
+            // Si le refresh échoue, déconnecter
+            this.clearAuth();
+            if (typeof window !== 'undefined') {
+              window.location.href = '/login';
+            }
+            return Promise.reject(refreshError);
+          }
+        }
+        
+        // Pour toutes les autres erreurs ou si refresh a échoué
         if (error.response?.status === 401) {
           this.clearAuth();
           if (typeof window !== 'undefined') {
             window.location.href = '/login';
           }
         }
+        
         return Promise.reject(error);
       }
     );

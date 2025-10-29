@@ -21,7 +21,7 @@ import { AuditLogService } from '../admin/audit-log.service';
       useFactory: (config: ConfigService) => ({
         secret: config.get('JWT_SECRET'),
         signOptions: {
-          expiresIn: config.get('JWT_EXPIRATION', '15m'),
+          expiresIn: config.get('JWT_EXPIRATION', '1h'),
         },
       }),
     }),

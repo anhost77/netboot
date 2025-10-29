@@ -478,7 +478,7 @@ export class AuthService {
       { sub: userId, email },
       {
         secret: this.config.get('JWT_SECRET'),
-        expiresIn: this.config.get('JWT_EXPIRATION', '15m'),
+        expiresIn: this.config.get('JWT_EXPIRATION', '1h'),
       },
     );
 

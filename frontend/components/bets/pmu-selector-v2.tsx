@@ -158,8 +158,89 @@ export default function PMUSelector({ platforms, onSelect }: PMUSelectorProps) {
     return selectedHorses.length >= selectedBetType!.minSelections;
   };
 
+  // Calculer l'étape actuelle et le total
+  const getStepNumber = () => {
+    const steps = { betType: 1, platform: 2, hippodrome: 3, race: 4, horse: 5 };
+    return steps[step];
+  };
+
+  const totalSteps = 5;
+  const currentStepNumber = getStepNumber();
+  const progressPercentage = ((currentStepNumber - 1) / (totalSteps - 1)) * 100;
+
   return (
     <div className="space-y-4">
+      {/* Barre de progression */}
+      <div className="mb-6">
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-sm font-medium text-gray-700">
+            Étape {currentStepNumber} sur {totalSteps}
+          </span>
+          <span className="text-sm text-gray-500">
+            {Math.round(progressPercentage)}% complété
+          </span>
+        </div>
+        
+        {/* Barre de progression visuelle */}
+        <div className="relative">
+          {/* Ligne de fond */}
+          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+            {/* Barre de progression */}
+            <div 
+              className="h-full bg-gradient-to-r from-primary-500 to-primary-600 transition-all duration-500 ease-out"
+              style={{ width: `${progressPercentage}%` }}
+            />
+          </div>
+          
+          {/* Points d'étapes */}
+          <div className="absolute top-1/2 -translate-y-1/2 w-full flex justify-between px-0">
+            {[1, 2, 3, 4, 5].map((stepNum) => (
+              <div
+                key={stepNum}
+                className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-bold transition-all duration-300 ${
+                  stepNum < currentStepNumber
+                    ? 'bg-primary-600 border-primary-600 text-white'
+                    : stepNum === currentStepNumber
+                    ? 'bg-white border-primary-600 text-primary-600 ring-4 ring-primary-100'
+                    : 'bg-white border-gray-300 text-gray-400'
+                }`}
+              >
+                {stepNum < currentStepNumber ? (
+                  <Check className="h-3 w-3" />
+                ) : (
+                  stepNum
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        {/* Labels des étapes */}
+        <div className="flex justify-between mt-3 px-0">
+          {[
+            { num: 1, label: 'Type' },
+            { num: 2, label: 'Bookmaker' },
+            { num: 3, label: 'Hippodrome' },
+            { num: 4, label: 'Course' },
+            { num: 5, label: 'Chevaux' }
+          ].map(({ num, label }) => (
+            <div
+              key={num}
+              className={`text-xs text-center transition-colors ${
+                num === currentStepNumber
+                  ? 'text-primary-600 font-semibold'
+                  : num < currentStepNumber
+                  ? 'text-gray-600'
+                  : 'text-gray-400'
+              }`}
+              style={{ width: '20%' }}
+            >
+              {label}
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Breadcrumb */}
       <div className="flex items-center space-x-2 text-sm">
         <button

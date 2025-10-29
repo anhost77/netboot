@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { budgetAPI, type UpdateBudgetSettingsData, type MonthlyBudgetHistory } from '@/lib/api/budget';
 import type { BudgetOverview, BudgetConsumption } from '@/lib/types';
+import { useMode } from '@/contexts/ModeContext';
 import { formatCurrency } from '@/lib/utils';
 import {
   Wallet,
@@ -19,9 +20,12 @@ import {
   Edit,
   CheckCircle,
   XCircle,
+  Play,
+  Zap,
 } from 'lucide-react';
 
 export default function BudgetPage() {
+  const { mode, isSimulation } = useMode();
   const [overview, setOverview] = useState<BudgetOverview | null>(null);
   const [history, setHistory] = useState<MonthlyBudgetHistory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -30,7 +34,7 @@ export default function BudgetPage() {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [mode]); // Recharger quand le mode change
 
   const loadData = async () => {
     try {
@@ -91,8 +95,28 @@ export default function BudgetPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Budget</h1>
-          <p className="mt-2 text-sm sm:text-base text-gray-600">Gérez votre budget et suivez vos dépenses</p>
+          <div className="flex items-center space-x-3 mb-2">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Budget</h1>
+            {/* Indicateur de mode */}
+            <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-semibold ${
+              isSimulation 
+                ? 'bg-blue-100 text-blue-800' 
+                : 'bg-green-100 text-green-800'
+            }`}>
+              {isSimulation ? (
+                <>
+                  <Play className="h-3 w-3" />
+                  <span>Simulation</span>
+                </>
+              ) : (
+                <>
+                  <Zap className="h-3 w-3" />
+                  <span>Réel</span>
+                </>
+              )}
+            </div>
+          </div>
+          <p className="mt-2 text-sm sm:text-base text-gray-600">Gérez votre budget et suivez vos dépenses {isSimulation ? '(mode simulation)' : '(mode réel)'}</p>
         </div>
         <button
           onClick={() => setShowSettingsModal(true)}

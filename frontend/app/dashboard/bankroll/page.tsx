@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { platformsAPI, type Platform, type GlobalBankroll, type BankrollEvolutionData } from '@/lib/api/platforms';
+import { useMode } from '@/contexts/ModeContext';
 import { formatCurrency } from '@/lib/utils';
 import {
   Wallet,
@@ -14,6 +15,8 @@ import {
   Settings as SettingsIcon,
   BarChart3,
   Download,
+  Play,
+  Zap,
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import PlatformModal from '@/components/platforms/platform-modal';
@@ -21,6 +24,7 @@ import TransactionModal from '@/components/platforms/transaction-modal';
 import BankrollChart from '@/components/charts/bankroll-chart';
 
 export default function BankrollPage() {
+  const { mode, isSimulation } = useMode();
   const [platforms, setPlatforms] = useState<Platform[]>([]);
   const [globalBankroll, setGlobalBankroll] = useState<GlobalBankroll | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -36,11 +40,11 @@ export default function BankrollPage() {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [mode]); // Recharger quand le mode change
 
   useEffect(() => {
     loadEvolutionData();
-  }, [period, platforms]);
+  }, [mode, period, platforms]); // Recharger quand le mode change
 
   const loadData = async () => {
     try {
@@ -165,8 +169,28 @@ export default function BankrollPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Gestion de Bankroll</h1>
-          <p className="mt-2 text-gray-600">Gérez vos plateformes et suivez l'évolution de votre bankroll</p>
+          <div className="flex items-center space-x-3 mb-2">
+            <h1 className="text-3xl font-bold text-gray-900">Gestion de Bankroll</h1>
+            {/* Indicateur de mode */}
+            <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-semibold ${
+              isSimulation 
+                ? 'bg-blue-100 text-blue-800' 
+                : 'bg-green-100 text-green-800'
+            }`}>
+              {isSimulation ? (
+                <>
+                  <Play className="h-3 w-3" />
+                  <span>Simulation</span>
+                </>
+              ) : (
+                <>
+                  <Zap className="h-3 w-3" />
+                  <span>Réel</span>
+                </>
+              )}
+            </div>
+          </div>
+          <p className="mt-2 text-gray-600">Gérez vos plateformes et suivez l'évolution de votre bankroll {isSimulation ? '(mode simulation)' : '(mode réel)'}</p>
         </div>
         <a
           href="/dashboard/bankroll/statistics"

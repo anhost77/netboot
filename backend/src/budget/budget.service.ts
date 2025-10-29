@@ -14,55 +14,56 @@ export class BudgetService {
   /**
    * Get or create user budget settings
    */
-  async getSettings(userId: string) {
-    let settings = await this.prisma.userSettings.findUnique({
-      where: { userId },
+  async getSettings(userId: string, mode: string = 'real') {
+    let budgetSettings = await this.prisma.budgetSettings.findUnique({
+      where: { 
+        userId_mode: {
+          userId,
+          mode,
+        },
+      },
     });
 
-    // Create default settings if they don't exist
-    if (!settings) {
-      settings = await this.prisma.userSettings.create({
+    if (!budgetSettings) {
+      // Create default settings if they don't exist
+      budgetSettings = await this.prisma.budgetSettings.create({
         data: {
           userId,
-          initialBankroll: new Decimal(0),
-          currentBankroll: new Decimal(0),
+          mode,
         },
       });
     }
 
-    return settings;
+    return budgetSettings;
   }
 
   /**
    * Update budget settings
    */
-  async updateSettings(userId: string, dto: UpdateBudgetSettingsDto) {
-    const settings = await this.getSettings(userId);
+  async updateSettings(userId: string, dto: UpdateBudgetSettingsDto, mode: string = 'real') {
+    const budgetSettings = await this.getSettings(userId, mode);
 
-    const updateData: any = {};
-
-    if (dto.initialBankroll !== undefined) {
-      updateData.initialBankroll = new Decimal(dto.initialBankroll);
-    }
-    if (dto.currentBankroll !== undefined) {
-      updateData.currentBankroll = new Decimal(dto.currentBankroll);
-    }
-    if (dto.dailyLimit !== undefined) {
-      updateData.dailyLimit = dto.dailyLimit !== null ? new Decimal(dto.dailyLimit) : null;
-    }
-    if (dto.weeklyLimit !== undefined) {
-      updateData.weeklyLimit = dto.weeklyLimit !== null ? new Decimal(dto.weeklyLimit) : null;
-    }
-    if (dto.monthlyLimit !== undefined) {
-      updateData.monthlyLimit = dto.monthlyLimit !== null ? new Decimal(dto.monthlyLimit) : null;
-    }
-    if (dto.alertThreshold !== undefined) {
-      updateData.alertThreshold = dto.alertThreshold !== null ? new Decimal(dto.alertThreshold) : null;
-    }
-
-    const updated = await this.prisma.userSettings.update({
-      where: { userId },
-      data: updateData,
+    const updated = await this.prisma.budgetSettings.upsert({
+      where: { 
+        userId_mode: {
+          userId,
+          mode,
+        },
+      },
+      update: {
+        dailyLimit: dto.dailyLimit !== undefined ? dto.dailyLimit : undefined,
+        weeklyLimit: dto.weeklyLimit !== undefined ? dto.weeklyLimit : undefined,
+        monthlyLimit: dto.monthlyLimit !== undefined ? dto.monthlyLimit : undefined,
+        alertThreshold: dto.alertThreshold !== undefined ? dto.alertThreshold : undefined,
+      },
+      create: {
+        userId,
+        mode,
+        dailyLimit: dto.dailyLimit,
+        weeklyLimit: dto.weeklyLimit,
+        monthlyLimit: dto.monthlyLimit,
+        alertThreshold: dto.alertThreshold,
+      },
     });
 
     await this.notificationsService.notifySuccess(
@@ -78,7 +79,7 @@ export class BudgetService {
   /**
    * Get budget consumption for a period
    */
-  async getConsumption(userId: string, period: 'daily' | 'weekly' | 'monthly') {
+  async getConsumption(userId: string, period: 'daily' | 'weekly' | 'monthly', mode: string = 'real') {
     const now = new Date();
     let startDate: Date;
 
@@ -102,6 +103,7 @@ export class BudgetService {
     const bets = await this.prisma.bet.findMany({
       where: {
         userId,
+        mode,
         date: {
           gte: startDate,
         },
@@ -116,18 +118,18 @@ export class BudgetService {
       return sum + (bet.profit ? Number(bet.profit) : 0);
     }, 0);
 
-    const settings = await this.getSettings(userId);
+    const budgetSettings = await this.getSettings(userId, mode);
     let limit: number | null = null;
 
     switch (period) {
       case 'daily':
-        limit = settings.dailyLimit ? Number(settings.dailyLimit) : null;
+        limit = budgetSettings.dailyLimit ? Number(budgetSettings.dailyLimit) : null;
         break;
       case 'weekly':
-        limit = settings.weeklyLimit ? Number(settings.weeklyLimit) : null;
+        limit = budgetSettings.weeklyLimit ? Number(budgetSettings.weeklyLimit) : null;
         break;
       case 'monthly':
-        limit = settings.monthlyLimit ? Number(settings.monthlyLimit) : null;
+        limit = budgetSettings.monthlyLimit ? Number(budgetSettings.monthlyLimit) : null;
         break;
     }
 
@@ -151,18 +153,18 @@ export class BudgetService {
   /**
    * Get budget overview (all periods)
    */
-  async getOverview(userId: string) {
-    const settings = await this.getSettings(userId);
+  async getOverview(userId: string, mode: string = 'real') {
+    const budgetSettings = await this.getSettings(userId, mode);
 
     const [daily, weekly, monthly] = await Promise.all([
-      this.getConsumption(userId, 'daily'),
-      this.getConsumption(userId, 'weekly'),
-      this.getConsumption(userId, 'monthly'),
+      this.getConsumption(userId, 'daily', mode),
+      this.getConsumption(userId, 'weekly', mode),
+      this.getConsumption(userId, 'monthly', mode),
     ]);
 
     // Check for alerts
     const alerts: string[] = [];
-    const alertThreshold = settings.alertThreshold ? Number(settings.alertThreshold) : 80;
+    const alertThreshold = budgetSettings.alertThreshold ? Number(budgetSettings.alertThreshold) : 80;
 
     if (daily.percentage && daily.percentage >= alertThreshold) {
       alerts.push(`Vous avez consommé ${daily.percentage.toFixed(1)}% de votre budget journalier`);
@@ -176,7 +178,7 @@ export class BudgetService {
 
     // Bankroll status - Récupérer depuis les plateformes
     const platforms = await this.prisma.platform.findMany({
-      where: { userId },
+      where: { userId, mode },
       select: {
         initialBankroll: true,
         currentBankroll: true,
@@ -192,9 +194,9 @@ export class BudgetService {
       settings: {
         initialBankroll,
         currentBankroll,
-        dailyLimit: settings.dailyLimit ? Number(settings.dailyLimit) : null,
-        weeklyLimit: settings.weeklyLimit ? Number(settings.weeklyLimit) : null,
-        monthlyLimit: settings.monthlyLimit ? Number(settings.monthlyLimit) : null,
+        dailyLimit: budgetSettings.dailyLimit ? Number(budgetSettings.dailyLimit) : null,
+        weeklyLimit: budgetSettings.weeklyLimit ? Number(budgetSettings.weeklyLimit) : null,
+        monthlyLimit: budgetSettings.monthlyLimit ? Number(budgetSettings.monthlyLimit) : null,
         alertThreshold,
       },
       daily,
@@ -214,14 +216,14 @@ export class BudgetService {
   /**
    * Check budgets and send alerts if needed (called after bet creation)
    */
-  async checkBudgetsAndAlert(userId: string) {
-    const settings = await this.getSettings(userId);
-    const alertThreshold = settings.alertThreshold ? Number(settings.alertThreshold) : 80;
+  async checkBudgetsAndAlert(userId: string, mode: string = 'real') {
+    const budgetSettings = await this.getSettings(userId, mode);
+    const alertThreshold = budgetSettings.alertThreshold ? Number(budgetSettings.alertThreshold) : 80;
 
     const [daily, weekly, monthly] = await Promise.all([
-      this.getConsumption(userId, 'daily'),
-      this.getConsumption(userId, 'weekly'),
-      this.getConsumption(userId, 'monthly'),
+      this.getConsumption(userId, 'daily', mode),
+      this.getConsumption(userId, 'weekly', mode),
+      this.getConsumption(userId, 'monthly', mode),
     ]);
 
     // Check daily
@@ -284,18 +286,19 @@ export class BudgetService {
 
   /**
    * Update bankroll after a bet result
+   * Note: Bankroll is now managed via Platform model, not BudgetSettings
    */
-  async updateBankroll(userId: string, profitAmount: number) {
-    const settings = await this.getSettings(userId);
-    const currentBankroll = settings.currentBankroll ? Number(settings.currentBankroll) : 0;
-    const newBankroll = currentBankroll + profitAmount;
-
-    await this.prisma.userSettings.update({
-      where: { userId },
-      data: {
-        currentBankroll: new Decimal(newBankroll),
+  async updateBankroll(userId: string, profitAmount: number, mode: string = 'real') {
+    // Get current bankroll from platforms
+    const platforms = await this.prisma.platform.findMany({
+      where: { userId, mode },
+      select: {
+        currentBankroll: true,
       },
     });
+
+    const currentBankroll = platforms.reduce((sum, p) => sum + Number(p.currentBankroll || 0), 0);
+    const newBankroll = currentBankroll + profitAmount;
 
     // Notify if significant change
     if (Math.abs(profitAmount) >= 50) {
@@ -319,7 +322,7 @@ export class BudgetService {
   /**
    * Get monthly budget history (for charts)
    */
-  async getMonthlyHistory(userId: string, months: number = 6) {
+  async getMonthlyHistory(userId: string, months: number = 6, mode: string = 'real') {
     const now = new Date();
     const startDate = new Date(now);
     startDate.setMonth(now.getMonth() - months);
@@ -329,6 +332,7 @@ export class BudgetService {
     const bets = await this.prisma.bet.findMany({
       where: {
         userId,
+        mode,
         date: {
           gte: startDate,
         },

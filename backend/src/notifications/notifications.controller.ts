@@ -17,6 +17,7 @@ import { NotificationsService } from './notifications.service';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { NotificationFiltersDto } from './dto/notification-filters.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { Mode } from '../common/decorators/mode.decorator';
 
 @ApiTags('Notifications')
 @Controller('notifications')
@@ -39,8 +40,8 @@ export class NotificationsController {
     summary: 'Get all notifications',
     description: 'Get paginated list of notifications for the current user with optional filters',
   })
-  findAll(@Request() req: any, @Query() filters: NotificationFiltersDto) {
-    return this.notificationsService.findAll(req.user.id, filters);
+  findAll(@Request() req: any, @Query() filters: NotificationFiltersDto, @Mode() mode: string) {
+    return this.notificationsService.findAll(req.user.id, filters, mode);
   }
 
   @Get('unread-count')
@@ -48,8 +49,8 @@ export class NotificationsController {
     summary: 'Get unread notifications count',
     description: 'Get the count of unread notifications for badge display',
   })
-  getUnreadCount(@Request() req: any) {
-    return this.notificationsService.getUnreadCount(req.user.id);
+  getUnreadCount(@Request() req: any, @Mode() mode: string) {
+    return this.notificationsService.getUnreadCount(req.user.id, mode);
   }
 
   @Patch(':id/read')

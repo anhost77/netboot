@@ -18,10 +18,11 @@ export class NotificationsService {
   /**
    * Create a new notification
    */
-  async create(userId: string, dto: CreateNotificationDto) {
+  async create(userId: string, dto: CreateNotificationDto, mode: string = 'real') {
     return this.prisma.notification.create({
       data: {
         userId,
+        mode,
         type: dto.type,
         title: dto.title,
         message: dto.message,
@@ -33,9 +34,10 @@ export class NotificationsService {
   /**
    * Create a notification for multiple users (broadcast)
    */
-  async createMany(userIds: string[], dto: CreateNotificationDto) {
+  async createMany(userIds: string[], dto: CreateNotificationDto, mode: string = 'real') {
     const notifications = userIds.map(userId => ({
       userId,
+      mode,
       type: dto.type,
       title: dto.title,
       message: dto.message,
@@ -50,12 +52,12 @@ export class NotificationsService {
   /**
    * Get all notifications for a user with pagination and filters
    */
-  async findAll(userId: string, filters: NotificationFiltersDto) {
+  async findAll(userId: string, filters: NotificationFiltersDto, mode: string = 'real') {
     const { page = 1, limit = 20, type, unreadOnly } = filters;
     const skip = (page - 1) * limit;
 
     // Build where clause
-    const where: any = { userId };
+    const where: any = { userId, mode };
 
     if (type) where.type = type;
     if (unreadOnly) where.readAt = null;
@@ -85,10 +87,11 @@ export class NotificationsService {
   /**
    * Get unread notifications count
    */
-  async getUnreadCount(userId: string) {
+  async getUnreadCount(userId: string, mode: string = 'real') {
     const count = await this.prisma.notification.count({
       where: {
         userId,
+        mode,
         readAt: null,
       },
     });
@@ -202,6 +205,7 @@ export class NotificationsService {
     title: string,
     message: string,
     link?: string,
+    mode: string = 'real',
   ) {
     // Get user settings and user info to check notification preferences
     const settings = await this.prisma.userSettings.findUnique({
@@ -218,7 +222,7 @@ export class NotificationsService {
 
     // Create web notification if preference allows
     if (notificationPreference !== 'none' && notificationPreference !== 'email_only') {
-      await this.create(userId, { type, title, message, link });
+      await this.create(userId, { type, title, message, link }, mode);
     }
 
     // Send push notification if enabled and preference allows
@@ -257,35 +261,36 @@ export class NotificationsService {
     title: string,
     message: string,
     link?: string,
+    mode: string = 'real',
   ) {
-    return this.createMany(userIds, { type, title, message, link });
+    return this.createMany(userIds, { type, title, message, link }, mode);
   }
 
   /**
    * Send success notification
    */
-  async notifySuccess(userId: string, title: string, message: string, link?: string) {
-    return this.notify(userId, 'success', title, message, link);
+  async notifySuccess(userId: string, title: string, message: string, link?: string, mode: string = 'real') {
+    return this.notify(userId, 'success', title, message, link, mode);
   }
 
   /**
    * Send error notification
    */
-  async notifyError(userId: string, title: string, message: string, link?: string) {
-    return this.notify(userId, 'error', title, message, link);
+  async notifyError(userId: string, title: string, message: string, link?: string, mode: string = 'real') {
+    return this.notify(userId, 'error', title, message, link, mode);
   }
 
   /**
    * Send warning notification
    */
-  async notifyWarning(userId: string, title: string, message: string, link?: string) {
-    return this.notify(userId, 'warning', title, message, link);
+  async notifyWarning(userId: string, title: string, message: string, link?: string, mode: string = 'real') {
+    return this.notify(userId, 'warning', title, message, link, mode);
   }
 
   /**
    * Send info notification
    */
-  async notifyInfo(userId: string, title: string, message: string, link?: string) {
-    return this.notify(userId, 'info', title, message, link);
+  async notifyInfo(userId: string, title: string, message: string, link?: string, mode: string = 'real') {
+    return this.notify(userId, 'info', title, message, link, mode);
   }
 }

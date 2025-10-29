@@ -211,7 +211,8 @@ export class BetsService {
       userId,
       'Pari créé',
       `Votre pari de ${dto.stake}€ a été enregistré avec succès`,
-      '/dashboard/bets'
+      '/dashboard/bets',
+      mode // Passer le mode
     );
 
     return bet;
@@ -397,6 +398,7 @@ export class BetsService {
 
     // Send notifications based on status change
     if (oldStatus !== newStatus) {
+      const betMode = existingBet.mode || 'real'; // Récupérer le mode du pari
       if (newStatus === 'won') {
         const payout = dto.payout !== undefined ? dto.payout : (existingBet.payout?.toNumber() || 0);
         const profitAmount = payout - newStake;
@@ -404,14 +406,16 @@ export class BetsService {
           userId,
           'Pari gagné ! 🎉',
           `Félicitations ! Vous avez gagné ${profitAmount.toFixed(2)}€`,
-          '/dashboard/bets'
+          '/dashboard/bets',
+          betMode // Passer le mode du pari
         );
       } else if (newStatus === 'lost') {
         await this.notificationsService.notifyError(
           userId,
           'Pari perdu',
           `Votre pari de ${newStake}€ a été marqué comme perdu`,
-          '/dashboard/bets'
+          '/dashboard/bets',
+          betMode // Passer le mode du pari
         );
       }
     }

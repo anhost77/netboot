@@ -8,6 +8,7 @@ import {
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { StatisticsService } from './statistics.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { Mode } from '../common/decorators/mode.decorator';
 import { DateRangeDto } from './dto/date-range.dto';
 import { TimeSeriesDto } from './dto/time-series.dto';
 import { ComparativeAnalysisDto } from './dto/comparative-analysis.dto';
@@ -24,8 +25,8 @@ export class StatisticsController {
     summary: 'Get comprehensive dashboard statistics',
     description: 'Returns current month, last month, year-to-date, all-time stats, and trends',
   })
-  getDashboard(@Request() req: any) {
-    return this.statisticsService.getDashboardStats(req.user.id);
+  getDashboard(@Request() req: any, @Mode() mode: string) {
+    return this.statisticsService.getDashboardStats(req.user.id, mode);
   }
 
   @Get('periods')
@@ -33,8 +34,8 @@ export class StatisticsController {
     summary: 'Get statistics for predefined periods',
     description: 'Returns stats for today, yesterday, this week, last week, this month, last month',
   })
-  getPeriods(@Request() req: any) {
-    return this.statisticsService.getPeriodStats(req.user.id);
+  getPeriods(@Request() req: any, @Mode() mode: string) {
+    return this.statisticsService.getPeriodStats(req.user.id, mode);
   }
 
   @Get('time-series')
@@ -45,6 +46,7 @@ export class StatisticsController {
   getTimeSeries(
     @Request() req: any,
     @Query() dto: TimeSeriesDto,
+    @Mode() mode: string,
   ) {
     const startDate = dto.startDate ? new Date(dto.startDate) : undefined;
     const endDate = dto.endDate ? new Date(dto.endDate) : undefined;
@@ -54,6 +56,7 @@ export class StatisticsController {
       dto.period,
       startDate,
       endDate,
+      mode,
     );
   }
 
@@ -65,6 +68,7 @@ export class StatisticsController {
   getPerformance(
     @Request() req: any,
     @Query() dto: DateRangeDto,
+    @Mode() mode: string,
   ) {
     const startDate = dto.startDate ? new Date(dto.startDate) : undefined;
     const endDate = dto.endDate ? new Date(dto.endDate) : undefined;
@@ -73,6 +77,7 @@ export class StatisticsController {
       req.user.id,
       startDate,
       endDate,
+      mode,
     );
   }
 
@@ -84,6 +89,7 @@ export class StatisticsController {
   getBreakdowns(
     @Request() req: any,
     @Query() dto: DateRangeDto,
+    @Mode() mode: string,
   ) {
     const startDate = dto.startDate ? new Date(dto.startDate) : undefined;
     const endDate = dto.endDate ? new Date(dto.endDate) : undefined;
@@ -92,6 +98,7 @@ export class StatisticsController {
       req.user.id,
       startDate,
       endDate,
+      mode,
     );
   }
 
@@ -103,11 +110,13 @@ export class StatisticsController {
   getComparative(
     @Request() req: any,
     @Query() dto: ComparativeAnalysisDto,
+    @Mode() mode: string,
   ) {
     return this.statisticsService.getComparativeAnalysis(
       req.user.id,
       new Date(dto.currentStart),
       new Date(dto.currentEnd),
+      mode,
     );
   }
 }

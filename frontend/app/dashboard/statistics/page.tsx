@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { statisticsAPI, type DashboardStats, type TimeSeriesData, type PerformanceMetrics, type Breakdowns, type PredefinedPeriods } from '@/lib/api/statistics';
 import { platformsAPI } from '@/lib/api/platforms';
+import { useMode } from '@/contexts/ModeContext';
 import { formatCurrency } from '@/lib/utils';
 import { formatLocalDate } from '@/lib/date-utils';
 import { OverviewTab } from '@/components/statistics/overview-tab';
@@ -19,12 +20,15 @@ import {
   Clock,
   Trophy,
   Download,
+  Play,
+  Zap,
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 type TabType = 'overview' | 'charts' | 'analysis';
 
 export default function StatisticsPage() {
+  const { mode, isSimulation } = useMode();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
   const [periods, setPeriods] = useState<PredefinedPeriods | null>(null);
@@ -47,7 +51,7 @@ export default function StatisticsPage() {
   useEffect(() => {
     loadData();
     loadBankrolls();
-  }, [period, dateRange]);
+  }, [mode, period, dateRange]); // Recharger quand le mode change
 
   const loadBankrolls = async () => {
     try {
@@ -454,8 +458,28 @@ export default function StatisticsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Statistiques</h1>
-          <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600">Analysez vos performances de paris</p>
+          <div className="flex items-center space-x-3 mb-2">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Statistiques</h1>
+            {/* Indicateur de mode */}
+            <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-semibold ${
+              isSimulation 
+                ? 'bg-blue-100 text-blue-800' 
+                : 'bg-green-100 text-green-800'
+            }`}>
+              {isSimulation ? (
+                <>
+                  <Play className="h-3 w-3" />
+                  <span>Simulation</span>
+                </>
+              ) : (
+                <>
+                  <Zap className="h-3 w-3" />
+                  <span>Réel</span>
+                </>
+              )}
+            </div>
+          </div>
+          <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600">Analysez vos performances de paris {isSimulation ? '(mode simulation)' : '(mode réel)'}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button

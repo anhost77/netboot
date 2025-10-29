@@ -47,8 +47,8 @@ export class PlatformsController {
   @Get('global-bankroll')
   @ApiOperation({ summary: 'Récupérer la bankroll globale de toutes les plateformes' })
   @ApiResponse({ status: 200, description: 'Bankroll globale' })
-  getGlobalBankroll(@Request() req: any) {
-    return this.platformsService.getGlobalBankroll(req.user.id);
+  getGlobalBankroll(@Request() req: any, @Mode() mode: string) {
+    return this.platformsService.getGlobalBankroll(req.user.id, mode);
   }
 
   @Get('global-bankroll-evolution')
@@ -59,12 +59,14 @@ export class PlatformsController {
     @Query('period') period?: 'day' | 'week' | 'month' | 'year',
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
+    @Mode() mode?: string,
   ) {
     return this.platformsService.getGlobalBankrollEvolution(
       req.user.id,
       period || 'day',
       startDate,
       endDate,
+      mode || 'real',
     );
   }
 
@@ -131,6 +133,7 @@ export class PlatformsController {
     @Query('period') period?: 'day' | 'week' | 'month' | 'year',
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
+    @Mode() mode?: string,
   ) {
     return this.platformsService.getBankrollEvolution(
       req.user.id,
@@ -138,6 +141,7 @@ export class PlatformsController {
       period || 'day',
       startDate,
       endDate,
+      mode || 'real',
     );
   }
 }

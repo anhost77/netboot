@@ -242,6 +242,7 @@ model User {
   documents           Document[]
   notifications       Notification[]
   userSettings        UserSettings?
+  budgetSettings      BudgetSettings[]
   pushSubscriptions   PushSubscription[]
   refreshTokens       RefreshToken[]
   apiKeys             ApiKey[]
@@ -528,6 +529,7 @@ model MenuItem {
 model Notification {
   id                    String              @id @default(uuid())
   userId                String              @map("user_id")
+  mode                  String              @default("real") // 'real' or 'simulation'
   type                  NotificationType    @default(info)
   title                 String
   message               String
@@ -538,7 +540,7 @@ model Notification {
   // Relations
   user                  User                @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([userId, readAt])
+  @@index([userId, mode, readAt])
   @@map("notifications")
 }
 
@@ -568,6 +570,25 @@ model UserSettings {
   user                      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_settings")
+}
+
+// Budget Settings table (per mode)
+model BudgetSettings {
+  id                        String      @id @default(uuid())
+  userId                    String      @map("user_id")
+  mode                      String      @default("real") // 'real' or 'simulation'
+  dailyLimit                Decimal?    @map("daily_limit") @db.Decimal(10, 2)
+  weeklyLimit               Decimal?    @map("weekly_limit") @db.Decimal(10, 2)
+  monthlyLimit              Decimal?    @map("monthly_limit") @db.Decimal(10, 2)
+  alertThreshold            Decimal?    @map("alert_threshold") @db.Decimal(5, 2)
+  createdAt                 DateTime    @default(now()) @map("created_at")
+  updatedAt                 DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  user                      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, mode])
+  @@map("budget_settings")
 }
 
 // Push Subscriptions table

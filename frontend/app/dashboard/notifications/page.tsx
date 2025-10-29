@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { notificationsAPI, type Notification, type NotificationFilters } from '@/lib/api/notifications';
+import { useMode } from '@/contexts/ModeContext';
 import { formatDate } from '@/lib/utils';
 import {
   Bell,
@@ -15,10 +16,13 @@ import {
   Filter,
   X,
   Download,
+  Play,
+  Zap,
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 export default function NotificationsPage() {
+  const { mode, isSimulation } = useMode();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -32,7 +36,7 @@ export default function NotificationsPage() {
   useEffect(() => {
     loadNotifications();
     loadUnreadCount();
-  }, [filters]);
+  }, [mode, filters]); // Recharger quand le mode change
 
   const loadNotifications = async () => {
     try {
@@ -185,17 +189,37 @@ export default function NotificationsPage() {
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center">
-              <Bell className="h-6 w-6 sm:h-8 sm:w-8 mr-2 sm:mr-3 text-primary-600" />
-              Notifications
-              {unreadCount > 0 && (
-                <span className="ml-2 sm:ml-3 px-2 sm:px-3 py-1 bg-red-500 text-white text-xs sm:text-sm font-semibold rounded-full">
-                  {unreadCount}
-                </span>
-              )}
-            </h1>
+            <div className="flex items-center space-x-3 mb-2">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center">
+                <Bell className="h-6 w-6 sm:h-8 sm:w-8 mr-2 sm:mr-3 text-primary-600" />
+                Notifications
+                {unreadCount > 0 && (
+                  <span className="ml-2 sm:ml-3 px-2 sm:px-3 py-1 bg-red-500 text-white text-xs sm:text-sm font-semibold rounded-full">
+                    {unreadCount}
+                  </span>
+                )}
+              </h1>
+              {/* Indicateur de mode */}
+              <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-semibold ${
+                isSimulation 
+                  ? 'bg-blue-100 text-blue-800' 
+                  : 'bg-green-100 text-green-800'
+              }`}>
+                {isSimulation ? (
+                  <>
+                    <Play className="h-3 w-3" />
+                    <span>Simulation</span>
+                  </>
+                ) : (
+                  <>
+                    <Zap className="h-3 w-3" />
+                    <span>Réel</span>
+                  </>
+                )}
+              </div>
+            </div>
             <p className="mt-1 text-xs sm:text-sm text-gray-600">
-              Restez informé de l'activité de votre compte
+              Restez informé de l'activité de votre compte {isSimulation ? '(mode simulation)' : '(mode réel)'}
             </p>
           </div>
         </div>

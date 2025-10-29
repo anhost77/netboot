@@ -112,23 +112,7 @@ export class PmuController {
       throw new Error('Invalid date format. Use YYYY-MM-DD');
     }
 
-    // Vérifier si la course existe déjà
-    const existingRace = await this.prisma.pmuRace.findFirst({
-      where: {
-        date: parsedDate,
-        reunionNumber: reunion,
-        raceNumber: course,
-      },
-    });
-
-    if (existingRace) {
-      // Convertir tous les BigInt en string pour la sérialisation JSON
-      return JSON.parse(JSON.stringify(existingRace, (key, value) =>
-        typeof value === 'bigint' ? value.toString() : value
-      ));
-    }
-
-    // Sinon, synchroniser la course
+    // Récupérer les détails de la course depuis l'API PMU
     const raceDetails = await this.pmuService.getRaceDetails(parsedDate, reunion, course);
     const participants = await this.pmuService.getRaceParticipants(parsedDate, reunion, course);
 
@@ -147,16 +131,29 @@ export class PmuController {
       });
     }
 
-    // Créer la course
-    const race = await this.prisma.pmuRace.create({
-      data: {
+    // Créer ou mettre à jour la course
+    const race = await this.prisma.pmuRace.upsert({
+      where: {
+        hippodromeCode_date_reunionNumber_raceNumber: {
+          hippodromeCode: hippodrome.code,
+          date: parsedDate,
+          reunionNumber: reunion,
+          raceNumber: course,
+        },
+      },
+      create: {
         date: parsedDate,
         reunionNumber: reunion,
         raceNumber: course,
         name: raceDetails.libelle,
-        hippodrome: {
-          connect: { id: hippodrome.id },
-        },
+        hippodromeCode: hippodrome.code,
+        startTime: raceDetails.heureDepart ? BigInt(raceDetails.heureDepart) : null,
+        discipline: raceDetails.discipline,
+        distance: raceDetails.distance,
+        prize: raceDetails.montantPrix,
+      },
+      update: {
+        name: raceDetails.libelle,
         startTime: raceDetails.heureDepart ? BigInt(raceDetails.heureDepart) : null,
         discipline: raceDetails.discipline,
         distance: raceDetails.distance,
@@ -165,7 +162,12 @@ export class PmuController {
     });
 
     // Créer les chevaux participants
-    if (participants.participants && participants.participants.length > 0) {
+    // participants peut être soit un tableau directement, soit un objet {participants: [...]}
+    const participantsList = Array.isArray(participants) ? participants : (participants.participants || []);
+    console.log('🐴 Participants count:', participantsList.length);
+    
+    if (participantsList && participantsList.length > 0) {
+      console.log(`🐴 Creating ${participantsList.length} horses for race ${race.id}`);
       // Construire un map des positions d'arrivée
       const arrivalMap = new Map<number, number>();
       if (raceDetails.ordreArrivee && Array.isArray(raceDetails.ordreArrivee)) {
@@ -181,21 +183,37 @@ export class PmuController {
       }
       console.log('Arrival map:', Array.from(arrivalMap.entries()));
 
-      for (const participant of participants.participants) {
-        const arrivalOrder = arrivalMap.get(participant.number) || null;
+      for (const participant of participantsList) {
+        const arrivalOrder = arrivalMap.get(participant.number) || participant.arrivalOrder || null;
         
-        // Créer le cheval lié à cette course avec sa position si disponible
-        await this.prisma.pmuHorse.create({
-          data: {
+        // Créer ou mettre à jour le cheval lié à cette course avec sa position si disponible
+        await this.prisma.pmuHorse.upsert({
+          where: {
+            raceId_number: {
+              raceId: race.id,
+              number: participant.number,
+            },
+          },
+          create: {
+            raceId: race.id,
             number: participant.number,
             name: participant.name,
             arrivalOrder: arrivalOrder,
-            race: {
-              connect: { id: race.id },
-            },
+            recentForm: participant.recentForm || null,
+            blinkers: participant.blinkers && participant.blinkers !== 'SANS_OEILLERES',
+            unshod: participant.unshod || null,
+            firstTime: participant.firstTime || false,
+            odds: participant.odds || null,
           },
-        }).catch(() => {
-          // Ignorer si le cheval existe déjà (contrainte unique number + raceId)
+          update: {
+            name: participant.name,
+            arrivalOrder: arrivalOrder,
+            recentForm: participant.recentForm || null,
+            blinkers: participant.blinkers && participant.blinkers !== 'SANS_OEILLERES',
+            unshod: participant.unshod || null,
+            firstTime: participant.firstTime || false,
+            odds: participant.odds || null,
+          },
         });
       }
     }
@@ -413,6 +431,61 @@ export class PmuController {
     });
     
     if (!race) return null;
+    
+    // Si la course n'a pas de chevaux, essayer de les synchroniser automatiquement
+    if (race.horses.length === 0) {
+      console.log(`🔄 Course ${race.id} sans chevaux, synchronisation automatique...`);
+      try {
+        const participants = await this.pmuService.getRaceParticipants(
+          race.date,
+          race.reunionNumber,
+          race.raceNumber
+        );
+        
+        const participantsList = Array.isArray(participants) ? participants : (participants.participants || []);
+        
+        if (participantsList && participantsList.length > 0) {
+          console.log(`🐴 Synchronisation de ${participantsList.length} chevaux`);
+          
+          for (const participant of participantsList) {
+            await this.prisma.pmuHorse.upsert({
+              where: {
+                raceId_number: {
+                  raceId: race.id,
+                  number: participant.number,
+                },
+              },
+              create: {
+                raceId: race.id,
+                number: participant.number,
+                name: participant.name,
+                arrivalOrder: participant.arrivalOrder || null,
+                recentForm: participant.recentForm || null,
+                blinkers: participant.blinkers && participant.blinkers !== 'SANS_OEILLERES',
+                unshod: participant.unshod || null,
+                firstTime: participant.firstTime || false,
+                odds: participant.odds || null,
+              },
+              update: {
+                name: participant.name,
+                arrivalOrder: participant.arrivalOrder || null,
+                recentForm: participant.recentForm || null,
+                blinkers: participant.blinkers && participant.blinkers !== 'SANS_OEILLERES',
+                unshod: participant.unshod || null,
+                firstTime: participant.firstTime || false,
+                odds: participant.odds || null,
+              },
+            });
+          }
+          
+          // Recharger la course avec les chevaux
+          return this.getRaceById(id);
+        }
+      } catch (error) {
+        console.error('❌ Erreur lors de la synchronisation automatique:', error.message);
+        // Continuer même en cas d'erreur
+      }
+    }
     
     // Convert BigInt to string and Decimal to number for JSON serialization
     return JSON.parse(JSON.stringify(race, (key, value) => {

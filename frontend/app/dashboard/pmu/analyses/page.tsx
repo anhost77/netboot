@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { pmuStatsAPI } from '@/lib/api/pmu-stats';
+import { useMode } from '@/contexts/ModeContext';
 import { Trophy, TrendingUp, TrendingDown, Award, Target, Users, BarChart3, PieChart, Activity, ChevronDown, Search, Info, HelpCircle, Lightbulb } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
@@ -33,6 +34,7 @@ ChartJS.register(
 );
 
 export default function PmuAnalysesPage() {
+  const { mode, isSimulation } = useMode();
   const [horseStats, setHorseStats] = useState<any[]>([]);
   const [jockeyStats, setJockeyStats] = useState<any>(null);
   const [combinations, setCombinations] = useState<any[]>([]);
@@ -52,7 +54,7 @@ export default function PmuAnalysesPage() {
 
   useEffect(() => {
     loadAnalyses();
-  }, []);
+  }, [mode]); // Recharger les analyses quand le mode change
 
   const loadAnalyses = async () => {
     try {

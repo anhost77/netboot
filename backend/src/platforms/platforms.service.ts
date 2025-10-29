@@ -146,9 +146,9 @@ export class PlatformsService {
     });
   }
 
-  async getGlobalBankroll(userId: string) {
+  async getGlobalBankroll(userId: string, mode: string = 'real') {
     const platforms = await this.prisma.platform.findMany({
-      where: { userId, isActive: true },
+      where: { userId, mode, isActive: true },
       select: {
         id: true,
         name: true,
@@ -207,6 +207,7 @@ export class PlatformsService {
     period: 'day' | 'week' | 'month' | 'year' = 'day',
     startDate?: string,
     endDate?: string,
+    mode: string = 'real',
   ) {
     // Vérifier que la plateforme existe et appartient à l'utilisateur
     const platform = await this.findOne(userId, platformId);
@@ -328,6 +329,7 @@ export class PlatformsService {
     period: 'day' | 'week' | 'month' | 'year' = 'day',
     startDate?: string,
     endDate?: string,
+    mode: string = 'real',
   ) {
     // Définir les dates par défaut (30 derniers jours si non spécifié)
     const end = endDate ? new Date(endDate) : new Date();
@@ -337,7 +339,7 @@ export class PlatformsService {
 
     // Récupérer toutes les plateformes actives de l'utilisateur
     const platforms = await this.prisma.platform.findMany({
-      where: { userId, isActive: true },
+      where: { userId, mode, isActive: true },
       select: { id: true },
     });
 
@@ -422,7 +424,7 @@ export class PlatformsService {
 
     // Ajouter un point avec la bankroll globale actuelle
     const platformsWithBalance = await this.prisma.platform.findMany({
-      where: { userId, isActive: true },
+      where: { userId, mode, isActive: true },
       select: { id: true, currentBankroll: true },
     });
 

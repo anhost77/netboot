@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { betsAPI, type BetsFilters } from '@/lib/api/bets';
 import { subscriptionsAPI, type Subscription } from '@/lib/api/subscriptions';
 import { budgetAPI } from '@/lib/api/budget';
+import { useMode } from '@/contexts/ModeContext';
 import { notificationService } from '@/lib/notification-service';
 import { pmuStatsAPI } from '@/lib/api/pmu-stats';
 import { platformsAPI, type Platform } from '@/lib/api/platforms';
@@ -62,6 +63,7 @@ const getBetTypeLabel = (betType: string | null | undefined) => {
 };
 
 export default function BetsPage() {
+  const { mode } = useMode();
   const [bets, setBets] = useState<PaginatedResponse<Bet> | null>(null);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [currentMonthBetsCount, setCurrentMonthBetsCount] = useState<number>(0);
@@ -90,6 +92,7 @@ export default function BetsPage() {
   const [loadingOdds, setLoadingOdds] = useState(false);
   const [selectedRaceId, setSelectedRaceId] = useState<string | null>(null);
   const [selectedBetHorses, setSelectedBetHorses] = useState<string>('');
+  const [raceResults, setRaceResults] = useState<any>(null);
 
   // Load bets, subscription, budget, platforms and tipsters
   useEffect(() => {
@@ -99,7 +102,7 @@ export default function BetsPage() {
     loadBudgetOverview();
     loadPlatforms();
     loadTipsters();
-  }, [filters]);
+  }, [mode, filters]); // Recharger quand le mode change
 
   const loadPlatforms = async () => {
     try {
@@ -321,6 +324,32 @@ export default function BetsPage() {
     try {
       setLoadingOdds(true);
       
+      // Charger les résultats de la course pour afficher les chevaux gagnants
+      try {
+        const raceData = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/pmu/data/races/${targetBet.pmuRaceId}`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          },
+        });
+        if (raceData.ok) {
+          const race = await raceData.json();
+          setRaceResults(race);
+        }
+      } catch (error) {
+        console.error('Error loading race results:', error);
+      }
+      
+      // Synchroniser les rapports PMU si nécessaire
+      try {
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/pmu/data/races/${targetBet.pmuRaceId}/update-odds`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          },
+        });
+      } catch (error) {
+        console.error('Error updating odds:', error);
+      }
+      
       const data = await pmuStatsAPI.getOddsForBet(
         targetBet.pmuRaceId,
         targetBet.betType || 'gagnant',
@@ -390,11 +419,11 @@ export default function BetsPage() {
       try {
         // Si requiresManualUpdate = true, utiliser l'endpoint spécial
         if (bet.requiresManualUpdate) {
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/bets/${bet.id}/result`, {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/bets/${bet.id}/result`, {
             method: 'PATCH',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${localStorage.getItem('token')}`,
+              'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
             },
             body: JSON.stringify({
               status: 'lost',
@@ -463,6 +492,7 @@ export default function BetsPage() {
       setShowWinModal(false);
       setBetToUpdate(null);
       setFinalOdds('');
+      setRaceResults(null);
       loadBets();
       loadCurrentMonthBetsCount();
       loadBudgetOverview();
@@ -1538,6 +1568,42 @@ export default function BetsPage() {
                 </div>
               )}
 
+              {/* Afficher les résultats de la course PMU */}
+              {raceResults && raceResults.horses && raceResults.horses.length > 0 && (
+                <div className="mb-4">
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h3 className="text-sm font-semibold text-blue-900 mb-2">🏆 Résultats officiels de la course</h3>
+                    <div className="space-y-1">
+                      {raceResults.horses
+                        .filter((h: any) => h.arrivalOrder && h.arrivalOrder <= 3)
+                        .sort((a: any, b: any) => a.arrivalOrder - b.arrivalOrder)
+                        .map((horse: any) => (
+                          <div key={horse.id} className="flex items-center justify-between text-sm">
+                            <span className="text-blue-800">
+                              {horse.arrivalOrder === 1 && '🥇 '}
+                              {horse.arrivalOrder === 2 && '🥈 '}
+                              {horse.arrivalOrder === 3 && '🥉 '}
+                              <span className="font-medium">#{horse.number}</span> {horse.name}
+                            </span>
+                            {horse.odds && (
+                              <span className="text-blue-600 font-semibold">{Number(horse.odds).toFixed(2)}€</span>
+                            )}
+                          </div>
+                        ))}
+                    </div>
+                    {betToUpdate.horsesSelected && !raceResults.horses.some((h: any) => 
+                      h.arrivalOrder === 1 && betToUpdate.horsesSelected?.includes(String(h.number))
+                    ) && (
+                      <div className="mt-3 pt-3 border-t border-blue-200">
+                        <p className="text-xs text-red-600 font-medium">
+                          ⚠️ Votre sélection ({betToUpdate.horsesSelected}) n'a pas gagné cette course
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {finalOdds && parseFloat(finalOdds) > 0 && (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
                   <div className="flex justify-between items-center">
@@ -1562,6 +1628,7 @@ export default function BetsPage() {
                   setShowWinModal(false);
                   setBetToUpdate(null);
                   setFinalOdds('');
+                  setRaceResults(null);
                 }}
                 disabled={isSubmitting}
                 className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"

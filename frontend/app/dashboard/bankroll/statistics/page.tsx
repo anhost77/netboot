@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ArrowUpDown, TrendingUp, TrendingDown, Award, AlertCircle, BarChart3, Wallet } from 'lucide-react';
+import { ArrowUpDown, TrendingUp, TrendingDown, Award, AlertCircle, BarChart3, Wallet, Play, Zap } from 'lucide-react';
 import { betsAPI } from '@/lib/api/bets';
 import { platformsAPI } from '@/lib/api/platforms';
+import { useMode } from '@/contexts/ModeContext';
 import Link from 'next/link';
 import { Bar, Doughnut } from 'react-chartjs-2';
 import {
@@ -50,6 +51,7 @@ interface PlatformStats {
 }
 
 export default function BankrollStatisticsPage() {
+  const { mode, isSimulation } = useMode();
   const [statistics, setStatistics] = useState<PlatformStats[]>([]);
   const [platforms, setPlatforms] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -59,7 +61,7 @@ export default function BankrollStatisticsPage() {
   useEffect(() => {
     loadPlatforms();
     loadStatistics();
-  }, []);
+  }, [mode]); // Recharger quand le mode change
 
   const loadPlatforms = async () => {
     try {
@@ -81,9 +83,29 @@ export default function BankrollStatisticsPage() {
   const loadStatistics = async () => {
     try {
       setIsLoading(true);
+      
+      // Charger les plateformes du mode actif en premier
+      const platformsData = await platformsAPI.getAll();
+      const activePlatformIds = new Set(platformsData.map(p => p.id));
+      const activePlatformNames = new Set(platformsData.map(p => p.name));
+      
       const stats = await betsAPI.getStatsByPlatform();
       
-      const transformedStats: PlatformStats[] = (Array.isArray(stats) ? stats : []).map((data: any) => {
+      console.log('📊 Stats brutes:', stats);
+      console.log('🏢 Plateformes actives (IDs):', Array.from(activePlatformIds));
+      console.log('🏢 Plateformes actives (Noms):', Array.from(activePlatformNames));
+      
+      // Filtrer les statistiques pour ne garder que les plateformes du mode actif
+      // On vérifie à la fois par ID et par nom car on ne sait pas ce que retourne l'API
+      const filteredStats = (Array.isArray(stats) ? stats : []).filter((data: any) => {
+        const match = activePlatformIds.has(data.platform) || activePlatformNames.has(data.platform);
+        console.log(`Plateforme "${data.platform}" - Match: ${match}`);
+        return match;
+      });
+      
+      console.log('✅ Stats filtrées:', filteredStats);
+      
+      const transformedStats: PlatformStats[] = filteredStats.map((data: any) => {
         const totalBets = data.totalBets || 0;
         const wonBets = data.wonBets || 0;
         const lostBets = data.lostBets || 0;
@@ -191,8 +213,28 @@ export default function BankrollStatisticsPage() {
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Statistiques par Bankroll / Bookmaker</h1>
-            <p className="text-gray-600 mt-2">Analyse détaillée de vos performances par plateforme</p>
+            <div className="flex items-center space-x-3 mb-2">
+              <h1 className="text-3xl font-bold text-gray-900">Statistiques par Bankroll / Bookmaker</h1>
+              {/* Indicateur de mode */}
+              <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-semibold ${
+                isSimulation 
+                  ? 'bg-blue-100 text-blue-800' 
+                  : 'bg-green-100 text-green-800'
+              }`}>
+                {isSimulation ? (
+                  <>
+                    <Play className="h-3 w-3" />
+                    <span>Simulation</span>
+                  </>
+                ) : (
+                  <>
+                    <Zap className="h-3 w-3" />
+                    <span>Réel</span>
+                  </>
+                )}
+              </div>
+            </div>
+            <p className="text-gray-600 mt-2">Analyse détaillée de vos performances par plateforme {isSimulation ? '(mode simulation)' : '(mode réel)'}</p>
           </div>
           <Link
             href="/dashboard/bankroll"

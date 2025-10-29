@@ -8,7 +8,7 @@ export class StatisticsService {
   /**
    * Get comprehensive dashboard statistics
    */
-  async getDashboardStats(userId: string) {
+  async getDashboardStats(userId: string, mode: string = 'real') {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -16,16 +16,16 @@ export class StatisticsService {
     const startOfYear = new Date(now.getFullYear(), 0, 1);
 
     // Current month stats
-    const currentMonth = await this.calculatePeriodStats(userId, startOfMonth, now);
+    const currentMonth = await this.calculatePeriodStats(userId, mode, startOfMonth, now);
 
     // Last month stats for comparison
-    const lastMonth = await this.calculatePeriodStats(userId, startOfLastMonth, endOfLastMonth);
+    const lastMonth = await this.calculatePeriodStats(userId, mode, startOfLastMonth, endOfLastMonth);
 
     // Year to date stats
-    const yearToDate = await this.calculatePeriodStats(userId, startOfYear, now);
+    const yearToDate = await this.calculatePeriodStats(userId, mode, startOfYear, now);
 
     // All time stats
-    const allTime = await this.calculatePeriodStats(userId);
+    const allTime = await this.calculatePeriodStats(userId, mode);
 
     // Calculate trends (% change from last month)
     const trends = {
@@ -47,7 +47,7 @@ export class StatisticsService {
   /**
    * Get statistics for predefined periods (today, yesterday, this week, etc.)
    */
-  async getPeriodStats(userId: string) {
+  async getPeriodStats(userId: string, mode: string = 'real') {
     const now = new Date();
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const startOfYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
@@ -70,12 +70,12 @@ export class StatisticsService {
     const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
 
     const [today, yesterday, thisWeek, lastWeek, thisMonth, lastMonth] = await Promise.all([
-      this.calculatePeriodStats(userId, startOfToday, now),
-      this.calculatePeriodStats(userId, startOfYesterday, endOfYesterday),
-      this.calculatePeriodStats(userId, startOfWeek, now),
-      this.calculatePeriodStats(userId, startOfLastWeek, endOfLastWeek),
-      this.calculatePeriodStats(userId, startOfMonth, now),
-      this.calculatePeriodStats(userId, startOfLastMonth, endOfLastMonth),
+      this.calculatePeriodStats(userId, mode, startOfToday, now),
+      this.calculatePeriodStats(userId, mode, startOfYesterday, endOfYesterday),
+      this.calculatePeriodStats(userId, mode, startOfWeek, now),
+      this.calculatePeriodStats(userId, mode, startOfLastWeek, endOfLastWeek),
+      this.calculatePeriodStats(userId, mode, startOfMonth, now),
+      this.calculatePeriodStats(userId, mode, startOfLastMonth, endOfLastMonth),
     ]);
 
     return {
@@ -96,6 +96,7 @@ export class StatisticsService {
     period: 'daily' | 'weekly' | 'monthly',
     startDate?: Date,
     endDate?: Date,
+    mode: string = 'real',
   ) {
     const end = endDate || new Date();
     const start = startDate || this.getDefaultStartDate(period);
@@ -103,6 +104,7 @@ export class StatisticsService {
     const bets = await this.prisma.bet.findMany({
       where: {
         userId,
+        mode,
         date: {
           gte: start,
           lte: end,
@@ -143,8 +145,8 @@ export class StatisticsService {
   /**
    * Get performance metrics and advanced analytics
    */
-  async getPerformanceMetrics(userId: string, startDate?: Date, endDate?: Date) {
-    const where: any = { userId };
+  async getPerformanceMetrics(userId: string, startDate?: Date, endDate?: Date, mode: string = 'real') {
+    const where: any = { userId, mode };
     if (startDate || endDate) {
       where.date = {};
       if (startDate) where.date.gte = startDate;
@@ -206,8 +208,8 @@ export class StatisticsService {
   /**
    * Get breakdown by bet type, category, etc.
    */
-  async getBreakdowns(userId: string, startDate?: Date, endDate?: Date) {
-    const where: any = { userId };
+  async getBreakdowns(userId: string, startDate?: Date, endDate?: Date, mode: string = 'real') {
+    const where: any = { userId, mode };
     if (startDate || endDate) {
       where.date = {};
       if (startDate) where.date.gte = startDate;
@@ -326,14 +328,15 @@ export class StatisticsService {
     userId: string,
     currentStart: Date,
     currentEnd: Date,
+    mode: string = 'real',
   ) {
     // Calculate previous period of same duration
     const duration = currentEnd.getTime() - currentStart.getTime();
     const previousStart = new Date(currentStart.getTime() - duration);
     const previousEnd = new Date(currentEnd.getTime() - duration);
 
-    const current = await this.calculatePeriodStats(userId, currentStart, currentEnd);
-    const previous = await this.calculatePeriodStats(userId, previousStart, previousEnd);
+    const current = await this.calculatePeriodStats(userId, mode, currentStart, currentEnd);
+    const previous = await this.calculatePeriodStats(userId, mode, previousStart, previousEnd);
 
     return {
       current: {
@@ -356,8 +359,8 @@ export class StatisticsService {
 
   // ============ PRIVATE HELPER METHODS ============
 
-  private async calculatePeriodStats(userId: string, startDate?: Date, endDate?: Date) {
-    const where: any = { userId };
+  private async calculatePeriodStats(userId: string, mode: string = 'real', startDate?: Date, endDate?: Date) {
+    const where: any = { userId, mode };
     if (startDate || endDate) {
       where.date = {};
       if (startDate) where.date.gte = startDate;

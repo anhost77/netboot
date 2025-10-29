@@ -285,7 +285,7 @@ export function BetForm({ bet, onSubmit, onCancel, isLoading = false }: BetFormP
                     {watch('hippodrome')} 
                     {watch('notes') && (
                       <span className="ml-2 text-primary-600">
-                        {watch('notes').match(/R\d+/)?.[0]}
+                        {watch('notes')?.match(/R\d+/)?.[0]}
                       </span>
                     )}
                   </p>
@@ -295,7 +295,7 @@ export function BetForm({ bet, onSubmit, onCancel, isLoading = false }: BetFormP
                   <p className="font-semibold text-gray-900">
                     {watch('notes') && (
                       <span className="text-primary-600">
-                        {watch('notes').match(/C\d+/)?.[0]}
+                        {watch('notes')?.match(/C\d+/)?.[0]}
                       </span>
                     )}
                   </p>

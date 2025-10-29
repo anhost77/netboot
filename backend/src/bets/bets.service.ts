@@ -21,7 +21,7 @@ export class BetsService {
     @Optional() private pmuDataService?: PmuDataService,
   ) {}
 
-  async create(userId: string, dto: CreateBetDto, ipAddress?: string, userAgent?: string) {
+  async create(userId: string, dto: CreateBetDto, mode: string = 'real', ipAddress?: string, userAgent?: string) {
     // Check monthly bet limit based on subscription
     await this.checkBetLimit(userId);
 
@@ -156,6 +156,7 @@ export class BetsService {
     const bet = await this.prisma.bet.create({
       data: {
         userId,
+        mode, // Ajouter le mode (real ou simulation)
         date: new Date(dto.date),
         time: raceTime,
         platform: oddsSource, // Stocker le nom de la plateforme, pas l'ID
@@ -216,7 +217,7 @@ export class BetsService {
     return bet;
   }
 
-  async findAll(userId: string, filters: BetFiltersDto) {
+  async findAll(userId: string, filters: BetFiltersDto, mode: string = 'real') {
     try {
       const { page = 1, limit = 20, sortBy = 'date', sortOrder = 'desc' } = filters;
       const skip = (page - 1) * limit;
@@ -228,8 +229,8 @@ export class BetsService {
       // Build where clause - start with AND array to properly combine conditions
       const andConditions: any[] = [];
 
-      // Always filter by userId
-      const where: any = { userId };
+      // Always filter by userId and mode
+      const where: any = { userId, mode };
 
       // Add specific filters
       if (filters.status) andConditions.push({ status: filters.status });

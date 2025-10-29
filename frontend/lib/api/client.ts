@@ -12,13 +12,18 @@ class APIClient {
       },
     });
 
-    // Request interceptor to add auth token
+    // Request interceptor to add auth token and app mode
     this.client.interceptors.request.use(
       (config) => {
         const token = this.getToken();
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
+        
+        // Add app mode header
+        const mode = typeof window !== 'undefined' ? localStorage.getItem('app-mode') || 'real' : 'real';
+        config.headers['X-App-Mode'] = mode;
+        
         return config;
       },
       (error) => Promise.reject(error)

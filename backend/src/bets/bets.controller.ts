@@ -26,6 +26,7 @@ import { UpdateBetResultDto } from './dto/update-bet-result.dto';
 import { BetFiltersDto } from './dto/bet-filters.dto';
 import { BetQueryDto } from './dto/bet-query.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { Mode } from '../common/decorators/mode.decorator';
 
 @ApiTags('Bets')
 @Controller('bets')
@@ -36,8 +37,8 @@ export class BetsController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new bet' })
-  create(@Request() req: any, @Body() createBetDto: CreateBetDto, @Ip() ipAddress: string, @Headers('user-agent') userAgent: string) {
-    return this.betsService.create(req.user.id, createBetDto, ipAddress, userAgent);
+  create(@Request() req: any, @Body() createBetDto: CreateBetDto, @Mode() mode: string, @Ip() ipAddress: string, @Headers('user-agent') userAgent: string) {
+    return this.betsService.create(req.user.id, createBetDto, mode, ipAddress, userAgent);
   }
 
   @Get()
@@ -45,8 +46,9 @@ export class BetsController {
   findAll(
     @Request() req: any,
     @Query() filters: BetFiltersDto,
+    @Mode() mode: string,
   ) {
-    return this.betsService.findAll(req.user.id, filters);
+    return this.betsService.findAll(req.user.id, filters, mode);
   }
 
   @Get('stats')

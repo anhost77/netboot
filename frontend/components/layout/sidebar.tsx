@@ -119,17 +119,34 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
           <div className="relative">
             <span className="text-2xl">🏇</span>
             {subscription && (
-              <span 
-                className={cn(
-                  "absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-gray-900",
-                  getPlanBadgeColor(subscription.plan?.name)
-                )}
-                title={subscription.plan?.name || 'Abonnement'}
-              />
+              <div className="absolute -top-2 -right-2">
+                <span 
+                  className={cn(
+                    "flex items-center justify-center w-5 h-5 rounded-full border-2 border-gray-900 shadow-lg",
+                    getPlanBadgeColor(subscription.plan?.name)
+                  )}
+                  title={subscription.plan?.name || 'Abonnement'}
+                >
+                  <span className="text-[10px] font-bold text-white drop-shadow">
+                    {subscription.plan?.name?.charAt(0).toUpperCase() || '★'}
+                  </span>
+                </span>
+              </div>
             )}
           </div>
           {!isCollapsed && (
-            <span className="text-xl font-bold">{settings?.siteName || 'BetTracker'}</span>
+            <div className="flex flex-col">
+              <span className="text-xl font-bold">{settings?.siteName || 'BetTracker'}</span>
+              {subscription && (
+                <span className={cn(
+                  "text-[10px] font-semibold px-2 py-0.5 rounded-full inline-block w-fit",
+                  getPlanBadgeColor(subscription.plan?.name),
+                  "text-white shadow-sm"
+                )}>
+                  {subscription.plan?.name || 'Plan'}
+                </span>
+              )}
+            </div>
           )}
         </Link>
         

@@ -158,7 +158,11 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
           isCollapsed ? "flex-col space-y-1" : "space-x-1"
         )}>
           <button
-            onClick={() => setMode('real')}
+            onClick={() => {
+              if (!isSimulation) return; // Déjà en mode réel
+              setMode('real');
+              window.location.reload(); // Recharger la page
+            }}
             className={cn(
               "flex items-center justify-center rounded-md px-3 py-2 text-xs font-semibold transition-all",
               isCollapsed ? "w-full" : "flex-1",
@@ -172,7 +176,11 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
             {!isCollapsed && <span>Réel</span>}
           </button>
           <button
-            onClick={() => setMode('simulation')}
+            onClick={() => {
+              if (isSimulation) return; // Déjà en mode simulation
+              setMode('simulation');
+              window.location.reload(); // Recharger la page
+            }}
             className={cn(
               "flex items-center justify-center rounded-md px-3 py-2 text-xs font-semibold transition-all",
               isCollapsed ? "w-full" : "flex-1",

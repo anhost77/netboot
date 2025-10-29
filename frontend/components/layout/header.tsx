@@ -1,7 +1,8 @@
 'use client';
 
 import { useAuth } from '@/lib/auth-context';
-import { LogOut, User, Menu } from 'lucide-react';
+import { useMode } from '@/contexts/ModeContext';
+import { LogOut, User, Menu, Play, Zap } from 'lucide-react';
 import { NotificationsDropdown } from './notifications-dropdown';
 
 interface HeaderProps {
@@ -10,6 +11,7 @@ interface HeaderProps {
 
 export function Header({ onMenuClick }: HeaderProps) {
   const { user, logout } = useAuth();
+  const { mode, isSimulation } = useMode();
 
   return (
     <header className="h-16 border-b border-gray-200 bg-white px-4 sm:px-6 flex items-center justify-between">
@@ -31,6 +33,25 @@ export function Header({ onMenuClick }: HeaderProps) {
       </div>
 
       <div className="flex items-center space-x-2 sm:space-x-4">
+        {/* Indicateur de mode */}
+        <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-semibold ${
+          isSimulation 
+            ? 'bg-blue-100 text-blue-800' 
+            : 'bg-green-100 text-green-800'
+        }`}>
+          {isSimulation ? (
+            <>
+              <Play className="h-3 w-3" />
+              <span className="hidden sm:inline">Simulation</span>
+            </>
+          ) : (
+            <>
+              <Zap className="h-3 w-3" />
+              <span className="hidden sm:inline">Réel</span>
+            </>
+          )}
+        </div>
+
         {/* Notifications */}
         <NotificationsDropdown />
         

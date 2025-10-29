@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
+import { ModeProvider } from '@/contexts/ModeContext';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Header } from '@/components/layout/header';
 import { SupportChatWidget } from '@/components/support/support-chat-widget';
@@ -38,18 +39,20 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      {/* Sidebar - Desktop (toujours visible) et Mobile (avec overlay) */}
-      <Sidebar 
-        isOpen={sidebarOpen} 
-        onClose={() => setSidebarOpen(false)} 
-      />
+    <ModeProvider>
+      <div className="flex h-screen overflow-hidden">
+        {/* Sidebar - Desktop (toujours visible) et Mobile (avec overlay) */}
+        <Sidebar 
+          isOpen={sidebarOpen} 
+          onClose={() => setSidebarOpen(false)} 
+        />
 
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <Header onMenuClick={() => setSidebarOpen(true)} />
-        <main className="flex-1 overflow-y-auto bg-gray-50 p-4 sm:p-6">{children}</main>
+        <div className="flex flex-1 flex-col overflow-hidden">
+          <Header onMenuClick={() => setSidebarOpen(true)} />
+          <main className="flex-1 overflow-y-auto bg-gray-50 p-4 sm:p-6">{children}</main>
+        </div>
+        <SupportChatWidget />
       </div>
-      <SupportChatWidget />
-    </div>
+    </ModeProvider>
   );
 }

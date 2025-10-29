@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useSettings } from '@/contexts/SettingsContext';
+import { useMode } from '@/contexts/ModeContext';
 import { apiClient } from '@/lib/api/client';
 import {
   LayoutDashboard,
@@ -20,6 +21,8 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  Play,
+  Zap,
 } from 'lucide-react';
 
 const navigation = [
@@ -44,6 +47,7 @@ interface SidebarProps {
 export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
   const pathname = usePathname();
   const { settings } = useSettings();
+  const { mode, setMode, isSimulation } = useMode();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [subscription, setSubscription] = useState<any>(null);
 
@@ -145,6 +149,48 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
             <ChevronLeft className="h-5 w-5" />
           )}
         </button>
+      </div>
+
+      {/* Toggle Réel / Simulation */}
+      <div className="px-3 py-3 border-b border-gray-800">
+        <div className={cn(
+          "flex items-center rounded-lg p-1 bg-gray-800",
+          isCollapsed ? "flex-col space-y-1" : "space-x-1"
+        )}>
+          <button
+            onClick={() => setMode('real')}
+            className={cn(
+              "flex items-center justify-center rounded-md px-3 py-2 text-xs font-semibold transition-all",
+              isCollapsed ? "w-full" : "flex-1",
+              !isSimulation
+                ? "bg-green-600 text-white shadow-lg"
+                : "text-gray-400 hover:text-white hover:bg-gray-700"
+            )}
+            title="Mode Réel"
+          >
+            <Zap className={cn("h-4 w-4", !isCollapsed && "mr-1.5")} />
+            {!isCollapsed && <span>Réel</span>}
+          </button>
+          <button
+            onClick={() => setMode('simulation')}
+            className={cn(
+              "flex items-center justify-center rounded-md px-3 py-2 text-xs font-semibold transition-all",
+              isCollapsed ? "w-full" : "flex-1",
+              isSimulation
+                ? "bg-blue-600 text-white shadow-lg"
+                : "text-gray-400 hover:text-white hover:bg-gray-700"
+            )}
+            title="Mode Simulation"
+          >
+            <Play className={cn("h-4 w-4", !isCollapsed && "mr-1.5")} />
+            {!isCollapsed && <span>Simulation</span>}
+          </button>
+        </div>
+        {!isCollapsed && (
+          <p className="text-[10px] text-gray-500 mt-2 text-center">
+            {isSimulation ? "🎮 Mode test - Vos paris ne sont pas réels" : "💰 Mode réel - Vos vrais paris"}
+          </p>
+        )}
       </div>
 
       <nav className="flex-1 space-y-1 px-3 py-4 overflow-y-auto">

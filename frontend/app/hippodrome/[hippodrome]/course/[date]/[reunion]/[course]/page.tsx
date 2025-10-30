@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Calendar, ArrowLeft } from 'lucide-react';
+import { Calendar, ArrowLeft, MapPin } from 'lucide-react';
 import { format, parse } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import Link from 'next/link';
 import MarketingHeader from '@/components/marketing/MarketingHeader';
 import MarketingFooter from '@/components/marketing/MarketingFooter';
 import RaceDetailsModal from '@/components/races/RaceDetailsModal';
@@ -33,8 +34,8 @@ export default function CoursePage() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
 
-  const dateStr = params.date as string;
   const hippodrome = decodeURIComponent(params.hippodrome as string);
+  const dateStr = params.date as string;
   const reunion = parseInt(params.reunion as string);
   const course = parseInt(params.course as string);
   const raceDate = parse(dateStr, 'yyyy-MM-dd', new Date());
@@ -131,16 +132,22 @@ export default function CoursePage() {
       <div className="bg-white border-b border-gray-200">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center gap-2 text-sm text-gray-600">
-            <button
-              onClick={() => router.push('/calendrier-courses')}
+            <Link
+              href="/calendrier-courses"
               className="hover:text-primary-600 transition-colors"
             >
               Calendrier
-            </button>
+            </Link>
+            <span>/</span>
+            <Link
+              href={`/hippodrome/${encodeURIComponent(hippodrome)}`}
+              className="hover:text-primary-600 transition-colors flex items-center gap-1"
+            >
+              <MapPin className="w-4 h-4" />
+              {hippodrome}
+            </Link>
             <span>/</span>
             <span className="text-gray-900 font-medium">{format(raceDate, 'd MMM yyyy', { locale: fr })}</span>
-            <span>/</span>
-            <span className="text-gray-900 font-medium">{race.hippodrome}</span>
             <span>/</span>
             <span className="text-gray-900 font-medium">R{race.reunionNumber}C{race.raceNumber}</span>
           </div>
@@ -214,7 +221,12 @@ export default function CoursePage() {
               <p className="text-gray-700 leading-relaxed">
                 La course <strong>{race.name}</strong> se déroule le{' '}
                 <strong>{format(raceDate, 'd MMMM yyyy', { locale: fr })}</strong> à l'hippodrome de{' '}
-                <strong>{race.hippodrome}</strong> dans le cadre de la réunion {race.reunionNumber}. 
+                <Link 
+                  href={`/hippodrome/${encodeURIComponent(hippodrome)}`}
+                  className="text-blue-600 hover:text-blue-700 font-semibold"
+                >
+                  {race.hippodrome}
+                </Link> dans le cadre de la réunion {race.reunionNumber}. 
                 Cette épreuve de <strong>{race.discipline}</strong> sur une distance de{' '}
                 <strong>{race.distance} mètres</strong> offre une allocation de{' '}
                 <strong className="text-green-600">{race.prize.toLocaleString()}€</strong>.

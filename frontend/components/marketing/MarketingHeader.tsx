@@ -11,7 +11,7 @@ export default function MarketingHeader() {
 
   const navLinks = [
     { label: 'Accueil', href: '/' },
-    { label: 'Fonctionnalités', href: '/#fonctionnalites' },
+    { label: 'Fonctionnalités', href: '/fonctionnalites' },
     { label: 'Tarifs', href: '/#tarifs' },
     { label: 'Calendrier', href: '/calendrier-courses' },
     { label: 'Pronostics', href: '/pronostics' },

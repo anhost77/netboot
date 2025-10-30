@@ -31,7 +31,7 @@ export default function MarketingFooter() {
     {
       title: 'Produit',
       links: [
-        { label: 'Fonctionnalités', href: '/#fonctionnalites' },
+        { label: 'Fonctionnalités', href: '/fonctionnalites' },
         { label: 'Tarifs', href: '/#tarifs' },
         { label: 'Calendrier des courses', href: '/calendrier-courses' },
         { label: 'Pronostics gratuits', href: '/pronostics' },

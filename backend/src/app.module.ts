@@ -23,6 +23,7 @@ import { TipstersModule } from './tipsters/tipsters.module';
 import { ApiModule } from './api/api.module';
 import { McpModule } from './mcp/mcp.module';
 import { SettingsModule } from './settings/settings.module';
+import { ContactModule } from './contact/contact.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { SettingsModule } from './settings/settings.module';
     ApiModule,
     McpModule,
     SettingsModule,
+    ContactModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

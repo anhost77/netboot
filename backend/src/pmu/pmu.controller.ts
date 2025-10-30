@@ -283,12 +283,25 @@ export class PmuController {
       // Récupérer les rapports PMU
       const reports = await this.pmuService.getRaceReports(parsedDate, reunion, course);
       
-      if (!reports || reports.length === 0) {
+      console.log('📊 Rapports bruts reçus de l\'API PMU:', JSON.stringify(reports).substring(0, 500));
+      console.log('📊 Type de reports:', typeof reports, Array.isArray(reports) ? 'Array' : 'Object');
+      
+      if (!reports) {
         return { odds: [] };
       }
 
+      // Si reports est un objet avec une propriété rapports
+      const reportsArray = Array.isArray(reports) ? reports : (reports.rapports || reports.listRapports || []);
+      
+      if (reportsArray.length === 0) {
+        console.log('⚠️ Aucun rapport dans le tableau');
+        return { odds: [] };
+      }
+
+      console.log(`✅ ${reportsArray.length} rapports trouvés`);
+
       // Mapper les rapports vers un format structuré
-      const oddsData = reports.map(report => ({
+      const oddsData = reportsArray.map(report => ({
         betType: report.typePari,
         label: this.getBetTypeLabel(report.typePari),
         combinations: report.rapportDirect?.map(r => ({

@@ -5,6 +5,7 @@ import { PmuService } from './pmu.service';
 import { PmuDataService } from './pmu-data.service';
 import { PmuAiService } from './pmu-ai.service';
 import { PmuPronosticAnalyzerService } from './pmu-pronostic-analyzer.service';
+import { PmuDailyPronosticService } from './pmu-daily-pronostic.service';
 import { PrismaService } from '../prisma.service';
 import { Prisma } from '@prisma/client';
 
@@ -20,6 +21,7 @@ export class PmuController {
     private readonly pmuDataService: PmuDataService,
     private readonly pmuAiService: PmuAiService,
     private readonly pronosticAnalyzer: PmuPronosticAnalyzerService,
+    private readonly dailyPronostic: PmuDailyPronosticService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -1316,6 +1318,29 @@ export class PmuController {
         success: false,
         message: error.message,
         analysis: null,
+      };
+    }
+  }
+
+  /**
+   * TEST: Générer les pronostics manuellement
+   */
+  @Public()
+  @Post('test/generate-pronostics')
+  @ApiOperation({ summary: 'Manually trigger daily pronostics generation (TEST)' })
+  async testGeneratePronostics() {
+    try {
+      this.logger.log('🧪 Manual pronostics generation triggered');
+      await this.dailyPronostic.generatePronosticsManually();
+      return {
+        success: true,
+        message: 'Pronostics generation completed. Check logs for details.',
+      };
+    } catch (error) {
+      this.logger.error('Error in manual pronostics generation:', error);
+      return {
+        success: false,
+        message: error.message,
       };
     }
   }

@@ -1,0 +1,16 @@
+feat: Implement real/simulation mode system with notifications and PMU integration
+
+- Add mode field to BudgetSettings model with unique constraint (userId, mode)
+- Add mode field to Notification model with filtering by mode
+- Update budget service to handle mode-specific settings and bankroll
+- Update notifications service to create and filter notifications by mode
+- Add mode parameter to all relevant backend endpoints
+- Implement automatic mode switching on all frontend pages
+- Add mode indicator badges on all dashboard pages
+- Implement automatic PMU race and horses synchronization
+- Add automatic odds loading from PMU reports
+- Display race results in win confirmation modal
+- Show warning when selected horse did not win
+- Fix participant structure handling (array vs object)
+- Use upsert instead of create for races and horses to avoid duplicates
+- All pages now reload data automatically when mode changes

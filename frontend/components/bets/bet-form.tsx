@@ -111,20 +111,23 @@ export function BetForm({ bet, onSubmit, onCancel, isLoading = false }: BetFormP
       'Simple Placé': 'place',
       'Simple Gagnant et Placé': 'gagnant_place',
       'Couplé Ordre': 'couple_ordre',
-      'Couplé Gagnant': 'couple',
-      'Couplé Placé': 'couple',
+      'Couplé Gagnant': 'couple_gagnant',
+      'Couplé Placé': 'couple_place',
       'Trio Ordre': 'trio_ordre',
       'Trio': 'trio',
+      'Trio Bonus': 'trio_bonus',
       'Tiercé Ordre': 'tierce_ordre',
       'Tiercé Désordre': 'tierce',
       'Quarté+ Ordre': 'quarte_ordre',
       'Quarté+ Désordre': 'quarte',
+      'Quarté+ Bonus': 'quarte_bonus',
       'Quinté+ Ordre': 'quinte_ordre',
       'Quinté+ Désordre': 'quinte',
       'Quinté+ Bonus': 'quinte',
-      '2sur4': 'multi',
+      '2sur4': 'deux_sur_quatre',
+      'Super 4': 'super4',
       'Multi': 'multi',
-      'Mini Multi': 'multi',
+      'Mini Multi': 'mini_multi',
       'Pick 5': 'pick5',
     };
 
@@ -485,16 +488,24 @@ export function BetForm({ bet, onSubmit, onCancel, isLoading = false }: BetFormP
                 <option value="">Sélectionnez un type</option>
                 <option value="gagnant">Simple Gagnant</option>
                 <option value="place">Simple Placé</option>
-                <option value="gagnant_place">Couplé Gagnant-Placé</option>
-                <option value="couple">Couplé</option>
+                <option value="gagnant_place">Simple Gagnant-Placé</option>
+                <option value="couple_gagnant">Couplé Gagnant</option>
+                <option value="couple_place">Couplé Placé</option>
                 <option value="couple_ordre">Couplé Ordre</option>
                 <option value="trio">Trio</option>
                 <option value="trio_ordre">Trio Ordre</option>
-                <option value="quarte">Quarté</option>
-                <option value="quarte_ordre">Quarté Ordre</option>
-                <option value="quinte">Quinté</option>
-                <option value="quinte_ordre">Quinté Ordre</option>
+                <option value="trio_bonus">Trio Bonus</option>
+                <option value="tierce">Tiercé</option>
+                <option value="tierce_ordre">Tiercé Ordre</option>
+                <option value="quarte">Quarté+</option>
+                <option value="quarte_ordre">Quarté+ Ordre</option>
+                <option value="quarte_bonus">Quarté+ Bonus</option>
+                <option value="quinte">Quinté+</option>
+                <option value="quinte_ordre">Quinté+ Ordre</option>
+                <option value="deux_sur_quatre">2sur4</option>
+                <option value="super4">Super 4</option>
                 <option value="multi">Multi</option>
+                <option value="mini_multi">Mini Multi</option>
                 <option value="pick5">Pick 5</option>
                 <option value="autre">Autre</option>
               </select>

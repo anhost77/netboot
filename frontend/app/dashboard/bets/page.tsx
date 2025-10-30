@@ -7,6 +7,7 @@ import { budgetAPI } from '@/lib/api/budget';
 import { useMode } from '@/contexts/ModeContext';
 import { notificationService } from '@/lib/notification-service';
 import { pmuStatsAPI } from '@/lib/api/pmu-stats';
+import { checkBetWin } from '@/lib/bet-validation';
 import { platformsAPI, type Platform } from '@/lib/api/platforms';
 import { tipstersAPI, type Tipster } from '@/lib/api/tipsters';
 import type { Bet, PaginatedResponse, CreateBetData, BudgetOverview } from '@/lib/types';
@@ -45,17 +46,23 @@ const getBetTypeLabel = (betType: string | null | undefined) => {
     gagnant: 'Gagnant',
     place: 'Placé',
     gagnant_place: 'G-P',
-    couple: 'Couplé',
+    couple_gagnant: 'C. Gagnant',
+    couple_place: 'C. Placé',
     couple_ordre: 'C. Ordre',
     trio: 'Trio',
     trio_ordre: 'T. Ordre',
+    trio_bonus: 'T. Bonus',
     tierce: 'Tiercé',
     tierce_ordre: 'Tiercé O.',
-    quarte: 'Quarté',
-    quarte_ordre: 'Q. Ordre',
-    quinte: 'Quinté',
-    quinte_ordre: 'Q+Ordre',
+    quarte: 'Quarté+',
+    quarte_ordre: 'Q+ Ordre',
+    quarte_bonus: 'Q+ Bonus',
+    quinte: 'Quinté+',
+    quinte_ordre: 'Q+ Ordre',
+    deux_sur_quatre: '2sur4',
+    super4: 'Super 4',
     multi: 'Multi',
+    mini_multi: 'Mini Multi',
     pick5: 'Pick 5',
     autre: 'Autre',
   };
@@ -93,6 +100,7 @@ export default function BetsPage() {
   const [selectedRaceId, setSelectedRaceId] = useState<string | null>(null);
   const [selectedBetHorses, setSelectedBetHorses] = useState<string>('');
   const [raceResults, setRaceResults] = useState<any>(null);
+  const [isBetWon, setIsBetWon] = useState<boolean>(false);
 
   // Load bets, subscription, budget, platforms and tipsters
   useEffect(() => {
@@ -493,6 +501,7 @@ export default function BetsPage() {
       setBetToUpdate(null);
       setFinalOdds('');
       setRaceResults(null);
+      setIsBetWon(false);
       loadBets();
       loadCurrentMonthBetsCount();
       loadBudgetOverview();
@@ -1536,75 +1545,90 @@ export default function BetsPage() {
                 </div>
               ) : (
                 // Pour les paris PMU : chargement automatique
-                <div className="mb-4">
-                  {loadingOdds ? (
-                  <div className="flex items-center justify-center py-8">
-                    <svg className="animate-spin h-8 w-8 text-primary-600 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <span className="text-gray-600">Chargement des cotes PMU...</span>
-                  </div>
-                ) : finalOdds ? (
-                  <div className="bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-200 rounded-lg p-6">
-                    <div className="text-center">
-                      <p className="text-sm font-medium text-gray-600 mb-2">Cote PMU officielle</p>
-                      <p className="text-5xl font-bold text-green-600 mb-2">{parseFloat(finalOdds).toFixed(2)}€</p>
-                      <p className="text-xs text-gray-500">
-                        {betToUpdate.pmuRaceId 
-                          ? '✓ Récupérée automatiquement depuis les rapports PMU'
-                          : 'Cote enregistrée'
-                        }
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
-                    <p className="text-yellow-800 text-sm">
-                      ⚠️ Cote non disponible. Les rapports PMU ne sont pas encore publiés.
-                    </p>
-                  </div>
-                  )}
-                </div>
-              )}
-
-              {/* Afficher les résultats de la course PMU */}
-              {raceResults && raceResults.horses && raceResults.horses.length > 0 && (
-                <div className="mb-4">
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <h3 className="text-sm font-semibold text-blue-900 mb-2">🏆 Résultats officiels de la course</h3>
-                    <div className="space-y-1">
-                      {raceResults.horses
-                        .filter((h: any) => h.arrivalOrder && h.arrivalOrder <= 3)
-                        .sort((a: any, b: any) => a.arrivalOrder - b.arrivalOrder)
-                        .map((horse: any) => (
-                          <div key={horse.id} className="flex items-center justify-between text-sm">
-                            <span className="text-blue-800">
-                              {horse.arrivalOrder === 1 && '🥇 '}
-                              {horse.arrivalOrder === 2 && '🥈 '}
-                              {horse.arrivalOrder === 3 && '🥉 '}
-                              <span className="font-medium">#{horse.number}</span> {horse.name}
-                            </span>
-                            {horse.odds && (
-                              <span className="text-blue-600 font-semibold">{Number(horse.odds).toFixed(2)}€</span>
-                            )}
-                          </div>
-                        ))}
-                    </div>
-                    {betToUpdate.horsesSelected && !raceResults.horses.some((h: any) => 
-                      h.arrivalOrder === 1 && betToUpdate.horsesSelected?.includes(String(h.number))
-                    ) && (
-                      <div className="mt-3 pt-3 border-t border-blue-200">
-                        <p className="text-xs text-red-600 font-medium">
-                          ⚠️ Votre sélection ({betToUpdate.horsesSelected}) n'a pas gagné cette course
+                betToUpdate.pmuRaceId && isBetWon && (
+                  <div className="mb-4">
+                    {loadingOdds ? (
+                      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
+                        <span className="text-gray-600">Chargement des cotes PMU...</span>
+                      </div>
+                    ) : finalOdds ? (
+                      <div className="bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-200 rounded-lg p-6">
+                        <div className="text-center">
+                          <p className="text-sm font-medium text-gray-600 mb-2">Cote PMU officielle</p>
+                          <p className="text-5xl font-bold text-green-600 mb-2">{parseFloat(finalOdds).toFixed(2)}€</p>
+                          <p className="text-xs text-gray-500">
+                            {betToUpdate.pmuRaceId 
+                              ? '✓ Récupérée automatiquement depuis les rapports PMU'
+                              : 'Cote enregistrée'
+                            }
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+                        <p className="text-yellow-800 text-sm">
+                          ⚠️ Cote non disponible. Les rapports PMU ne sont pas encore publiés.
                         </p>
                       </div>
                     )}
                   </div>
-                </div>
+                )
               )}
 
-              {finalOdds && parseFloat(finalOdds) > 0 && (
+              {/* Afficher les résultats de la course PMU */}
+              {raceResults && raceResults.horses && raceResults.horses.length > 0 && betToUpdate.horsesSelected && betToUpdate.betType && (() => {
+                const validation = checkBetWin(betToUpdate.betType, betToUpdate.horsesSelected, raceResults);
+                
+                // Mettre à jour l'état si le pari est gagné
+                if (validation.isWon !== isBetWon) {
+                  setIsBetWon(validation.isWon);
+                }
+                
+                const maxDisplay = betToUpdate.betType === 'quinte' || betToUpdate.betType === 'quinte_ordre' || betToUpdate.betType === 'pick5' ? 5 : 
+                                   betToUpdate.betType === 'quarte' || betToUpdate.betType === 'quarte_ordre' || betToUpdate.betType === 'quarte_bonus' || betToUpdate.betType === 'super4' || betToUpdate.betType === 'multi' || betToUpdate.betType === 'mini_multi' || betToUpdate.betType === 'deux_sur_quatre' ? 4 : 3;
+                
+                return (
+                  <div className="mb-4">
+                    <div className={`border rounded-lg p-4 ${validation.isWon ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+                      <h3 className="text-sm font-semibold mb-2" style={{ color: validation.isWon ? '#065f46' : '#991b1b' }}>
+                        🏆 Résultats officiels de la course
+                      </h3>
+                      <div className="space-y-1">
+                        {raceResults.horses
+                          .filter((h: any) => h.arrivalOrder && h.arrivalOrder <= maxDisplay)
+                          .sort((a: any, b: any) => a.arrivalOrder - b.arrivalOrder)
+                          .map((horse: any) => (
+                            <div key={horse.id} className="flex items-center justify-between text-sm">
+                              <span style={{ color: validation.isWon ? '#065f46' : '#991b1b' }}>
+                                {horse.arrivalOrder === 1 && '🥇 '}
+                                {horse.arrivalOrder === 2 && '🥈 '}
+                                {horse.arrivalOrder === 3 && '🥉 '}
+                                {horse.arrivalOrder === 4 && '4️⃣ '}
+                                {horse.arrivalOrder === 5 && '5️⃣ '}
+                                <span className="font-medium">#{horse.number}</span> {horse.name}
+                              </span>
+                              {horse.odds && (
+                                <span className="font-semibold" style={{ color: validation.isWon ? '#059669' : '#dc2626' }}>
+                                  {Number(horse.odds).toFixed(2)}€
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                      </div>
+                      <div className={`mt-3 pt-3 border-t ${validation.isWon ? 'border-green-200' : 'border-red-200'}`}>
+                        <p className={`text-sm font-medium ${validation.isWon ? 'text-green-700' : 'text-red-700'}`}>
+                          {validation.message}
+                        </p>
+                        <p className="text-xs mt-1" style={{ color: validation.isWon ? '#065f46' : '#991b1b' }}>
+                          Type de pari : {getBetTypeLabel(betToUpdate.betType)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {finalOdds && parseFloat(finalOdds) > 0 && isBetWon && (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium text-green-800">Gain estimé :</span>
@@ -1629,6 +1653,7 @@ export default function BetsPage() {
                   setBetToUpdate(null);
                   setFinalOdds('');
                   setRaceResults(null);
+                  setIsBetWon(false);
                 }}
                 disabled={isSubmitting}
                 className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
@@ -1637,11 +1662,11 @@ export default function BetsPage() {
               </button>
               <button
                 onClick={handleConfirmWin}
-                disabled={isSubmitting || !finalOdds || parseFloat(finalOdds) <= 0}
+                disabled={isSubmitting || !isBetWon || !finalOdds || parseFloat(finalOdds) <= 0}
                 className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
               >
                 <CheckCircle className="h-4 w-4 mr-2" />
-                {isSubmitting ? 'Validation...' : 'Valider le gain'}
+                {isSubmitting ? 'Validation...' : isBetWon ? 'Valider le gain' : 'Pari perdu'}
               </button>
             </div>
           </div>

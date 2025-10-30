@@ -19,6 +19,97 @@ export class PmuController {
     private readonly prisma: PrismaService,
   ) {}
 
+  /**
+   * Détecte les types de paris disponibles depuis les rapports PMU
+   */
+  private detectAvailableBetTypesFromReports(reports: any[]): string[] {
+    const betTypes: string[] = [];
+    
+    // Mapping des types de rapports PMU vers nos types de paris
+    const reportMapping: Record<string, string[]> = {
+      'SIMPLE_GAGNANT': ['gagnant'],
+      'SIMPLE_PLACE': ['place'],
+      'COUPLE_ORDRE': ['couple_ordre'],
+      'COUPLE_GAGNANT': ['couple_gagnant'],
+      'COUPLE_PLACE': ['couple_place'],
+      'TRIO': ['trio'],
+      'TRIO_ORDRE': ['trio_ordre'],
+      'TIERCE': ['tierce', 'tierce_ordre'],
+      'QUARTE_PLUS': ['quarte', 'quarte_ordre', 'quarte_bonus'],
+      'QUINTÉ_PLUS': ['quinte', 'quinte_ordre'],
+      'DEUX_SUR_QUATRE': ['deux_sur_quatre'],
+      'MULTI': ['multi', 'mini_multi'],
+      'SUPER_QUATRE': ['super4'],
+      'PICK5': ['pick5'],
+    };
+    
+    // Extraire les types depuis les rapports
+    for (const report of reports) {
+      const mappedTypes = reportMapping[report.betType];
+      if (mappedTypes) {
+        betTypes.push(...mappedTypes);
+      }
+    }
+    
+    // Toujours ajouter gagnant_place si on a gagnant ET place
+    if (betTypes.includes('gagnant') && betTypes.includes('place')) {
+      betTypes.push('gagnant_place');
+    }
+    
+    // Supprimer les doublons
+    return [...new Set(betTypes)];
+  }
+
+  /**
+   * Détecte les types de paris disponibles selon les types de jeu proposés par le PMU
+   */
+  private detectAvailableBetTypes(raceDetails: any): string[] {
+    const betTypes: string[] = [];
+    
+    // Récupérer les types de jeu depuis l'API PMU
+    const typesJeu = raceDetails.typesJeu || [];
+    
+    // Log pour debug
+    console.log('🎯 Race:', raceDetails.libelle);
+    console.log('🎲 Types de jeu PMU:', typesJeu);
+    
+    // Mapping des types de jeu PMU vers nos types de paris
+    const typeMapping: Record<string, string[]> = {
+      'SIMPLE_GAGNANT': ['gagnant'],
+      'SIMPLE_PLACE': ['place'],
+      'SIMPLE_GAGNANT_PLACE': ['gagnant_place'],
+      'COUPLE': ['couple_gagnant', 'couple_place', 'couple_ordre'], // Générique
+      'COUPLE_GAGNANT': ['couple_gagnant'],
+      'COUPLE_PLACE': ['couple_place'],
+      'COUPLE_ORDRE': ['couple_ordre'],
+      'TRIO': ['trio'],
+      'TRIO_ORDRE': ['trio_ordre'],
+      'TIERCE': ['tierce', 'tierce_ordre'],
+      'QUARTE_PLUS': ['quarte', 'quarte_ordre', 'quarte_bonus'],
+      'QUINTE_PLUS': ['quinte', 'quinte_ordre'],
+      'DEUX_SUR_QUATRE': ['deux_sur_quatre'],
+      'MULTI': ['multi', 'mini_multi'],
+      'SUPER_QUATRE': ['super4'],
+      'PICK5': ['pick5'],
+    };
+    
+    // Ajouter les types de paris selon les types de jeu disponibles
+    for (const typeJeu of typesJeu) {
+      const mappedTypes = typeMapping[typeJeu];
+      if (mappedTypes) {
+        betTypes.push(...mappedTypes);
+      }
+    }
+    
+    // Si aucun type détecté, ajouter au moins les paris simples (fallback)
+    if (betTypes.length === 0) {
+      betTypes.push('gagnant', 'place', 'gagnant_place');
+    }
+    
+    // Supprimer les doublons
+    return [...new Set(betTypes)];
+  }
+
   @Get('program/today')
   @ApiOperation({ summary: 'Get today\'s race program' })
   async getTodayProgram() {
@@ -131,7 +222,7 @@ export class PmuController {
       });
     }
 
-    // Créer ou mettre à jour la course
+    // Créer ou mettre à jour la course (sans les types de paris pour l'instant)
     const race = await this.prisma.pmuRace.upsert({
       where: {
         hippodromeCode_date_reunionNumber_raceNumber: {
@@ -151,6 +242,7 @@ export class PmuController {
         discipline: raceDetails.discipline,
         distance: raceDetails.distance,
         prize: raceDetails.montantPrix,
+        availableBetTypes: [], // Sera mis à jour après récupération des rapports
       },
       update: {
         name: raceDetails.libelle,
@@ -158,6 +250,7 @@ export class PmuController {
         discipline: raceDetails.discipline,
         distance: raceDetails.distance,
         prize: raceDetails.montantPrix,
+        // availableBetTypes sera mis à jour après récupération des rapports
       },
     });
 
@@ -228,6 +321,24 @@ export class PmuController {
           reunion,
           course,
         );
+        
+        // Mettre à jour les types de paris disponibles depuis les rapports
+        const raceWithReports = await this.prisma.pmuRace.findUnique({
+          where: { id: race.id },
+          include: { reports: true },
+        });
+        
+        if (raceWithReports && raceWithReports.reports.length > 0) {
+          const availableBetTypes = this.detectAvailableBetTypesFromReports(raceWithReports.reports);
+          console.log('✅ Types de paris détectés depuis les rapports:', availableBetTypes);
+          
+          await this.prisma.pmuRace.update({
+            where: { id: race.id },
+            data: { availableBetTypes },
+          });
+          
+          race.availableBetTypes = availableBetTypes;
+        }
       } catch (error) {
         console.error('Error updating odds:', error);
         // Continue même si les cotes échouent

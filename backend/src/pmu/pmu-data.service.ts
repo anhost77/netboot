@@ -282,13 +282,13 @@ export class PmuDataService {
           const match = h.trim().match(/^(\d+)/);
           return match ? parseInt(match[1]) : 0;
         })
-        .filter(n => n > 0)
-        .sort((a, b) => a - b);
+        .filter(n => n > 0);
 
       if (selectedNumbers.length === 0) return null;
 
       // Find the appropriate report based on bet type
       let targetBetType = '';
+      let shouldSort = true; // Par défaut, on trie (pour les paris désordre)
       switch (betType?.toLowerCase()) {
         case 'gagnant':
         case 'simple_gagnant':
@@ -301,29 +301,69 @@ export class PmuDataService {
         case 'gagnant_place':
           targetBetType = 'SIMPLE_GAGNANT'; // Use winner odds for G-P
           break;
-        case 'couple':
         case 'couple_gagnant':
           targetBetType = 'COUPLE_GAGNANT';
           break;
         case 'couple_place':
           targetBetType = 'COUPLE_PLACE';
           break;
+        case 'couple_ordre':
+          targetBetType = 'COUPLE_ORDRE';
+          shouldSort = false; // Ordre important
+          break;
         case 'trio':
           targetBetType = 'TRIO';
           break;
+        case 'trio_ordre':
+          targetBetType = 'TRIO_ORDRE';
+          shouldSort = false; // Ordre important
+          break;
+        case 'tierce':
+        case 'tiercé':
+          targetBetType = 'TIERCE';
+          break;
+        case 'tierce_ordre':
+          targetBetType = 'TIERCE';
+          shouldSort = false; // Ordre important
+          break;
         case 'quarte':
         case 'quarte+':
+        case 'quarte_plus':
           targetBetType = 'QUARTE_PLUS';
+          break;
+        case 'quarte_ordre':
+          targetBetType = 'QUARTE_PLUS';
+          shouldSort = false; // Ordre important
           break;
         case 'quinte':
         case 'quinte+':
+        case 'quinte_plus':
           targetBetType = 'QUINTE_PLUS';
           break;
-        case 'multi':
-          targetBetType = 'MINI_MULTI';
+        case 'quinte_ordre':
+          targetBetType = 'QUINTE_PLUS';
+          shouldSort = false; // Ordre important
           break;
+        case 'deux_sur_quatre':
         case '2sur4':
           targetBetType = 'DEUX_SUR_QUATRE';
+          break;
+        case 'multi':
+        case 'mini_multi':
+          targetBetType = 'MULTI';
+          break;
+        case 'super4':
+          targetBetType = 'SUPER_QUATRE';
+          shouldSort = false; // Ordre important pour Super 4
+          break;
+        case 'pick5':
+          targetBetType = 'PICK5';
+          break;
+        case 'trio_bonus':
+          targetBetType = 'TRIO'; // Utiliser les cotes du Trio
+          break;
+        case 'quarte_bonus':
+          targetBetType = 'QUARTE_PLUS'; // Utiliser les cotes du Quarté+
           break;
         default:
           this.logger.warn(`Unknown bet type: ${betType}`);
@@ -339,7 +379,35 @@ export class PmuDataService {
 
       // Find the matching combination in the reports
       const reportData = report.reports as any[];
-      const combination = selectedNumbers.join('-');
+      
+      // Pour les paris ORDRE, trier selon l'ordre d'arrivée réel
+      let numbersToUse = selectedNumbers;
+      if (!shouldSort) {
+        // Récupérer l'ordre d'arrivée depuis les chevaux de la course
+        const horses = await this.prisma.pmuHorse.findMany({
+          where: {
+            raceId: raceId,
+            number: { in: selectedNumbers },
+            arrivalOrder: { not: null },
+          },
+          orderBy: { arrivalOrder: 'asc' },
+        });
+        
+        // Trier les numéros sélectionnés selon l'ordre d'arrivée
+        numbersToUse = horses.map(h => h.number);
+        this.logger.log(`   Ordre d'arrivée réel: ${numbersToUse.join('-')}`);
+      } else {
+        // Pour les paris désordre, trier par numéro croissant
+        numbersToUse = [...selectedNumbers].sort((a, b) => a - b);
+      }
+      
+      const combination = numbersToUse.join('-');
+
+      this.logger.log(`🔍 Recherche de cote pour ${betType}`);
+      this.logger.log(`   Chevaux sélectionnés: ${selectedNumbers.join('-')}`);
+      this.logger.log(`   Combinaison cherchée: ${combination} (shouldSort: ${shouldSort})`);
+      this.logger.log(`   Type de rapport: ${targetBetType}`);
+      this.logger.log(`   Combinaisons disponibles: ${reportData.map(r => r.combinaison).join(', ')}`);
 
       // Try to find exact match
       let matchingReport = reportData.find(r => r.combinaison === combination);
@@ -349,9 +417,9 @@ export class PmuDataService {
         matchingReport = reportData.find(r => r.combinaison === selectedNumbers[0].toString());
       }
 
-      // For couples/trios, try reverse order
-      if (!matchingReport && selectedNumbers.length > 1) {
-        const reverseCombination = selectedNumbers.reverse().join('-');
+      // For couples/trios désordre, try reverse order
+      if (!matchingReport && selectedNumbers.length > 1 && shouldSort) {
+        const reverseCombination = [...numbersToUse].reverse().join('-');
         matchingReport = reportData.find(r => r.combinaison === reverseCombination);
       }
 

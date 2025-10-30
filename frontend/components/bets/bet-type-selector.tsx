@@ -7,9 +7,10 @@ import { PMU_BET_TYPES, getBetTypesByCategory, type PMUBetType } from '@/lib/pmu
 interface BetTypeSelectorProps {
   selectedType: string | null;
   onSelect: (betType: PMUBetType) => void;
+  availableBetTypes?: string[]; // Liste des types de paris disponibles pour la course sélectionnée
 }
 
-export default function BetTypeSelector({ selectedType, onSelect }: BetTypeSelectorProps) {
+export default function BetTypeSelector({ selectedType, onSelect, availableBetTypes }: BetTypeSelectorProps) {
   const [activeCategory, setActiveCategory] = useState<PMUBetType['category']>('simple');
 
   const categories = [
@@ -20,7 +21,13 @@ export default function BetTypeSelector({ selectedType, onSelect }: BetTypeSelec
     { value: 'special' as const, label: 'Paris Spéciaux', icon: '⭐' },
   ];
 
-  const betTypes = getBetTypesByCategory(activeCategory);
+  // Filtrer les types de paris selon ceux disponibles pour la course
+  let betTypes = getBetTypesByCategory(activeCategory);
+  if (availableBetTypes && availableBetTypes.length > 0) {
+    betTypes = betTypes.filter(bt => 
+      availableBetTypes.includes(bt.code.toLowerCase())
+    );
+  }
 
   return (
     <div className="space-y-4">

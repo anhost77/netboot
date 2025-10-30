@@ -17,7 +17,7 @@ export interface PMUBetType {
 export const PMU_BET_TYPES: PMUBetType[] = [
   // PARIS SIMPLES
   {
-    code: 'SIMPLE_GAGNANT',
+    code: 'GAGNANT',
     name: 'Simple Gagnant',
     description: 'Trouver le cheval gagnant',
     minSelections: 1,
@@ -26,7 +26,7 @@ export const PMU_BET_TYPES: PMUBetType[] = [
     category: 'simple',
   },
   {
-    code: 'SIMPLE_PLACE',
+    code: 'PLACE',
     name: 'Simple Placé',
     description: 'Trouver un cheval dans les 3 premiers',
     minSelections: 1,
@@ -35,7 +35,7 @@ export const PMU_BET_TYPES: PMUBetType[] = [
     category: 'simple',
   },
   {
-    code: 'SIMPLE_GAGNANT_PLACE',
+    code: 'GAGNANT_PLACE',
     name: 'Simple Gagnant et Placé',
     description: 'Combinaison Gagnant + Placé',
     minSelections: 1,
@@ -169,6 +169,15 @@ export const PMU_BET_TYPES: PMUBetType[] = [
     category: 'special',
   },
   {
+    code: 'SUPER4',
+    name: 'Super 4',
+    description: 'Trouver les 4 premiers chevaux (ordre ou désordre)',
+    minSelections: 4,
+    maxSelections: 4,
+    hasOrder: false,
+    category: 'special',
+  },
+  {
     code: 'MULTI',
     name: 'Multi',
     description: 'Trouver 4 chevaux dans les 4 premiers (désordre)',
@@ -192,6 +201,24 @@ export const PMU_BET_TYPES: PMUBetType[] = [
     description: 'Trouver le gagnant de 5 courses consécutives',
     minSelections: 5,
     maxSelections: 5,
+    hasOrder: false,
+    category: 'special',
+  },
+  {
+    code: 'TRIO_BONUS',
+    name: 'Trio Bonus',
+    description: 'Bonus si 2 des 3 chevaux sont dans les 3 premiers',
+    minSelections: 3,
+    maxSelections: 3,
+    hasOrder: false,
+    category: 'special',
+  },
+  {
+    code: 'QUARTE_BONUS',
+    name: 'Quarté+ Bonus',
+    description: 'Bonus si 3 des 4 chevaux sont dans les 4 premiers',
+    minSelections: 4,
+    maxSelections: 4,
     hasOrder: false,
     category: 'special',
   },

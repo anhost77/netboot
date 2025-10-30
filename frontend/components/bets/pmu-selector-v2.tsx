@@ -24,12 +24,13 @@ interface PMUSelectorProps {
 }
 
 export default function PMUSelector({ platforms, onSelect }: PMUSelectorProps) {
-  const [step, setStep] = useState<'betType' | 'platform' | 'hippodrome' | 'race' | 'horse'>('betType');
+  const [step, setStep] = useState<'platform' | 'hippodrome' | 'race' | 'betType' | 'horse'>('platform');
   const [selectedBetType, setSelectedBetType] = useState<PMUBetType | null>(null);
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
   const [meetings, setMeetings] = useState<PMUMeeting[]>([]);
   const [selectedMeeting, setSelectedMeeting] = useState<PMUMeeting | null>(null);
   const [selectedRace, setSelectedRace] = useState<PMURace | null>(null);
+  const [availableBetTypes, setAvailableBetTypes] = useState<string[]>([]);
   const [participants, setParticipants] = useState<PMUParticipant[]>([]);
   const [selectedHorses, setSelectedHorses] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -58,11 +59,6 @@ export default function PMUSelector({ platforms, onSelect }: PMUSelectorProps) {
     }
   };
 
-  const handleSelectBetType = (betType: PMUBetType) => {
-    setSelectedBetType(betType);
-    setStep('platform');
-  };
-
   const handleSelectPlatform = (platformId: string) => {
     setSelectedPlatform(platformId);
     setStep('hippodrome');
@@ -76,14 +72,64 @@ export default function PMUSelector({ platforms, onSelect }: PMUSelectorProps) {
   const handleSelectRace = async (race: PMURace) => {
     setSelectedRace(race);
     setSelectedHorses([]);
+    
+    try {
+      setIsLoading(true);
+      
+      // Synchroniser la course dans notre base de données pour obtenir les types de paris disponibles
+      const token = localStorage.getItem('access_token');
+      const syncResponse = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/pmu/data/races/${selectedDate}/${selectedMeeting!.number}/${race.number}/sync`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        }
+      );
+      
+      if (syncResponse.ok) {
+        const syncedRace = await syncResponse.json();
+        
+        // Utiliser les types de paris disponibles depuis la base de données
+        if (syncedRace.availableBetTypes && syncedRace.availableBetTypes.length > 0) {
+          console.log('✅ Types de paris disponibles:', syncedRace.availableBetTypes);
+          setAvailableBetTypes(syncedRace.availableBetTypes);
+        } else {
+          console.warn('⚠️ Aucun type de pari détecté, utilisation des paris simples par défaut');
+          setAvailableBetTypes(['gagnant', 'place', 'gagnant_place']);
+        }
+      } else {
+        console.error('❌ Échec de la synchronisation');
+        setAvailableBetTypes(['gagnant', 'place', 'gagnant_place']);
+      }
+    } catch (error) {
+      console.error('❌ Erreur lors de la synchronisation:', error);
+      setAvailableBetTypes(['gagnant', 'place', 'gagnant_place']);
+    } finally {
+      setIsLoading(false);
+    }
+    
+    setStep('betType');
+  };
+
+  const handleSelectBetType = (betType: PMUBetType) => {
+    setSelectedBetType(betType);
     setStep('horse');
+    
+    // Charger les participants
+    loadParticipants();
+  };
+
+  const loadParticipants = async () => {
+    if (!selectedMeeting || !selectedRace) return;
     
     try {
       setIsLoading(true);
       const data = await pmuAPI.getRaceParticipants(
         selectedDate,
-        selectedMeeting!.number,
-        race.number
+        selectedMeeting.number,
+        selectedRace.number
       );
       setParticipants(data.participants || []);
     } catch (error) {
@@ -142,7 +188,7 @@ export default function PMUSelector({ platforms, onSelect }: PMUSelectorProps) {
       hippodromeCode: selectedMeeting.hippodrome.code,
       raceNumber: selectedRace.number.toString(),
       horsesSelected: horsesNames,
-      betType: selectedBetType.name,
+      betType: selectedBetType.name, // Envoyer le nom pour le mapping
       date: selectedDate,
       pmuCode,
       platformId: selectedPlatform,
@@ -160,7 +206,7 @@ export default function PMUSelector({ platforms, onSelect }: PMUSelectorProps) {
 
   // Calculer l'étape actuelle et le total
   const getStepNumber = () => {
-    const steps = { betType: 1, platform: 2, hippodrome: 3, race: 4, horse: 5 };
+    const steps = { platform: 1, hippodrome: 2, race: 3, betType: 4, horse: 5 };
     return steps[step];
   };
 
@@ -218,10 +264,10 @@ export default function PMUSelector({ platforms, onSelect }: PMUSelectorProps) {
         {/* Labels des étapes */}
         <div className="flex justify-between mt-3 px-0">
           {[
-            { num: 1, label: 'Type' },
-            { num: 2, label: 'Bookmaker' },
-            { num: 3, label: 'Hippodrome' },
-            { num: 4, label: 'Course' },
+            { num: 1, label: 'Bookmaker' },
+            { num: 2, label: 'Hippodrome' },
+            { num: 3, label: 'Course' },
+            { num: 4, label: 'Type' },
             { num: 5, label: 'Chevaux' }
           ].map(({ num, label }) => (
             <div
@@ -245,27 +291,13 @@ export default function PMUSelector({ platforms, onSelect }: PMUSelectorProps) {
       <div className="flex items-center space-x-2 text-sm">
         <button
           type="button"
-          onClick={() => setStep('betType')}
+          onClick={() => setStep('platform')}
           className={`hover:text-primary-600 transition-colors ${
-            step === 'betType' ? 'font-semibold text-primary-600' : 'text-gray-600'
+            step === 'platform' ? 'font-semibold text-primary-600' : 'text-gray-600'
           }`}
         >
-          Type de pari
+          Bookmaker
         </button>
-        {selectedBetType && (
-          <>
-            <ChevronRight className="h-4 w-4 text-gray-400" />
-            <button
-              type="button"
-              onClick={() => setStep('platform')}
-              className={`hover:text-primary-600 transition-colors ${
-                step === 'platform' ? 'font-semibold text-primary-600' : 'text-gray-600'
-              }`}
-            >
-              Bookmaker
-            </button>
-          </>
-        )}
         {selectedPlatform && (
           <>
             <ChevronRight className="h-4 w-4 text-gray-400" />
@@ -297,16 +329,31 @@ export default function PMUSelector({ platforms, onSelect }: PMUSelectorProps) {
         {selectedRace && (
           <>
             <ChevronRight className="h-4 w-4 text-gray-400" />
+            <button
+              type="button"
+              onClick={() => setStep('betType')}
+              className={`hover:text-primary-600 transition-colors ${
+                step === 'betType' ? 'font-semibold text-primary-600' : 'text-gray-600'
+              }`}
+            >
+              Type de pari
+            </button>
+          </>
+        )}
+        {selectedBetType && (
+          <>
+            <ChevronRight className="h-4 w-4 text-gray-400" />
             <span className="font-semibold text-primary-600">Chevaux</span>
           </>
         )}
       </div>
 
-      {/* Step 1: Select Bet Type */}
+      {/* Step 4: Select Bet Type (after race selection) */}
       {step === 'betType' && (
         <BetTypeSelector
           selectedType={selectedBetType?.code || null}
           onSelect={handleSelectBetType}
+          availableBetTypes={availableBetTypes}
         />
       )}
 

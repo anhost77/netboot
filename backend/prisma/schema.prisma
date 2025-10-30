@@ -37,22 +37,28 @@ enum BetStatus {
 }
 
 enum HorseBetType {
-  gagnant        // Simple gagnant
-  place          // Simple placé
-  gagnant_place  // Couplé gagnant-placé
-  couple         // Couplé
-  couple_ordre   // Couplé ordre
-  trio           // Trio
-  trio_ordre     // Trio ordre
-  tierce         // Tiercé
-  tierce_ordre   // Tiercé ordre
-  quarte         // Quarté
-  quarte_ordre   // Quarté ordre
-  quinte         // Quinté
-  quinte_ordre   // Quinté ordre
-  multi          // Multi
-  pick5          // Pick 5
-  autre          // Autre
+  gagnant          // Simple gagnant
+  place            // Simple placé
+  gagnant_place    // E-Simple (Gagnant + Placé)
+  couple_gagnant   // Couplé Gagnant (2 premiers, ordre indifférent)
+  couple_place     // Couplé Placé (2 parmi les 3 premiers)
+  couple_ordre     // Couplé Ordre (2 premiers dans l'ordre)
+  trio             // Trio (3 premiers, ordre indifférent)
+  trio_ordre       // Trio Ordre (3 premiers dans l'ordre)
+  trio_bonus       // Trio Bonus (2 des 3 dans les 3 premiers)
+  tierce           // Tiercé (3 premiers)
+  tierce_ordre     // Tiercé Ordre
+  quarte           // Quarté+ (4 premiers)
+  quarte_ordre     // Quarté+ Ordre
+  quarte_bonus     // Quarté+ Bonus (3 des 4 dans les 4 premiers)
+  quinte           // Quinté+ (5 premiers)
+  quinte_ordre     // Quinté+ Ordre
+  deux_sur_quatre  // 2sur4 (2 chevaux parmi les 4 premiers)
+  super4           // Super 4 (4 premiers)
+  multi            // Multi (4 à 7 chevaux dans les 4 premiers)
+  mini_multi       // Mini Multi (alias du Multi)
+  pick5            // Pick 5 (5 premiers, ordre indifférent)
+  autre            // Autre type de pari
 }
 
 // PMU Data Models for statistics
@@ -81,6 +87,7 @@ model PmuRace {
   discipline      String?       // PLAT, ATTELE, HAIE, etc.
   distance        Int?          // Distance in meters
   prize           Int?          // Prize money
+  availableBetTypes String[]    @default([]) @map("available_bet_types") // Types de paris disponibles pour cette course
   horses          PmuHorse[]
   reports         PmuReport[]
   bets            Bet[]

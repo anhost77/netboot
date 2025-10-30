@@ -74,46 +74,134 @@ export class PmuDailyPronosticService {
 
       await Promise.all(weatherPromises);
 
-      // 3. Générer les pronostics pour les courses principales
-      this.logger.log('🎯 Generating pronostics...');
-      let successCount = 0;
+      // 3. Analyser TOUTES les courses
+      this.logger.log('🎯 Analyzing ALL races...');
+      const analyses: Array<{ race: any; analysis: any; score: number }> = [];
       let errorCount = 0;
 
-      // Prioriser les courses importantes (Quinté+, etc.)
-      const prioritizedRaces = this.prioritizeRaces(races);
-
-      for (const race of prioritizedRaces.slice(0, 10)) { // Limiter à 10 courses principales
+      for (const race of races) {
         try {
           this.logger.log(`Analyzing ${race.hippodrome.name} - R${race.reunionNumber}C${race.raceNumber}`);
           
           const analysis = await this.pronosticAnalyzer.analyzeRace(race.id);
           
-          if (analysis) {
-            // Stocker les résultats dans RaceAiContent
-            await this.storePronosticAnalysis(race.id, analysis);
-            successCount++;
-            this.logger.debug(`✅ Pronostic generated for race ${race.id}`);
+          if (analysis && analysis.horses.length > 0) {
+            // Calculer un score de qualité de la course
+            const qualityScore = this.calculateRaceQualityScore(race, analysis);
+            
+            analyses.push({
+              race,
+              analysis,
+              score: qualityScore,
+            });
+            
+            this.logger.debug(`✅ Race analyzed - Quality score: ${qualityScore.toFixed(1)}`);
           } else {
             errorCount++;
-            this.logger.warn(`⚠️ Failed to generate pronostic for race ${race.id}`);
+            this.logger.warn(`⚠️ Failed to analyze race ${race.id}`);
           }
 
           // Petit délai pour ne pas surcharger
-          await this.delay(500);
+          await this.delay(300);
         } catch (error) {
           errorCount++;
-          this.logger.error(`❌ Error generating pronostic for race ${race.id}:`, error.message);
+          this.logger.error(`❌ Error analyzing race ${race.id}:`, error.message);
         }
       }
 
-      this.logger.log(`✅ Daily pronostics generation completed: ${successCount} success, ${errorCount} errors`);
+      this.logger.log(`📊 Analyzed ${analyses.length} races successfully, ${errorCount} errors`);
+
+      // 4. Trier par score de qualité et garder les meilleures
+      analyses.sort((a, b) => b.score - a.score);
+
+      // 5. Filtrer : garder seulement les courses avec un bon score
+      const MIN_QUALITY_SCORE = 60; // Score minimum pour être publié
+      const qualityRaces = analyses.filter(a => a.score >= MIN_QUALITY_SCORE);
+
+      this.logger.log(`🏆 ${qualityRaces.length} races meet quality threshold (score >= ${MIN_QUALITY_SCORE})`);
+
+      // 6. Stocker les pronostics des courses de qualité
+      let successCount = 0;
+      for (const { race, analysis } of qualityRaces) {
+        try {
+          await this.storePronosticAnalysis(race.id, analysis);
+          successCount++;
+        } catch (error) {
+          this.logger.error(`Error storing pronostic for race ${race.id}:`, error.message);
+        }
+      }
+
+      this.logger.log(`✅ Daily pronostics generation completed: ${successCount} quality races published`);
     } catch (error) {
       this.logger.error('❌ Error in daily pronostics generation:', error);
     }
   }
 
   /**
+   * Calcule un score de qualité pour une course
+   * Basé sur plusieurs critères pour déterminer si la course mérite un pronostic
+   */
+  private calculateRaceQualityScore(race: any, analysis: any): number {
+    let score = 0;
+
+    // 1. Type de course (30 points max)
+    if (race.availableBetTypes?.includes('QUINTE_PLUS')) {
+      score += 30; // Quinté+ = toujours publié
+    } else if (race.availableBetTypes?.includes('QUARTE_PLUS')) {
+      score += 25;
+    } else if (race.availableBetTypes?.includes('TIERCE')) {
+      score += 20;
+    } else if (race.availableBetTypes?.includes('TRIO')) {
+      score += 15;
+    } else {
+      score += 10;
+    }
+
+    // 2. Allocation (prize money) (20 points max)
+    const prize = race.prize || 0;
+    if (prize >= 100000) score += 20;
+    else if (prize >= 50000) score += 15;
+    else if (prize >= 30000) score += 10;
+    else if (prize >= 20000) score += 5;
+
+    // 3. Qualité de l'analyse (30 points max)
+    // Si on a un cheval qui se démarque clairement = bonne opportunité
+    const topHorse = analysis.horses[0];
+    const secondHorse = analysis.horses[1];
+    
+    if (topHorse && secondHorse) {
+      const scoreDiff = topHorse.totalScore - secondHorse.totalScore;
+      
+      // Écart significatif = pronostic plus fiable
+      if (scoreDiff >= 15) score += 30; // Très clair
+      else if (scoreDiff >= 10) score += 25; // Clair
+      else if (scoreDiff >= 5) score += 20; // Assez clair
+      else score += 10; // Course serrée
+    }
+
+    // 4. Confiance globale (10 points max)
+    const highConfidenceHorses = analysis.horses.filter((h: any) => h.confidence === 'high').length;
+    if (highConfidenceHorses >= 3) score += 10;
+    else if (highConfidenceHorses >= 2) score += 7;
+    else if (highConfidenceHorses >= 1) score += 5;
+
+    // 5. Nombre de partants (10 points max)
+    const nbHorses = analysis.horses.length;
+    if (nbHorses >= 12 && nbHorses <= 18) score += 10; // Idéal
+    else if (nbHorses >= 8 && nbHorses <= 20) score += 7;
+    else score += 3;
+
+    // Bonus : Quinté+ est toujours publié
+    if (race.availableBetTypes?.includes('QUINTE_PLUS')) {
+      score = Math.max(score, 100); // Force le score à 100 minimum
+    }
+
+    return Math.min(100, score);
+  }
+
+  /**
    * Priorise les courses (Quinté+ en premier, puis par montant de prize)
+   * NOTE: Cette méthode n'est plus utilisée, on analyse toutes les courses
    */
   private prioritizeRaces(races: any[]): any[] {
     return races.sort((a, b) => {

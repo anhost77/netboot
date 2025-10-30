@@ -430,29 +430,32 @@ export default function RaceDetailsModal({ race, onClose, onBet }: RaceDetailsMo
                           </div>
                           <div className="flex-1">
                             <h4 className="text-lg font-bold text-gray-900">{horse.name}</h4>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2 text-sm">
+                            
+                            {/* Jockey et Entraîneur en évidence */}
+                            <div className="flex flex-wrap gap-3 mt-2">
                               {horse.jockey && (
-                                <div className="flex items-center gap-2 text-gray-600">
+                                <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium">
                                   <User className="w-4 h-4" />
-                                  <span>Jockey: {horse.jockey}</span>
+                                  <span>🏇 {horse.jockey}</span>
                                 </div>
                               )}
                               {horse.trainer && (
-                                <div className="flex items-center gap-2 text-gray-600">
+                                <div className="flex items-center gap-2 px-3 py-1 bg-purple-50 text-purple-700 rounded-full text-sm font-medium">
                                   <Award className="w-4 h-4" />
-                                  <span>Entraîneur: {horse.trainer}</span>
+                                  <span>👔 {horse.trainer}</span>
                                 </div>
                               )}
+                            </div>
+                            
+                            {/* Autres infos */}
+                            <div className="flex flex-wrap gap-3 mt-2 text-sm text-gray-600">
                               {horse.weight && (
-                                <div className="text-gray-600">
-                                  <span>Poids: {horse.weight}kg</span>
-                                </div>
+                                <span>⚖️ {horse.weight}kg</span>
                               )}
                               {horse.odds && (
-                                <div className="flex items-center gap-2 text-green-600 font-semibold">
-                                  <TrendingUp className="w-4 h-4" />
-                                  <span>Cote: {horse.odds}</span>
-                                </div>
+                                <span className="text-green-600 font-semibold">
+                                  💰 {horse.odds}
+                                </span>
                               )}
                             </div>
                             {(horse.age || horse.sex || horse.rope) && (
@@ -521,7 +524,7 @@ export default function RaceDetailsModal({ race, onClose, onBet }: RaceDetailsMo
                                 className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:border-primary-400 hover:shadow-md transition-all"
                               >
                                 <div className="flex items-center gap-3 flex-1">
-                                  <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                  <div className={`${combo.horses.toString().length > 2 ? 'min-w-[60px] px-3' : 'w-12'} h-12 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0`}>
                                     <span className="font-bold text-primary-700 text-lg">{combo.horses}</span>
                                   </div>
                                   <div className="flex-1 min-w-0">

@@ -126,6 +126,7 @@ export class PmuController {
     return this.pmuService.getProgramByDate(parsedDate);
   }
 
+  @Public()
   @Get('race/participants')
   @ApiOperation({ summary: 'Get race participants' })
   async getRaceParticipants(
@@ -188,6 +189,64 @@ export class PmuController {
       throw new Error('Invalid date format. Use YYYY-MM-DD');
     }
     return this.pmuService.getRaceDetails(parsedDate, reunion, course);
+  }
+
+  @Public()
+  @Get('race/all-odds')
+  @ApiOperation({ summary: 'Get all odds for a race (public access)' })
+  async getAllOddsForRace(
+    @Query('date') date: string,
+    @Query('reunion', ParseIntPipe) reunion: number,
+    @Query('course', ParseIntPipe) course: number,
+  ) {
+    const parsedDate = new Date(date);
+    if (isNaN(parsedDate.getTime())) {
+      throw new Error('Invalid date format. Use YYYY-MM-DD');
+    }
+
+    try {
+      // Récupérer les rapports PMU
+      const reports = await this.pmuService.getRaceReports(parsedDate, reunion, course);
+      
+      if (!reports || reports.length === 0) {
+        return { odds: [] };
+      }
+
+      // Mapper les rapports vers un format structuré
+      const oddsData = reports.map(report => ({
+        betType: report.typePari,
+        label: this.getBetTypeLabel(report.typePari),
+        combinations: report.rapportDirect?.map(r => ({
+          horses: r.numPmu,
+          odds: r.rapport
+        })) || []
+      }));
+
+      return { odds: oddsData };
+    } catch (error) {
+      console.error('Error fetching all odds:', error);
+      return { odds: [] };
+    }
+  }
+
+  private getBetTypeLabel(betType: string): string {
+    const labels: Record<string, string> = {
+      'SIMPLE_GAGNANT': 'Simple Gagnant',
+      'SIMPLE_PLACE': 'Simple Placé',
+      'COUPLE_GAGNANT': 'Couplé Gagnant',
+      'COUPLE_PLACE': 'Couplé Placé',
+      'COUPLE_ORDRE': 'Couplé Ordre',
+      'TRIO': 'Trio',
+      'TRIO_ORDRE': 'Trio Ordre',
+      'SUPER4': 'Super 4',
+      'QUARTE_PLUS': 'Quarté+',
+      'QUINTE_PLUS': 'Quinté+',
+      'MULTI': 'Multi',
+      '2SUR4': '2 sur 4',
+      'MINI_MULTI': 'Mini Multi',
+      'PICK5': 'Pick 5'
+    };
+    return labels[betType] || betType;
   }
 
   @Post('data/races/:date/:reunion/:course/sync')

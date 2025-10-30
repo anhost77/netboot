@@ -8,6 +8,8 @@ import { fr } from 'date-fns/locale';
 import MarketingHeader from '@/components/marketing/MarketingHeader';
 import MarketingFooter from '@/components/marketing/MarketingFooter';
 import { useAuthModal } from '@/contexts/AuthModalContext';
+import { API_URL } from '@/lib/config';
+import RaceDetailsModal from '@/components/races/RaceDetailsModal';
 
 interface Race {
   id: string;
@@ -43,7 +45,6 @@ export default function CalendrierCourses() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedHippodrome, setSelectedHippodrome] = useState('all');
   const [selectedRace, setSelectedRace] = useState<Race | null>(null);
-  const [loadingRaceDetails, setLoadingRaceDetails] = useState(false);
 
   useEffect(() => {
     // Fetch races from API
@@ -54,7 +55,7 @@ export default function CalendrierCourses() {
     setLoading(true);
     try {
       const dateStr = format(date, 'yyyy-MM-dd');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/pmu/public/races?date=${dateStr}`);
+      const response = await fetch(`${API_URL}/pmu/public/races?date=${dateStr}`);
       if (response.ok) {
         const data = await response.json();
         // Si pas de données en BDD, utiliser les données mock
@@ -391,192 +392,18 @@ export default function CalendrierCourses() {
 
       {/* Modal détails de course */}
       {selectedRace && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
-            {/* Header */}
-            <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-4 flex justify-between items-center">
-              <div>
-                <h2 className="text-2xl font-bold">{selectedRace.name}</h2>
-                <p className="text-blue-100 mt-1">
-                  {selectedRace.hippodrome} - R{selectedRace.reunionNumber}C{selectedRace.raceNumber}
-                </p>
-              </div>
-              <button
-                onClick={() => setSelectedRace(null)}
-                className="p-2 hover:bg-blue-800 rounded-lg transition-colors"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-
-            {/* Infos course */}
-            <div className="p-6 border-b border-gray-200">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div>
-                  <p className="text-sm text-gray-600">Heure de départ</p>
-                  <p className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                    <Clock className="w-5 h-5" />
-                    {selectedRace.startTime}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Discipline</p>
-                  <p className="text-lg font-bold text-gray-900">{selectedRace.discipline}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Distance</p>
-                  <p className="text-lg font-bold text-gray-900">{selectedRace.distance}m</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Allocation</p>
-                  <p className="text-lg font-bold text-green-600">{selectedRace.prize.toLocaleString()}€</p>
-                </div>
-              </div>
-
-              {/* Types de paris */}
-              <div className="mt-4">
-                <p className="text-sm text-gray-600 mb-2">Paris disponibles</p>
-                <div className="flex flex-wrap gap-2">
-                  {selectedRace.betTypes.map(type => (
-                    <span
-                      key={type}
-                      className="px-3 py-1 bg-primary-100 text-primary-700 rounded-full font-medium text-sm"
-                    >
-                      {type}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Liste des partants */}
-            <div className="p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <Trophy className="w-6 h-6 text-yellow-500" />
-                Partants ({selectedRace.horses?.length || 'Chargement...'})
-              </h3>
-
-              {loadingRaceDetails ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                  <p className="mt-4 text-gray-600">Chargement des détails...</p>
-                </div>
-              ) : selectedRace.horses && selectedRace.horses.length > 0 ? (
-                <div className="space-y-3">
-                  {selectedRace.horses.map((horse) => (
-                    <div
-                      key={horse.number}
-                      className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
-                    >
-                      <div className="flex items-start gap-4">
-                        <div className="flex-shrink-0 w-12 h-12 bg-primary-600 text-white rounded-full flex items-center justify-center font-bold text-lg">
-                          {horse.number}
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="text-lg font-bold text-gray-900">{horse.name}</h4>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2 text-sm">
-                            {horse.jockey && (
-                              <div className="flex items-center gap-2 text-gray-600">
-                                <User className="w-4 h-4" />
-                                <span>Jockey: {horse.jockey}</span>
-                              </div>
-                            )}
-                            {horse.trainer && (
-                              <div className="flex items-center gap-2 text-gray-600">
-                                <Award className="w-4 h-4" />
-                                <span>Entraîneur: {horse.trainer}</span>
-                              </div>
-                            )}
-                            {horse.weight && (
-                              <div className="text-gray-600">
-                                <span>Poids: {horse.weight}kg</span>
-                              </div>
-                            )}
-                            {horse.odds && (
-                              <div className="flex items-center gap-2 text-green-600 font-semibold">
-                                <TrendingUp className="w-4 h-4" />
-                                <span>Cote: {horse.odds}</span>
-                              </div>
-                            )}
-                          </div>
-                          {(horse.age || horse.sex || horse.rope) && (
-                            <div className="flex gap-3 mt-2 text-xs text-gray-500">
-                              {horse.age && <span>{horse.age} ans</span>}
-                              {horse.sex && <span>{horse.sex}</span>}
-                              {horse.rope && <span>Corde: {horse.rope}</span>}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 bg-gray-50 rounded-lg">
-                  <Trophy className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                  <p className="text-gray-600">Informations sur les partants non disponibles pour le moment.</p>
-                  <p className="text-sm text-gray-500 mt-2">Les données seront disponibles quelques heures avant la course.</p>
-                </div>
-              )}
-            </div>
-
-            {/* Footer */}
-            <div className="border-t border-gray-200 px-6 py-4 bg-gray-50 flex justify-end gap-3">
-              <button
-                onClick={() => setSelectedRace(null)}
-                className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
-              >
-                Fermer
-              </button>
-              <button
-                onClick={openRegisterModal}
-                className="px-6 py-2 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors"
-              >
-                Parier sur cette course
-              </button>
-            </div>
-          </div>
-        </div>
+        <RaceDetailsModal
+          race={{ ...selectedRace, date: selectedDate }}
+          onClose={() => setSelectedRace(null)}
+          onBet={openRegisterModal}
+        />
       )}
 
       <MarketingFooter />
     </div>
   );
 
-  async function handleViewRaceDetails(race: Race) {
+  function handleViewRaceDetails(race: Race) {
     setSelectedRace(race);
-    setLoadingRaceDetails(true);
-
-    try {
-      // Récupérer les détails de la course depuis l'API
-      const dateStr = format(selectedDate, 'yyyy-MM-dd');
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/pmu/race/participants?date=${dateStr}&reunion=${race.reunionNumber}&course=${race.raceNumber}`
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        // Mettre à jour la course avec les détails
-        const horses = data.participants || data.horses || [];
-        setSelectedRace({
-          ...race,
-          horses: horses.map((p: any) => ({
-            number: p.number || p.numeroParticipant,
-            name: p.name || p.nom,
-            jockey: p.jockey || p.driver,
-            trainer: p.trainer || p.entraineur,
-            weight: p.weight || p.poids,
-            odds: p.odds || p.cote,
-            age: p.age,
-            sex: p.sex || p.sexe,
-            rope: p.rope || p.corde
-          }))
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching race details:', error);
-    } finally {
-      setLoadingRaceDetails(false);
-    }
   }
 }

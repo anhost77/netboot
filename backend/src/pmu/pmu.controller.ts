@@ -177,8 +177,9 @@ export class PmuController {
     return { participants: participantsArray || [] };
   }
 
+  @Public()
   @Get('race/details')
-  @ApiOperation({ summary: 'Get race details' })
+  @ApiOperation({ summary: 'Get race details (public)' })
   async getRaceDetails(
     @Query('date') date: string,
     @Query('reunion', ParseIntPipe) reunion: number,

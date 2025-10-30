@@ -47,10 +47,11 @@ export default function CoursePage() {
   const loadRaceData = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/pmu/public/races?date=${dateStr}`);
+      // 1. Essayer d'abord depuis la BDD (données synchronisées)
+      const dbResponse = await fetch(`${API_URL}/pmu/public/races?date=${dateStr}`);
       
-      if (response.ok) {
-        const races = await response.json();
+      if (dbResponse.ok) {
+        const races = await dbResponse.json();
         const foundRace = races.find((r: any) => 
           r.hippodrome === hippodrome && 
           r.reunionNumber === reunion && 
@@ -62,25 +63,41 @@ export default function CoursePage() {
             ...foundRace,
             date: raceDate
           });
-        } else {
-          // Créer une course mock pour le SEO
-          setRace({
-            id: `${hippodrome}-R${reunion}-C${course}`,
-            hippodrome,
-            reunionNumber: reunion,
-            raceNumber: course,
-            name: `Prix de ${hippodrome}`,
-            startTime: '14:30',
-            discipline: 'Trot',
-            distance: 2100,
-            prize: 50000,
-            betTypes: ['Simple Gagnant', 'Simple Placé', 'Couplé', 'Trio', 'Quinté+'],
-            date: raceDate
-          });
+          setLoading(false);
+          return;
         }
       }
+
+      // 2. Si pas en BDD, essayer l'API PMU directement
+      const detailsResponse = await fetch(
+        `${API_URL}/pmu/race/details?date=${dateStr}&reunion=${reunion}&course=${course}`
+      );
+      
+      if (detailsResponse.ok) {
+        const raceDetails = await detailsResponse.json();
+        
+        setRace({
+          id: `${hippodrome}-R${reunion}-C${course}`,
+          hippodrome,
+          reunionNumber: reunion,
+          raceNumber: course,
+          name: raceDetails.libelleCourse || raceDetails.libelle || `Course ${course}`,
+          startTime: raceDetails.heureDepart || '14:30',
+          discipline: raceDetails.discipline || 'Trot',
+          distance: raceDetails.distance || 2100,
+          prize: raceDetails.allocation || 50000,
+          betTypes: raceDetails.typesDeJeu || ['Simple Gagnant', 'Simple Placé'],
+          date: raceDate
+        });
+        setLoading(false);
+        return;
+      }
+
+      // 3. Si rien trouvé, race reste null (affichera "Course non trouvée")
+      setRace(null);
     } catch (error) {
       console.error('Error loading race:', error);
+      setRace(null);
     } finally {
       setLoading(false);
     }

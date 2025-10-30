@@ -242,25 +242,25 @@ export default function PronosticsPage() {
         </div>
       </div>
 
-      {/* Stats Section */}
+      {/* Info Section */}
       <div className="bg-white border-y border-gray-200 py-8">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto text-center">
             <div>
-              <div className="text-3xl font-bold text-yellow-600 mb-1">75%</div>
-              <div className="text-sm text-gray-600">Taux de réussite</div>
+              <div className="text-3xl font-bold text-yellow-600 mb-1">Quotidien</div>
+              <div className="text-sm text-gray-600">Nouveaux pronostics</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-yellow-600 mb-1">365</div>
-              <div className="text-sm text-gray-600">Pronostics/an</div>
+              <div className="text-3xl font-bold text-yellow-600 mb-1">Quinté+</div>
+              <div className="text-sm text-gray-600">Et courses principales</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-yellow-600 mb-1">+28%</div>
-              <div className="text-sm text-gray-600">ROI moyen</div>
+              <div className="text-3xl font-bold text-yellow-600 mb-1">Détaillées</div>
+              <div className="text-sm text-gray-600">Analyses complètes</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-yellow-600 mb-1">10K+</div>
-              <div className="text-sm text-gray-600">Utilisateurs</div>
+              <div className="text-3xl font-bold text-yellow-600 mb-1">100%</div>
+              <div className="text-sm text-gray-600">Gratuit</div>
             </div>
           </div>
         </div>

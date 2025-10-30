@@ -13,11 +13,6 @@ export default function Home() {
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
         <div className="container mx-auto px-4 py-20 md:py-32 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full mb-6 animate-fade-in">
-              <Star className="w-4 h-4 text-yellow-300 fill-yellow-300" />
-              <span className="text-sm font-medium">Noté 4.8/5 par 250+ utilisateurs</span>
-            </div>
-
             <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
               Maîtrisez vos <span className="text-yellow-300">Paris Hippiques</span> comme un Pro
             </h1>
@@ -50,11 +45,11 @@ export default function Home() {
               </div>
               <div className="flex items-center gap-2">
                 <Zap className="w-5 h-5 text-yellow-300" />
-                <span>Données Temps Réel</span>
+                <span>Données Temps Réel PMU</span>
               </div>
               <div className="flex items-center gap-2">
-                <Users className="w-5 h-5 text-blue-300" />
-                <span>2000+ Utilisateurs</span>
+                <Target className="w-5 h-5 text-blue-300" />
+                <span>20+ Types de Paris</span>
               </div>
             </div>
           </div>
@@ -68,25 +63,25 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Statistiques */}
+      {/* Fonctionnalités Clés */}
       <section className="py-12 bg-gray-50 border-y border-gray-200">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-5xl mx-auto">
             <div className="text-center">
-              <div className="text-4xl font-bold text-blue-600 mb-2">2000+</div>
-              <div className="text-gray-600">Utilisateurs Actifs</div>
+              <div className="text-4xl font-bold text-blue-600 mb-2">20+</div>
+              <div className="text-gray-600">Types de Paris</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold text-blue-600 mb-2">50K+</div>
-              <div className="text-gray-600">Paris Suivis</div>
+              <div className="text-4xl font-bold text-blue-600 mb-2">Tous</div>
+              <div className="text-gray-600">Hippodromes Français</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold text-blue-600 mb-2">15+</div>
-              <div className="text-gray-600">Hippodromes</div>
+              <div className="text-4xl font-bold text-blue-600 mb-2">2</div>
+              <div className="text-gray-600">Modes (Réel/Simulation)</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold text-blue-600 mb-2">98%</div>
-              <div className="text-gray-600">Satisfaction</div>
+              <div className="text-4xl font-bold text-blue-600 mb-2">100%</div>
+              <div className="text-gray-600">Gratuit pour commencer</div>
             </div>
           </div>
         </div>
@@ -461,58 +456,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Témoignages */}
-      <section className="py-20 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-              Ce que disent nos <span className="text-blue-600">utilisateurs</span>
-            </h2>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            <div className="p-6 bg-white rounded-xl shadow-sm">
-              <div className="flex gap-1 mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-5 h-5 text-yellow-400 fill-yellow-400" />
-                ))}
-              </div>
-              <p className="text-gray-700 mb-4 italic">
-                "Enfin une application qui me permet de suivre précisément mes paris. Les statistiques par hippodrome m'ont aidé à améliorer mon ROI de 15%."
-              </p>
-              <div className="font-semibold text-gray-900">Marc L.</div>
-              <div className="text-sm text-gray-500">Turfiste depuis 8 ans</div>
-            </div>
-
-            <div className="p-6 bg-white rounded-xl shadow-sm">
-              <div className="flex gap-1 mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-5 h-5 text-yellow-400 fill-yellow-400" />
-                ))}
-              </div>
-              <p className="text-gray-700 mb-4 italic">
-                "Le mode simulation est génial pour tester de nouvelles stratégies sans risque. L'intégration PMU fonctionne parfaitement."
-              </p>
-              <div className="font-semibold text-gray-900">Sophie D.</div>
-              <div className="text-sm text-gray-500">Utilisatrice Pro</div>
-            </div>
-
-            <div className="p-6 bg-white rounded-xl shadow-sm">
-              <div className="flex gap-1 mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-5 h-5 text-yellow-400 fill-yellow-400" />
-                ))}
-              </div>
-              <p className="text-gray-700 mb-4 italic">
-                "Interface intuitive et fonctionnalités complètes. Le rapport qualité/prix est excellent. Je recommande à tous les passionnés."
-              </p>
-              <div className="font-semibold text-gray-900">Pierre M.</div>
-              <div className="text-sm text-gray-500">Membre depuis 2 ans</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* CTA Final */}
       <section className="py-20 bg-gradient-to-br from-blue-600 to-blue-900 text-white">
         <div className="container mx-auto px-4 text-center">
@@ -520,7 +463,7 @@ export default function Home() {
             Prêt à optimiser vos paris hippiques ?
           </h2>
           <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-            Rejoignez 2000+ turfistes qui ont déjà amélioré leurs performances avec BetTracker Pro
+            Rejoignez la communauté des parieurs qui optimisent leurs stratégies avec BetTracker Pro
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link

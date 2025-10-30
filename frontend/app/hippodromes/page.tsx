@@ -218,19 +218,19 @@ export default function HippodromesPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
               <div>
                 <div className="text-3xl font-bold text-purple-600 mb-1">{hippodromes.length}</div>
-                <div className="text-sm text-gray-600">Hippodromes</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-purple-600 mb-1">250+</div>
-                <div className="text-sm text-gray-600">Courses/an</div>
+                <div className="text-sm text-gray-600">Hippodromes présentés</div>
               </div>
               <div>
                 <div className="text-3xl font-bold text-purple-600 mb-1">3</div>
                 <div className="text-sm text-gray-600">Disciplines</div>
               </div>
               <div>
-                <div className="text-3xl font-bold text-purple-600 mb-1">12</div>
-                <div className="text-sm text-gray-600">Régions</div>
+                <div className="text-3xl font-bold text-purple-600 mb-1">Toute</div>
+                <div className="text-sm text-gray-600">La France</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-purple-600 mb-1">Détails</div>
+                <div className="text-sm text-gray-600">Complets</div>
               </div>
             </div>
           </div>

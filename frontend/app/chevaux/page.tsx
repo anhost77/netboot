@@ -36,7 +36,7 @@ export default function ChevauxPage() {
         ...(search && { search }),
       });
       
-      const response = await fetch(`${API_URL}/pmu/public/horses?${params}`);
+      const response = await fetch(`${API_URL}/api/pmu/public/horses?${params}`);
       if (response.ok) {
         const data = await response.json();
         setHorses(data.horses);

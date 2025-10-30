@@ -52,7 +52,7 @@ export default function ChevalDetailPage() {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch(`${API_URL}/pmu/public/horse/${encodeURIComponent(name)}`);
+      const response = await fetch(`${API_URL}/api/pmu/public/horse/${encodeURIComponent(name)}`);
       if (response.ok) {
         const data = await response.json();
         setHorse(data);

@@ -4,6 +4,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { PmuService } from './pmu.service';
 import { PmuDataService } from './pmu-data.service';
 import { PmuAiService } from './pmu-ai.service';
+import { PmuPronosticAnalyzerService } from './pmu-pronostic-analyzer.service';
 import { PrismaService } from '../prisma.service';
 import { Prisma } from '@prisma/client';
 
@@ -18,6 +19,7 @@ export class PmuController {
     private readonly pmuService: PmuService,
     private readonly pmuDataService: PmuDataService,
     private readonly pmuAiService: PmuAiService,
+    private readonly pronosticAnalyzer: PmuPronosticAnalyzerService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -1282,6 +1284,38 @@ export class PmuController {
         success: false,
         message: error.message,
         report: null,
+      };
+    }
+  }
+
+  /**
+   * Analyser une course avec le système de scoring
+   */
+  @Public()
+  @Get('race/:id/analyze')
+  @ApiOperation({ summary: 'Analyze race with scoring system (public access)' })
+  async analyzeRace(@Param('id') raceId: string) {
+    try {
+      const analysis = await this.pronosticAnalyzer.analyzeRace(raceId);
+      
+      if (!analysis) {
+        return {
+          success: false,
+          message: 'Analyse non disponible',
+          analysis: null,
+        };
+      }
+
+      return {
+        success: true,
+        analysis,
+      };
+    } catch (error) {
+      console.error('Error analyzing race:', error);
+      return {
+        success: false,
+        message: error.message,
+        analysis: null,
       };
     }
   }

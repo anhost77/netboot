@@ -4,9 +4,10 @@ import { PmuController, PmuTestController } from './pmu.controller';
 import { PmuService } from './pmu.service';
 import { PmuDataService } from './pmu-data.service';
 import { PmuAutoUpdateService } from './pmu-auto-update.service';
+import { PmuAiService } from './pmu-ai.service';
+import { PmuPronosticAnalyzerService } from './pmu-pronostic-analyzer.service';
 import { PmuDailySyncService } from './pmu-daily-sync.service';
 import { PmuHistoryCollectorService } from './pmu-history-collector.service';
-import { PmuAiService } from './pmu-ai.service';
 import { PrismaService } from '../prisma.service';
 import { EmailModule } from '../email/email.module';
 import { NotificationsModule } from '../notifications/notifications.module';
@@ -19,10 +20,11 @@ import { NotificationsModule } from '../notifications/notifications.module';
     PmuDataService,
     PmuAutoUpdateService,
     PmuAiService,
+    PmuPronosticAnalyzerService,
     PmuDailySyncService,
     PmuHistoryCollectorService,
     PrismaService,
   ],
-  exports: [PmuService, PmuDataService, PmuHistoryCollectorService],
+  exports: [PmuService, PmuDataService, PmuHistoryCollectorService, PmuPronosticAnalyzerService],
 })
 export class PmuModule {}

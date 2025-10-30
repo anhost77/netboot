@@ -988,6 +988,44 @@ export class PmuController {
   }
 
   @Public()
+  @Get('debug/races-count')
+  @ApiOperation({ summary: 'Debug: Count races in database by date' })
+  async debugRacesCount(@Query('date') dateStr?: string) {
+    const date = dateStr ? new Date(dateStr) : new Date();
+    
+    const count = await this.prisma.pmuRace.count({
+      where: {
+        date: {
+          gte: new Date(date.setHours(0, 0, 0, 0)),
+          lt: new Date(date.setHours(23, 59, 59, 999)),
+        },
+      },
+    });
+
+    const races = await this.prisma.pmuRace.findMany({
+      where: {
+        date: {
+          gte: new Date(date.setHours(0, 0, 0, 0)),
+          lt: new Date(date.setHours(23, 59, 59, 999)),
+        },
+      },
+      select: {
+        id: true,
+        reunionNumber: true,
+        raceNumber: true,
+        name: true,
+        hippodromeCode: true,
+      },
+    });
+
+    return {
+      date: dateStr || new Date().toISOString().split('T')[0],
+      count,
+      races,
+    };
+  }
+
+  @Public()
   @Get('sync-yesterday-results')
   @ApiOperation({ summary: 'Manually sync yesterday\'s results (public access for cron)' })
   async syncYesterdayResults() {

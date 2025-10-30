@@ -116,25 +116,30 @@ export class PmuDailyPronosticService {
       // 4. Trier par score de qualité et garder les meilleures
       analyses.sort((a, b) => b.score - a.score);
 
-      // 5. Stratégie ultra-sélective : seulement les MEILLEURES courses
-      const MIN_QUALITY_SCORE = 65; // Score minimum élevé
+      // 5. Stratégie PRO : Seulement le TOP 3 de la journée
+      const MIN_QUALITY_SCORE = 60; // Seuil pro : 60/100 minimum
       
-      // Séparer Quinté+ et autres courses
-      const quinteRaces = analyses.filter(a => a.race.availableBetTypes?.includes('QUINTE_PLUS'));
-      const otherRaces = analyses.filter(a => !a.race.availableBetTypes?.includes('QUINTE_PLUS'));
+      // Filtrer les courses avec données complètes et bon score
+      const qualityRaces = analyses.filter(a => {
+        // Vérifier que les données sont complètes (pas de N/A partout)
+        const topHorse = a.analysis.recommendations.cheval_du_jour;
+        const hasCompleteData = topHorse && topHorse.totalScore >= MIN_QUALITY_SCORE;
+        
+        // Quinté+ toujours inclus si score décent
+        const isQuinte = a.race.availableBetTypes?.includes('QUINTE_PLUS');
+        if (isQuinte && a.score >= 50) return true;
+        
+        // Autres courses : score élevé + grosse allocation
+        const hasGoodScore = a.score >= MIN_QUALITY_SCORE;
+        const hasGoodPrize = a.race.prize && a.race.prize >= 50000;
+        
+        return hasCompleteData && hasGoodScore && hasGoodPrize;
+      });
       
-      // Prendre le meilleur Quinté+ (s'il y en a)
-      const bestQuinte = quinteRaces.length > 0 ? [quinteRaces[0]] : [];
-      
-      // Prendre les 2 meilleures autres courses (score élevé + grosse allocation)
-      const bestOthers = otherRaces
-        .filter(a => a.score >= MIN_QUALITY_SCORE && a.race.prize && a.race.prize >= 50000)
-        .slice(0, 2);
-      
-      // Combiner : 1 Quinté+ + 2 autres max = 3 pronostics max
-      const limitedRaces = [...bestQuinte, ...bestOthers];
+      // Prendre seulement le TOP 3 de la journée (comme les pros)
+      const limitedRaces = qualityRaces.slice(0, 3);
 
-      this.logger.log(`🏆 ${limitedRaces.length} ultra-selective races (1 Quinté+ + ${bestOthers.length} premium races, score >= ${MIN_QUALITY_SCORE})`);
+      this.logger.log(`🏆 TOP ${limitedRaces.length}/3 races of the day (pro strategy, score >= ${MIN_QUALITY_SCORE})`);
 
       // 6. Générer la synthèse globale (cheval du jour + outsider)
       const dailySummary = this.generateDailySummary(analyses);
@@ -447,7 +452,7 @@ Format Markdown avec titres ##`;
             id: race.id,
             name: analysis.raceName,
             hippodrome: analysis.hippodrome,
-            startTime: race.startTime,
+            startTime: race.startTime ? Number(race.startTime) : 0,
             distance: analysis.distance,
             discipline: analysis.discipline,
           }
@@ -472,7 +477,7 @@ Format Markdown avec titres ##`;
               id: race.id,
               name: analysis.raceName,
               hippodrome: analysis.hippodrome,
-              startTime: race.startTime,
+              startTime: race.startTime ? Number(race.startTime) : 0,
               distance: analysis.distance,
               discipline: analysis.discipline,
             }

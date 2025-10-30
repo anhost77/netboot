@@ -158,15 +158,13 @@ export class PmuPronosticAnalyzerService {
     // 6. Score conditions
     const conditionsScore = this.calculateConditionsScore(horse.performances, race.trackCondition);
 
-    // 7. Calcul du score total (moyenne pondérée)
-    const totalScore = (
-      performanceScore * 0.30 +
-      jockeyScore * 0.20 +
-      trainerScore * 0.15 +
-      oddsScore * 0.15 +
-      distanceScore * 0.10 +
-      conditionsScore * 0.10
-    );
+    // 7. Calcul du score total pondéré (système pro)
+    const totalScore = 
+      performanceScore * 0.30 +  // Musique/régularité
+      jockeyScore * 0.20 +       // Stats jockey
+      conditionsScore * 0.20 +   // Distance + météo + terrain (augmenté)
+      oddsScore * 0.15 +         // Valeur/cote
+      trainerScore * 0.15;       // Stats entraîneur
 
     // 8. Déterminer la confiance et la catégorie
     const confidence = this.determineConfidence(totalScore);

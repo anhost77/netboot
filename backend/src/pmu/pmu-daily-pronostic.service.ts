@@ -117,12 +117,15 @@ export class PmuDailyPronosticService {
       analyses.sort((a, b) => b.score - a.score);
 
       // 5. Filtrer : garder seulement les courses avec un bon score
-      const MIN_QUALITY_SCORE = 50; // Score minimum pour être publié (abaissé pour tests)
+      const MIN_QUALITY_SCORE = 40; // Score minimum pour être publié (abaissé pour avoir plus de courses)
       
       // Toujours inclure les Quinté+ même si score faible
       const qualityRaces = analyses.filter(a => {
         const isQuinte = a.race.availableBetTypes?.includes('QUINTE_PLUS');
-        return a.score >= MIN_QUALITY_SCORE || isQuinte;
+        const isMainRace = a.race.availableBetTypes?.includes('QUARTE_PLUS') || 
+                          a.race.availableBetTypes?.includes('TIERCE') ||
+                          (a.race.prize && a.race.prize >= 30000); // Courses avec grosse allocation
+        return a.score >= MIN_QUALITY_SCORE || isQuinte || isMainRace;
       });
 
       this.logger.log(`🏆 ${qualityRaces.length} races meet quality threshold (score >= ${MIN_QUALITY_SCORE} or Quinté+)`);

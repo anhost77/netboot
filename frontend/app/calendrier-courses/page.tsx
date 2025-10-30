@@ -219,9 +219,9 @@ export default function CalendrierCourses() {
           ) : Object.keys(groupedRaces).length === 0 ? (
             <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
               <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Synchronisation en cours...</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Chargement des courses...</h3>
               <p className="text-gray-600 mb-4">
-                Les courses pour cette date sont en cours de synchronisation depuis l'API PMU.
+                Les courses pour cette date sont en cours de chargement. Veuillez patienter quelques secondes.
               </p>
               <button
                 onClick={() => fetchRaces(selectedDate)}

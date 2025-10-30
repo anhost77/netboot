@@ -1181,11 +1181,16 @@ export class PmuController {
     }
 
     // Vérifier si on a des courses en BDD pour cette date
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+    
     const existingRaces = await this.prisma.pmuRace.findMany({
       where: {
         date: {
-          gte: new Date(date.setHours(0, 0, 0, 0)),
-          lt: new Date(date.setHours(23, 59, 59, 999)),
+          gte: startOfDay,
+          lt: endOfDay,
         },
       },
       include: {

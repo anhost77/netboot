@@ -304,10 +304,10 @@ export class PmuController {
       const oddsData = reportsArray.map(report => ({
         betType: report.typePari,
         label: this.getBetTypeLabel(report.typePari),
-        combinations: report.rapportDirect?.map(r => ({
-          horses: r.numPmu,
-          odds: r.rapport
-        })) || []
+        combinations: (report.rapports || report.rapportDirect || []).map(r => ({
+          horses: r.combinaison || r.numPmu,
+          odds: r.dividende || r.dividendePourUnEuro || r.rapport
+        }))
       }));
 
       return { odds: oddsData };

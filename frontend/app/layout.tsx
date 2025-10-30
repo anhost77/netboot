@@ -4,6 +4,7 @@ import { AuthProvider } from '@/lib/auth-context';
 import { SettingsProvider } from '@/contexts/SettingsContext';
 import { AuthModalProvider } from '@/contexts/AuthModalContext';
 import { Toaster } from 'react-hot-toast';
+import CookieConsent from '@/components/CookieConsent';
 
 export const metadata: Metadata = {
   title: {
@@ -67,6 +68,7 @@ export default function RootLayout({
             <AuthModalProvider>
               {children}
               <Toaster position="top-right" />
+              <CookieConsent />
             </AuthModalProvider>
           </SettingsProvider>
         </AuthProvider>

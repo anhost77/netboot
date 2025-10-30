@@ -128,15 +128,34 @@ export default function MarketingFooter() {
           </div>
         </div>
 
-        {/* Copyright */}
+        {/* Copyright et liens légaux */}
         <div className="border-t border-gray-800 pt-8">
-          <div className="flex flex-col md:flex-row items-center justify-between text-sm">
-            <p className="text-gray-400">
-              © {currentYear} BetTracker Pro. Tous droits réservés.
-            </p>
-            <p className="text-gray-500 mt-2 md:mt-0">
-              Fait avec ❤️ pour les passionnés de turf
-            </p>
+          <div className="flex flex-col items-center gap-4">
+            {/* Liens légaux */}
+            <div className="flex flex-wrap justify-center gap-4 text-sm">
+              <Link href="/mentions-legales" className="text-gray-400 hover:text-white transition-colors">
+                Mentions légales
+              </Link>
+              <Link href="/cgu" className="text-gray-400 hover:text-white transition-colors">
+                CGU
+              </Link>
+              <Link href="/politique-confidentialite" className="text-gray-400 hover:text-white transition-colors">
+                Politique de confidentialité
+              </Link>
+              <Link href="/politique-cookies" className="text-gray-400 hover:text-white transition-colors">
+                Gestion des cookies
+              </Link>
+            </div>
+            
+            {/* Copyright */}
+            <div className="flex flex-col md:flex-row items-center justify-between text-sm w-full">
+              <p className="text-gray-400">
+                © {currentYear} BetTracker Pro. Tous droits réservés.
+              </p>
+              <p className="text-gray-500 mt-2 md:mt-0">
+                Fait avec ❤️ pour les passionnés de turf
+              </p>
+            </div>
           </div>
         </div>
       </div>

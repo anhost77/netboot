@@ -13,7 +13,7 @@ export class PmuDailySyncService {
     private prisma: PrismaService,
     private pmuService: PmuService,
     private pmuDataService: PmuDataService,
-    private historyCollector: PmuHistoryCollectorService,
+    private historyCollector?: PmuHistoryCollectorService,
   ) {
     this.logger.log('✅ PmuDailySyncService initialized');
   }
@@ -236,6 +236,11 @@ export class PmuDailySyncService {
   })
   async syncWeeklyHistory() {
     this.logger.log('🔄 Starting weekly history collection (last 7 days)...');
+
+    if (!this.historyCollector) {
+      this.logger.warn('⚠️ History collector not available, skipping weekly sync');
+      return;
+    }
 
     try {
       const endDate = new Date();

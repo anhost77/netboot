@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { authAPI } from '@/lib/api/auth';
 import { notificationService } from '@/lib/notification-service';
+import { useAuthModal } from '@/contexts/AuthModalContext';
 
 interface ResetPasswordForm {
   newPassword: string;
@@ -13,6 +14,7 @@ interface ResetPasswordForm {
 }
 
 export default function ResetPasswordPage() {
+  const { openLoginModal } = useAuthModal();
   const params = useParams();
   const router = useRouter();
   const token = params.token as string;
@@ -81,12 +83,12 @@ export default function ResetPasswordPage() {
                 <p className="font-semibold mb-2">✅ Mot de passe réinitialisé avec succès !</p>
                 <p className="text-sm">Vous allez être redirigé vers la page de connexion...</p>
               </div>
-              <Link
-                href="/login"
+              <button
+                onClick={openLoginModal}
                 className="inline-block text-primary-600 hover:text-primary-700 font-medium"
               >
                 Se connecter maintenant →
-              </Link>
+              </button>
             </div>
           ) : (
             <>
@@ -149,9 +151,9 @@ export default function ResetPasswordPage() {
 
               <div className="mt-6 text-center">
                 <p className="text-sm text-gray-600">
-                  <Link href="/login" className="text-primary-600 hover:text-primary-700 font-medium">
+                  <button onClick={openLoginModal} className="text-primary-600 hover:text-primary-700 font-medium">
                     ← Retour à la connexion
-                  </Link>
+                  </button>
                 </p>
               </div>
             </>

@@ -5,6 +5,7 @@ import { Map, MapPin, TrendingUp, Trophy, Info, ChevronRight, Search } from 'luc
 import { useState } from 'react';
 import MarketingHeader from '@/components/marketing/MarketingHeader';
 import MarketingFooter from '@/components/marketing/MarketingFooter';
+import { useAuthModal } from '@/contexts/AuthModalContext';
 
 interface Hippodrome {
   id: string;
@@ -150,6 +151,7 @@ const hippodromes: Hippodrome[] = [
 ];
 
 export default function HippodromesPage() {
+  const { openRegisterModal } = useAuthModal();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDiscipline, setSelectedDiscipline] = useState('all');
 
@@ -339,13 +341,13 @@ export default function HippodromesPage() {
           <p className="text-xl text-primary-100 mb-8 max-w-2xl mx-auto">
             BetTracker Pro vous permet d'analyser vos résultats hippodrome par hippodrome pour identifier vos terrains favoris
           </p>
-          <Link
-            href="/register"
+          <button
+            onClick={openRegisterModal}
             className="inline-flex items-center gap-2 bg-yellow-400 text-primary-900 px-8 py-4 rounded-lg font-bold text-lg hover:bg-yellow-300 transition-all"
           >
             Commencer Gratuitement
             <ChevronRight className="w-5 h-5" />
-          </Link>
+          </button>
         </div>
       </div>
 

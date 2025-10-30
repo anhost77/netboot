@@ -7,6 +7,7 @@ import { format, addDays, startOfDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import MarketingHeader from '@/components/marketing/MarketingHeader';
 import MarketingFooter from '@/components/marketing/MarketingFooter';
+import { useAuthModal } from '@/contexts/AuthModalContext';
 
 interface Race {
   id: string;
@@ -22,6 +23,7 @@ interface Race {
 }
 
 export default function CalendrierCourses() {
+  const { openRegisterModal } = useAuthModal();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [races, setRaces] = useState<Race[]>([]);
   const [loading, setLoading] = useState(true);
@@ -109,13 +111,13 @@ export default function CalendrierCourses() {
             <p className="text-xl text-primary-100 mb-6">
               Retrouvez toutes les courses PMU du jour et de la semaine. Programme complet avec horaires et détails.
             </p>
-            <Link
-              href="/register"
+            <button
+              onClick={openRegisterModal}
               className="inline-flex items-center gap-2 bg-yellow-400 text-primary-900 px-6 py-3 rounded-lg font-bold hover:bg-yellow-300 transition-all"
             >
               Suivre mes paris avec BetTracker Pro
               <ChevronRight className="w-5 h-5" />
-            </Link>
+            </button>
           </div>
         </div>
       </div>
@@ -266,12 +268,12 @@ export default function CalendrierCourses() {
                             >
                               Pronostic
                             </Link>
-                            <Link
-                              href="/register"
+                            <button
+                              onClick={openRegisterModal}
                               className="px-4 py-2 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors text-sm"
                             >
                               Parier
-                            </Link>
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -293,13 +295,13 @@ export default function CalendrierCourses() {
           <p className="text-xl text-primary-100 mb-8 max-w-2xl mx-auto">
             Avec BetTracker Pro, enregistrez vos paris, analysez vos performances et optimisez votre stratégie
           </p>
-          <Link
-            href="/register"
+          <button
+            onClick={openRegisterModal}
             className="inline-flex items-center gap-2 bg-yellow-400 text-primary-900 px-8 py-4 rounded-lg font-bold text-lg hover:bg-yellow-300 transition-all"
           >
             Commencer Gratuitement
             <ChevronRight className="w-5 h-5" />
-          </Link>
+          </button>
         </div>
       </div>
 

@@ -7,6 +7,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import MarketingHeader from '@/components/marketing/MarketingHeader';
 import MarketingFooter from '@/components/marketing/MarketingFooter';
+import { useAuthModal } from '@/contexts/AuthModalContext';
 
 interface Pronostic {
   id: string;
@@ -33,6 +34,7 @@ interface Pronostic {
 }
 
 export default function PronosticsPage() {
+  const { openRegisterModal } = useAuthModal();
   const [pronostics, setPronostics] = useState<Pronostic[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedType, setSelectedType] = useState<'all' | 'quinte' | 'autres'>('all');
@@ -412,13 +414,13 @@ export default function PronosticsPage() {
                   {/* Actions */}
                   <div className="p-6 bg-gray-50 border-t border-gray-200">
                     <div className="flex flex-col sm:flex-row gap-3">
-                      <Link
-                        href="/register"
+                      <button
+                        onClick={openRegisterModal}
                         className="flex-1 inline-flex items-center justify-center gap-2 bg-primary-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-primary-700 transition-all"
                       >
                         Suivre ce pari avec BetTracker Pro
                         <ChevronRight className="w-5 h-5" />
-                      </Link>
+                      </button>
                       <Link
                         href={`/calendrier-courses`}
                         className="inline-flex items-center justify-center gap-2 bg-white text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-all border border-gray-300"
@@ -443,13 +445,13 @@ export default function PronosticsPage() {
           <p className="text-xl text-primary-100 mb-8 max-w-2xl mx-auto">
             Enregistrez vos paris basés sur nos pronostics, analysez vos résultats et améliorez votre stratégie
           </p>
-          <Link
-            href="/register"
+          <button
+            onClick={openRegisterModal}
             className="inline-flex items-center gap-2 bg-yellow-400 text-primary-900 px-8 py-4 rounded-lg font-bold text-lg hover:bg-yellow-300 transition-all"
           >
             Commencer Gratuitement
             <ChevronRight className="w-5 h-5" />
-          </Link>
+          </button>
         </div>
       </div>
 

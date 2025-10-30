@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import MarketingHeader from '@/components/marketing/MarketingHeader';
 import MarketingFooter from '@/components/marketing/MarketingFooter';
+import { useAuthModal } from '@/contexts/AuthModalContext';
 
 const categories = [
   {
@@ -336,6 +337,7 @@ const categories = [
 ];
 
 export default function FonctionnalitesPage() {
+  const { openLoginModal, openRegisterModal } = useAuthModal();
   const [activeTab, setActiveTab] = useState('debutant');
   const activeCategory = categories.find(cat => cat.id === activeTab) || categories[0];
   const CategoryIcon = activeCategory.icon;
@@ -377,13 +379,13 @@ export default function FonctionnalitesPage() {
               Des outils simples et puissants pour enregistrer, suivre et analyser vos paris faits sur les plateformes PMU. Que vous soyez débutant ou expert.
             </p>
 
-            <Link
-              href="/register"
+            <button
+              onClick={openRegisterModal}
               className="inline-flex items-center justify-center gap-2 bg-yellow-400 text-gray-900 px-8 py-4 rounded-lg font-bold text-lg hover:bg-yellow-300 transition-all shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
             >
               Commencer Gratuitement
               <ChevronRight className="w-5 h-5" />
-            </Link>
+            </button>
           </div>
         </div>
 
@@ -569,19 +571,19 @@ export default function FonctionnalitesPage() {
               Rejoignez BetTracker Pro gratuitement et commencez à suivre et optimiser vos paris hippiques dès aujourd'hui.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                href="/register"
+              <button
+                onClick={openRegisterModal}
                 className="inline-flex items-center justify-center gap-2 bg-yellow-400 text-gray-900 px-8 py-4 rounded-lg font-bold text-lg hover:bg-yellow-300 transition-all shadow-xl"
               >
                 Créer un Compte Gratuit
                 <ChevronRight className="w-5 h-5" />
-              </Link>
-              <Link
-                href="/login"
+              </button>
+              <button
+                onClick={openLoginModal}
                 className="inline-flex items-center justify-center gap-2 bg-white/10 backdrop-blur-sm text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-white/20 transition-all border-2 border-white/30"
               >
                 J'ai déjà un compte
-              </Link>
+              </button>
             </div>
           </div>
         </div>

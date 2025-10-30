@@ -7,6 +7,7 @@ import { fr } from 'date-fns/locale';
 import { useState } from 'react';
 import MarketingHeader from '@/components/marketing/MarketingHeader';
 import MarketingFooter from '@/components/marketing/MarketingFooter';
+import { useAuthModal } from '@/contexts/AuthModalContext';
 
 interface Article {
   id: string;
@@ -121,6 +122,7 @@ const articles: Article[] = [
 ];
 
 export default function BlogPage() {
+  const { openRegisterModal } = useAuthModal();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
 
@@ -289,13 +291,13 @@ export default function BlogPage() {
           <p className="text-xl text-primary-100 mb-8 max-w-2xl mx-auto">
             Appliquez les stratégies de notre blog et suivez vos résultats avec notre plateforme
           </p>
-          <Link
-            href="/register"
+          <button
+            onClick={openRegisterModal}
             className="inline-flex items-center gap-2 bg-yellow-400 text-primary-900 px-8 py-4 rounded-lg font-bold text-lg hover:bg-yellow-300 transition-all"
           >
             Commencer Gratuitement
             <ChevronRight className="w-5 h-5" />
-          </Link>
+          </button>
         </div>
       </div>
 

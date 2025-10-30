@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import {
   TrendingUp, Target, BarChart3, Wallet, Bell, Shield,
@@ -6,8 +8,10 @@ import {
 } from 'lucide-react';
 import MarketingHeader from '@/components/marketing/MarketingHeader';
 import MarketingFooter from '@/components/marketing/MarketingFooter';
+import { useAuthModal } from '@/contexts/AuthModalContext';
 
 export default function Home() {
+  const { openLoginModal, openRegisterModal } = useAuthModal();
   return (
     <div className="min-h-screen bg-white">
       <MarketingHeader />
@@ -26,19 +30,19 @@ export default function Home() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-              <Link
-                href="/register"
+              <button
+                onClick={openRegisterModal}
                 className="inline-flex items-center justify-center gap-2 bg-yellow-400 text-primary-900 px-8 py-4 rounded-lg font-bold text-lg hover:bg-yellow-300 transition-all shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
               >
                 Commencer Gratuitement
                 <ChevronRight className="w-5 h-5" />
-              </Link>
-              <Link
-                href="/login"
+              </button>
+              <button
+                onClick={openLoginModal}
                 className="inline-flex items-center justify-center gap-2 bg-white/10 backdrop-blur-sm text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-white/20 transition-all border-2 border-white/30"
               >
                 Se connecter
-              </Link>
+              </button>
             </div>
 
             <div className="flex flex-wrap justify-center gap-8 text-sm">
@@ -350,12 +354,12 @@ export default function Home() {
                   50 MB stockage
                 </li>
               </ul>
-              <Link
-                href="/register"
+              <button
+                onClick={openRegisterModal}
                 className="block w-full text-center bg-gray-100 text-gray-900 px-6 py-3 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
               >
                 Commencer
-              </Link>
+              </button>
             </div>
 
             {/* Starter */}
@@ -379,12 +383,12 @@ export default function Home() {
                   500 MB stockage
                 </li>
               </ul>
-              <Link
-                href="/register"
+              <button
+                onClick={openRegisterModal}
                 className="block w-full text-center bg-primary-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary-700 transition-colors"
               >
                 Essayer
-              </Link>
+              </button>
             </div>
 
             {/* Pro */}
@@ -415,12 +419,12 @@ export default function Home() {
                   Accès API
                 </li>
               </ul>
-              <Link
-                href="/register"
+              <button
+                onClick={openRegisterModal}
                 className="block w-full text-center bg-yellow-400 text-primary-900 px-6 py-3 rounded-lg font-bold hover:bg-yellow-300 transition-colors"
               >
                 Essayer Pro
-              </Link>
+              </button>
             </div>
 
             {/* Business */}
@@ -448,12 +452,12 @@ export default function Home() {
                   Support prioritaire
                 </li>
               </ul>
-              <Link
-                href="/register"
+              <button
+                onClick={openRegisterModal}
                 className="block w-full text-center bg-gray-900 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors"
               >
                 Contactez-nous
-              </Link>
+              </button>
             </div>
           </div>
         </div>
@@ -469,13 +473,13 @@ export default function Home() {
             Rejoignez la communauté des parieurs qui optimisent leurs stratégies avec BetTracker Pro
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/register"
+            <button
+              onClick={openRegisterModal}
               className="inline-flex items-center justify-center gap-2 bg-yellow-400 text-primary-900 px-8 py-4 rounded-lg font-bold text-lg hover:bg-yellow-300 transition-all"
             >
               Commencer Gratuitement
               <ChevronRight className="w-5 h-5" />
-            </Link>
+            </button>
             <Link
               href="/fonctionnalites"
               className="inline-flex items-center justify-center gap-2 bg-white/10 backdrop-blur-sm text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-white/20 transition-all border-2 border-white/30"

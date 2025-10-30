@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { AuthProvider } from '@/lib/auth-context';
 import { SettingsProvider } from '@/contexts/SettingsContext';
+import { AuthModalProvider } from '@/contexts/AuthModalContext';
 import { Toaster } from 'react-hot-toast';
 
 export const metadata: Metadata = {
@@ -63,8 +64,10 @@ export default function RootLayout({
       <body className="font-sans antialiased">
         <AuthProvider>
           <SettingsProvider>
-            {children}
-            <Toaster position="top-right" />
+            <AuthModalProvider>
+              {children}
+              <Toaster position="top-right" />
+            </AuthModalProvider>
           </SettingsProvider>
         </AuthProvider>
       </body>

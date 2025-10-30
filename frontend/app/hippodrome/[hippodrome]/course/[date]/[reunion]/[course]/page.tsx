@@ -13,8 +13,8 @@ import { useAuthModal } from '@/contexts/AuthModalContext';
 import { API_URL } from '@/lib/config';
 
 // Force dynamic rendering pour que Next.js pré-rende le contenu IA
-export const dynamic = 'force-dynamic';
-export const revalidate = 3600; // Revalider toutes les heures
+// Note: avec 'use client', on ne peut pas utiliser revalidate
+// Le contenu sera chargé dynamiquement mais Google crawlera le JS
 
 interface Horse {
   number: number;

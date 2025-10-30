@@ -14,21 +14,6 @@ interface MenuItem {
 }
 
 export default function MarketingFooter() {
-  const [footerMenus, setFooterMenus] = useState<MenuItem[]>([]);
-
-  useEffect(() => {
-    // Charger les menus du footer depuis l'API
-    fetch(`${API_URL}/api/cms/menu-items/public/footer`)
-      .then(res => res.ok ? res.json() : [])
-      .then(data => {
-        // Si l'API retourne un tableau vide ou invalide, utiliser les menus par défaut
-        if (Array.isArray(data) && data.length > 0) {
-          setFooterMenus(data);
-        }
-      })
-      .catch(err => console.error('Error loading footer menus:', err));
-  }, []);
-
   const currentYear = new Date().getFullYear();
 
   // Menus par défaut si l'API ne retourne rien
@@ -107,44 +92,24 @@ export default function MarketingFooter() {
             </div>
           </div>
 
-          {/* Colonnes dynamiques ou par défaut */}
-          {footerMenus.length > 0 ? (
-            footerMenus.slice(0, 3).map((menu) => (
-              <div key={menu.id}>
-                <h4 className="font-semibold text-white mb-4">{menu.label}</h4>
-                <ul className="space-y-2">
-                  {menu.children?.map((child) => (
-                    <li key={child.id}>
-                      <Link
-                        href={child.url}
-                        className="text-sm text-gray-400 hover:text-white transition-colors"
-                      >
-                        {child.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))
-          ) : (
-            defaultMenus.map((section, idx) => (
-              <div key={idx}>
-                <h4 className="font-semibold text-white mb-4">{section.title}</h4>
-                <ul className="space-y-2">
-                  {section.links.map((link) => (
-                    <li key={link.href}>
-                      <Link
-                        href={link.href}
-                        className="text-sm text-gray-400 hover:text-white transition-colors"
-                      >
-                        {link.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))
-          )}
+          {/* Colonnes de liens */}
+          {defaultMenus.map((section, idx) => (
+            <div key={idx}>
+              <h4 className="font-semibold text-white mb-4">{section.title}</h4>
+              <ul className="space-y-2">
+                {section.links.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="text-sm text-gray-400 hover:text-white transition-colors"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
 
         {/* Disclaimer Légal */}

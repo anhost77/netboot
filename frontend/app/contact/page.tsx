@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import MarketingHeader from '@/components/marketing/MarketingHeader';
 import MarketingFooter from '@/components/marketing/MarketingFooter';
-import { Mail, Phone, MapPin, Send, CheckCircle } from 'lucide-react';
+import { Mail, Send, CheckCircle } from 'lucide-react';
 import { API_URL } from '@/lib/config';
 
 export default function ContactPage() {
@@ -189,29 +189,6 @@ export default function ContactPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <Phone className="w-6 h-6 text-primary-600" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-gray-900 mb-1">Téléphone</h3>
-                      <p className="text-gray-600">+33 1 23 45 67 89</p>
-                      <p className="text-sm text-gray-500 mt-1">Lun-Ven : 9h-18h</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <MapPin className="w-6 h-6 text-primary-600" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-gray-900 mb-1">Adresse</h3>
-                      <p className="text-gray-600">
-                        123 Avenue des Champs-Élysées<br />
-                        75008 Paris, France
-                      </p>
-                    </div>
-                  </div>
                 </div>
               </div>
 

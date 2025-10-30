@@ -119,7 +119,7 @@ export default function RaceDetailsModal({ race, onClose, onBet }: RaceDetailsMo
           })));
         }
         
-        // Mapper les rapports
+        // Mapper les rapports si disponibles en BDD
         if (fullRaceData.reports && fullRaceData.reports.length > 0) {
           const mappedOdds = fullRaceData.reports.map((report: any) => ({
             betType: report.betType,
@@ -130,6 +130,33 @@ export default function RaceDetailsModal({ race, onClose, onBet }: RaceDetailsMo
             })) || []
           }));
           setOddsData(mappedOdds);
+        } else {
+          // Si pas de rapports en BDD, vérifier si la course est terminée
+          const isRaceFinished = isRaceOver(fullRaceData);
+          
+          if (isRaceFinished) {
+            console.log('Course terminée, tentative de récupération des rapports depuis API PMU...');
+            try {
+              // Essayer de récupérer les rapports depuis l'API PMU
+              const reportsResponse = await fetch(
+                `${API_URL}/pmu/race/all-odds?date=${dateStr}&reunion=${race.reunionNumber}&course=${race.raceNumber}`
+              );
+              
+              if (reportsResponse.ok) {
+                const reportsData = await reportsResponse.json();
+                if (reportsData.odds && reportsData.odds.length > 0) {
+                  setOddsData(reportsData.odds);
+                  
+                  // Déclencher la synchronisation en BDD en arrière-plan
+                  fetch(
+                    `${API_URL}/pmu/race/sync-reports?date=${dateStr}&reunion=${race.reunionNumber}&course=${race.raceNumber}`
+                  ).catch(err => console.error('Erreur sync rapports en BDD:', err));
+                }
+              }
+            } catch (err) {
+              console.error('Erreur récupération rapports PMU:', err);
+            }
+          }
         }
       }
     } catch (error) {
@@ -137,6 +164,25 @@ export default function RaceDetailsModal({ race, onClose, onBet }: RaceDetailsMo
     } finally {
       setLoadingDetails(false);
       setLoadingOdds(false);
+    }
+  };
+
+  // Vérifier si la course est terminée (date + heure + 30 min de marge)
+  const isRaceOver = (raceData: any): boolean => {
+    if (!raceData.date || !raceData.startTime) return false;
+    
+    try {
+      const raceDate = new Date(raceData.date);
+      const [hours, minutes] = raceData.startTime.split(':').map(Number);
+      raceDate.setHours(hours, minutes, 0, 0);
+      
+      // Ajouter 30 minutes de marge pour la fin de la course
+      const raceEndTime = new Date(raceDate.getTime() + 30 * 60 * 1000);
+      const now = new Date();
+      
+      return now > raceEndTime;
+    } catch (err) {
+      return false;
     }
   };
 

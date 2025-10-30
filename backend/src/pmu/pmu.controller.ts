@@ -199,6 +199,74 @@ export class PmuController {
   }
 
   @Public()
+  @Get('race/sync-reports')
+  @ApiOperation({ summary: 'Sync race reports to database (public access)' })
+  async syncRaceReports(
+    @Query('date') date: string,
+    @Query('reunion', ParseIntPipe) reunion: number,
+    @Query('course', ParseIntPipe) course: number,
+  ) {
+    const parsedDate = new Date(date);
+    if (isNaN(parsedDate.getTime())) {
+      throw new Error('Invalid date format. Use YYYY-MM-DD');
+    }
+
+    try {
+      // Récupérer les rapports depuis l'API PMU
+      const reports = await this.pmuService.getRaceReports(parsedDate, reunion, course);
+      
+      if (!reports || reports.length === 0) {
+        return { success: false, message: 'No reports available' };
+      }
+
+      // Trouver la course en BDD
+      const race = await this.prisma.pmuRace.findFirst({
+        where: {
+          date: {
+            gte: new Date(parsedDate.setHours(0, 0, 0, 0)),
+            lt: new Date(parsedDate.setHours(23, 59, 59, 999)),
+          },
+          reunionNumber: reunion,
+          raceNumber: course,
+        },
+      });
+
+      if (!race) {
+        return { success: false, message: 'Race not found in database' };
+      }
+
+      // Sauvegarder les rapports en BDD
+      for (const report of reports) {
+        await this.prisma.pmuReport.upsert({
+          where: {
+            raceId_betType: {
+              raceId: race.id,
+              betType: report.typePari,
+            },
+          },
+          create: {
+            raceId: race.id,
+            betType: report.typePari,
+            betFamily: report.typePari.split('_')[0], // SIMPLE, COUPLE, etc.
+            baseStake: report.montantMise || 100,
+            refunded: report.rembourse || false,
+            reports: report.rapportDirect || [],
+          },
+          update: {
+            reports: report.rapportDirect || [],
+            refunded: report.rembourse || false,
+          },
+        });
+      }
+
+      return { success: true, message: 'Reports synced successfully', count: reports.length };
+    } catch (error) {
+      console.error('Error syncing reports:', error);
+      return { success: false, message: error.message };
+    }
+  }
+
+  @Public()
   @Get('race/all-odds')
   @ApiOperation({ summary: 'Get all odds for a race (public access)' })
   async getAllOddsForRace(

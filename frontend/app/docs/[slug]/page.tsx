@@ -1881,8 +1881,8 @@ export default function DocPage() {
                   <h4 className="font-semibold text-white mb-4">Support</h4>
                   <ul className="space-y-2">
                     <li>
-                      <Link href="/dashboard/support" className="text-sm text-gray-400 hover:text-primary-400 transition-colors">
-                        Centre d'aide
+                      <Link href="/comment-ca-marche" className="text-sm text-gray-400 hover:text-primary-400 transition-colors">
+                        Comment ça marche ?
                       </Link>
                     </li>
                     <li>

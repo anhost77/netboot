@@ -39,7 +39,7 @@ export default function MarketingFooter() {
     {
       title: 'Support',
       links: [
-        { label: 'Centre d\'aide', href: '/dashboard/support' },
+        { label: 'Comment ça marche ?', href: '/comment-ca-marche' },
         { label: 'Documentation technique', href: '/docs/mcp-server' },
         { label: 'Intégration ChatGPT', href: '/docs/chatgpt' },
         { label: 'Contactez-nous', href: '/contact' },

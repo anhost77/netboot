@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
+import { WeatherService } from './weather.service';
 
 interface HorseAnalysis {
   horseNumber: number;
@@ -67,7 +68,10 @@ interface RaceAnalysis {
 export class PmuPronosticAnalyzerService {
   private readonly logger = new Logger(PmuPronosticAnalyzerService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private weatherService: WeatherService,
+  ) {}
 
   /**
    * Analyse complète d'une course

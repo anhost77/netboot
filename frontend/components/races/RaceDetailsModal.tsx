@@ -16,6 +16,7 @@ interface Horse {
   age?: number;
   sex?: string;
   rope?: string;
+  arrivalOrder?: number;
 }
 
 interface Race {
@@ -31,6 +32,16 @@ interface Race {
   betTypes: string[];
   horses?: Horse[];
   date?: Date;
+  reports?: Report[];
+}
+
+interface Report {
+  id: string;
+  betType: string;
+  rapportDirect: Array<{
+    numPmu: string;
+    rapport: number;
+  }>;
 }
 
 interface OddsData {
@@ -56,66 +67,97 @@ export default function RaceDetailsModal({ race, onClose, onBet }: RaceDetailsMo
   const [oddsData, setOddsData] = useState<OddsData[]>([]);
 
   useEffect(() => {
-    if (!race.horses || race.horses.length === 0) {
-      loadRaceDetails();
-    }
-  }, [race]);
+    loadFullRaceData();
+  }, [race.id]);
 
-  useEffect(() => {
-    if (activeTab === 'odds' && oddsData.length === 0) {
-      loadOdds();
-    }
-  }, [activeTab]);
-
-  const loadRaceDetails = async () => {
+  const loadFullRaceData = async () => {
     setLoadingDetails(true);
+    setLoadingOdds(true);
+    
     try {
+      // D'abord, trouver le raceId depuis la BDD
       const dateStr = race.date ? format(race.date, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd');
-      const response = await fetch(
-        `${API_URL}/pmu/race/participants?date=${dateStr}&reunion=${race.reunionNumber}&course=${race.raceNumber}`
+      const racesResponse = await fetch(`${API_URL}/pmu/public/races?date=${dateStr}`);
+      
+      if (!racesResponse.ok) {
+        throw new Error('Failed to load races');
+      }
+      
+      const races = await racesResponse.json();
+      const foundRace = races.find((r: any) => 
+        r.reunionNumber === race.reunionNumber && 
+        r.raceNumber === race.raceNumber
       );
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Race participants data:', data);
-        const horsesData = data.participants || data.horses || [];
-        console.log('Horses data:', horsesData);
-        setHorses(horsesData.map((p: any) => ({
-          number: p.number || p.numeroParticipant,
-          name: p.name || p.nom,
-          jockey: p.jockey || p.driver,
-          trainer: p.trainer || p.entraineur,
-          weight: p.weight || p.poids,
-          odds: p.odds || p.cote,
-          age: p.age,
-          sex: p.sex || p.sexe,
-          rope: p.rope || p.corde
-        })));
+      
+      if (!foundRace) {
+        console.log('Race not found in DB, loading from API...');
+        setLoadingDetails(false);
+        setLoadingOdds(false);
+        return;
+      }
+      
+      // Charger les détails complets avec auto-sync
+      const raceResponse = await fetch(`${API_URL}/pmu/public/race/${foundRace.id}`);
+      
+      if (raceResponse.ok) {
+        const fullRaceData = await raceResponse.json();
+        console.log('Full race data:', fullRaceData);
+        
+        // Mapper les chevaux
+        if (fullRaceData.horses && fullRaceData.horses.length > 0) {
+          setHorses(fullRaceData.horses.map((h: any) => ({
+            number: h.number,
+            name: h.name,
+            jockey: h.jockey,
+            trainer: h.trainer,
+            weight: h.weight,
+            odds: h.odds,
+            age: h.age,
+            sex: h.sex,
+            rope: h.rope,
+            arrivalOrder: h.arrivalOrder
+          })));
+        }
+        
+        // Mapper les rapports
+        if (fullRaceData.reports && fullRaceData.reports.length > 0) {
+          const mappedOdds = fullRaceData.reports.map((report: any) => ({
+            betType: report.betType,
+            label: getBetTypeLabel(report.betType),
+            combinations: report.rapportDirect?.map((r: any) => ({
+              horses: r.numPmu,
+              odds: r.rapport
+            })) || []
+          }));
+          setOddsData(mappedOdds);
+        }
       }
     } catch (error) {
-      console.error('Error loading race details:', error);
+      console.error('Error loading race data:', error);
     } finally {
       setLoadingDetails(false);
+      setLoadingOdds(false);
     }
   };
 
-  const loadOdds = async () => {
-    setLoadingOdds(true);
-    try {
-      const dateStr = race.date ? format(race.date, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd');
-      const response = await fetch(
-        `${API_URL}/pmu/race/all-odds?date=${dateStr}&reunion=${race.reunionNumber}&course=${race.raceNumber}`
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        setOddsData(data.odds || []);
-      }
-    } catch (error) {
-      console.error('Error loading odds:', error);
-    } finally {
-      setLoadingOdds(false);
-    }
+  const getBetTypeLabel = (betType: string): string => {
+    const labels: Record<string, string> = {
+      'SIMPLE_GAGNANT': 'Simple Gagnant',
+      'SIMPLE_PLACE': 'Simple Placé',
+      'COUPLE_GAGNANT': 'Couplé Gagnant',
+      'COUPLE_PLACE': 'Couplé Placé',
+      'COUPLE_ORDRE': 'Couplé Ordre',
+      'TRIO': 'Trio',
+      'TRIO_ORDRE': 'Trio Ordre',
+      'SUPER4': 'Super 4',
+      'QUARTE_PLUS': 'Quarté+',
+      'QUINTE_PLUS': 'Quinté+',
+      'MULTI': 'Multi',
+      'DEUX_SUR_QUATRE': '2 sur 4',
+      'MINI_MULTI': 'Mini Multi',
+      'PICK5': 'Pick 5'
+    };
+    return labels[betType] || betType;
   };
 
   return (
@@ -212,6 +254,83 @@ export default function RaceDetailsModal({ race, onClose, onBet }: RaceDetailsMo
                   </div>
                 </div>
               </div>
+
+              {/* Podium - Top 3 */}
+              {horses.some(h => h.arrivalOrder) && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
+                    <Trophy className="w-5 h-5 text-yellow-500" />
+                    <span>Podium</span>
+                  </h3>
+                  <div className="flex items-end justify-center space-x-4">
+                    {/* 2nd Place */}
+                    {horses.find(h => h.arrivalOrder === 2) && (() => {
+                      const horse = horses.find(h => h.arrivalOrder === 2)!;
+                      return (
+                        <div className="flex flex-col items-center">
+                          <div className="w-24 h-32 bg-gradient-to-br from-gray-300 to-gray-400 rounded-t-lg flex flex-col items-center justify-center shadow-lg">
+                            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-2 shadow">
+                              <span className="text-2xl font-bold text-gray-700">{horse.number}</span>
+                            </div>
+                            <div className="text-white text-4xl font-bold">2</div>
+                          </div>
+                          <div className="bg-gray-200 w-24 p-2 text-center rounded-b-lg">
+                            <p className="font-semibold text-sm text-gray-900 truncate">{horse.name}</p>
+                            {horse.odds && (
+                              <p className="text-xs font-bold text-green-600 mt-1">{Number(horse.odds).toFixed(2)}€</p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* 1st Place */}
+                    {horses.find(h => h.arrivalOrder === 1) && (() => {
+                      const horse = horses.find(h => h.arrivalOrder === 1)!;
+                      return (
+                        <div className="flex flex-col items-center">
+                          <div className="w-28 h-40 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-t-lg flex flex-col items-center justify-center shadow-xl relative">
+                            <div className="absolute -top-3">
+                              <Trophy className="h-8 w-8 text-yellow-300" />
+                            </div>
+                            <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-2 shadow-lg">
+                              <span className="text-3xl font-bold text-yellow-600">{horse.number}</span>
+                            </div>
+                            <div className="text-white text-5xl font-bold">1</div>
+                          </div>
+                          <div className="bg-yellow-200 w-28 p-2 text-center rounded-b-lg">
+                            <p className="font-bold text-sm text-yellow-900 truncate">{horse.name}</p>
+                            {horse.odds && (
+                              <p className="text-xs font-bold text-green-700 mt-1">{Number(horse.odds).toFixed(2)}€</p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* 3rd Place */}
+                    {horses.find(h => h.arrivalOrder === 3) && (() => {
+                      const horse = horses.find(h => h.arrivalOrder === 3)!;
+                      return (
+                        <div className="flex flex-col items-center">
+                          <div className="w-24 h-28 bg-gradient-to-br from-orange-400 to-orange-600 rounded-t-lg flex flex-col items-center justify-center shadow-lg">
+                            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-2 shadow">
+                              <span className="text-2xl font-bold text-orange-700">{horse.number}</span>
+                            </div>
+                            <div className="text-white text-4xl font-bold">3</div>
+                          </div>
+                          <div className="bg-orange-200 w-24 p-2 text-center rounded-b-lg">
+                            <p className="font-semibold text-sm text-orange-900 truncate">{horse.name}</p>
+                            {horse.odds && (
+                              <p className="text-xs font-bold text-green-600 mt-1">{Number(horse.odds).toFixed(2)}€</p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
+              )}
 
               {/* Liste des partants */}
               <div>

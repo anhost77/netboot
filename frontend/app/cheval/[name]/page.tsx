@@ -53,6 +53,24 @@ interface HorseData {
   recentPerformances: Performance[];
 }
 
+// Fonction pour formater le sexe du cheval
+const formatSex = (sex: string | null): string => {
+  if (!sex) return '';
+  
+  const sexMap: { [key: string]: string } = {
+    'HONGRES': 'Hongre (H)',
+    'MALES': 'Mâle (M)',
+    'FEMELLES': 'Femelle (F)',
+    'MALE': 'Mâle (M)',
+    'FEMELLE': 'Femelle (F)',
+    'H': 'Hongre (H)',
+    'M': 'Mâle (M)',
+    'F': 'Femelle (F)',
+  };
+  
+  return sexMap[sex.toUpperCase()] || sex;
+};
+
 export default function ChevalDetailPage() {
   const params = useParams();
   const name = decodeURIComponent(params.name as string);
@@ -171,7 +189,7 @@ export default function ChevalDetailPage() {
               {horse.info.sex && (
                 <div>
                   <div className="text-sm text-gray-500">Sexe</div>
-                  <div className="text-lg font-semibold text-gray-900">{horse.info.sex}</div>
+                  <div className="text-lg font-semibold text-gray-900">{formatSex(horse.info.sex)}</div>
                 </div>
               )}
               {horse.info.weight && (

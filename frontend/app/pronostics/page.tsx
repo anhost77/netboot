@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Trophy, Star, TrendingUp, Target, ChevronRight, Calendar, Clock, Award, Zap } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import ReactMarkdown from 'react-markdown';
 import MarketingHeader from '@/components/marketing/MarketingHeader';
 import MarketingFooter from '@/components/marketing/MarketingFooter';
 import { useAuthModal } from '@/contexts/AuthModalContext';
@@ -23,9 +24,9 @@ interface Pronostic {
     position: number;
     horseNumber: number;
     horseName: string;
-    jockey: string;
+    jockey?: string;
     confidence: 'high' | 'medium' | 'low';
-    cote: number;
+    cote?: number;
     analysis: string;
   }[];
   betType: string;
@@ -393,11 +394,13 @@ export default function PronosticsPage() {
 
                   {/* Analyse générale */}
                   <div className="p-6 bg-primary-50 border-b border-primary-100">
-                    <h4 className="font-bold text-gray-900 mb-2 flex items-center gap-2">
+                    <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
                       <TrendingUp className="w-5 h-5 text-primary-600" />
                       Analyse de la course
                     </h4>
-                    <p className="text-gray-700 leading-relaxed">{pronostic.analysis}</p>
+                    <div className="prose prose-sm max-w-none text-gray-700">
+                      <ReactMarkdown>{pronostic.analysis}</ReactMarkdown>
+                    </div>
                   </div>
 
                   {/* Sélections détaillées */}
@@ -420,9 +423,13 @@ export default function PronosticsPage() {
                                   Confiance: {getConfidenceLabel(selection.confidence)}
                                 </span>
                               </div>
-                              <div className="text-sm text-gray-600 mb-2">
-                                Jockey: {selection.jockey} • Cote: <span className="font-semibold text-green-600">{selection.cote}</span>
-                              </div>
+                              {(selection.jockey || selection.cote) && (
+                                <div className="text-sm text-gray-600 mb-2">
+                                  {selection.jockey && `Jockey: ${selection.jockey}`}
+                                  {selection.jockey && selection.cote && ' • '}
+                                  {selection.cote && <span>Cote: <span className="font-semibold text-green-600">{selection.cote}</span></span>}
+                                </div>
+                              )}
                               <p className="text-sm text-gray-700">{selection.analysis}</p>
                             </div>
                           </div>

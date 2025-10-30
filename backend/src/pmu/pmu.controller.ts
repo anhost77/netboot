@@ -2433,4 +2433,385 @@ export class PmuTestController {
     };
   }
 
+  // ============================================
+  // ENDPOINTS PUBLICS POUR PAGES SEO
+  // ============================================
+
+  @Public()
+  @Get('public/horses')
+  @ApiOperation({ summary: 'Get all horses with basic stats (public, paginated)' })
+  async getPublicHorses(
+    @Query('page') pageStr?: string,
+    @Query('limit') limitStr?: string,
+    @Query('search') search?: string,
+  ) {
+    const page = pageStr ? parseInt(pageStr) : 1;
+    const limit = limitStr ? parseInt(limitStr) : 50;
+    const skip = (page - 1) * limit;
+
+    const where = search ? {
+      name: {
+        contains: search,
+        mode: 'insensitive' as any,
+      },
+    } : {};
+
+    const [horses, total] = await Promise.all([
+      this.prisma.pmuHorse.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { name: 'asc' },
+        include: {
+          performances: {
+            select: {
+              arrivalPosition: true,
+              status: true,
+            },
+          },
+        },
+      }),
+      this.prisma.pmuHorse.count({ where }),
+    ]);
+
+    const horsesWithStats = horses.map(horse => {
+      const totalRaces = horse.performances.length;
+      const wins = horse.performances.filter(p => p.arrivalPosition === 1).length;
+      const podiums = horse.performances.filter(p => p.arrivalPosition && p.arrivalPosition <= 3).length;
+
+      return {
+        id: horse.id,
+        name: horse.name,
+        totalRaces,
+        wins,
+        podiums,
+        winRate: totalRaces > 0 ? Math.round((wins / totalRaces) * 100) : 0,
+      };
+    });
+
+    return {
+      horses: horsesWithStats,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  @Public()
+  @Get('public/horse/:name')
+  @ApiOperation({ summary: 'Get horse details by name (public)' })
+  async getPublicHorseByName(@Param('name') name: string) {
+    const horse = await this.prisma.pmuHorse.findFirst({
+      where: {
+        name: {
+          equals: name,
+          mode: 'insensitive' as any,
+        },
+      },
+      include: {
+        performances: {
+          orderBy: { date: 'desc' },
+          take: 20,
+          include: {
+            race: {
+              include: {
+                hippodrome: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!horse) {
+      throw new HttpException('Cheval non trouvé', HttpStatus.NOT_FOUND);
+    }
+
+    const totalRaces = horse.performances.length;
+    const wins = horse.performances.filter(p => p.arrivalPosition === 1).length;
+    const podiums = horse.performances.filter(p => p.arrivalPosition && p.arrivalPosition <= 3).length;
+    const positions = horse.performances
+      .filter(p => p.arrivalPosition)
+      .map(p => p.arrivalPosition);
+    const avgPosition = positions.length > 0
+      ? positions.reduce((sum, p) => sum + p, 0) / positions.length
+      : null;
+
+    return {
+      id: horse.id,
+      name: horse.name,
+      stats: {
+        totalRaces,
+        wins,
+        podiums,
+        winRate: totalRaces > 0 ? Math.round((wins / totalRaces) * 100) : 0,
+        podiumRate: totalRaces > 0 ? Math.round((podiums / totalRaces) * 100) : 0,
+        avgPosition: avgPosition ? Math.round(avgPosition * 10) / 10 : null,
+      },
+      recentPerformances: horse.performances.slice(0, 10).map(p => ({
+        date: p.date,
+        hippodrome: p.race?.hippodrome?.name || 'N/A',
+        raceName: p.raceName,
+        discipline: p.discipline,
+        distance: p.distance,
+        position: p.arrivalPosition,
+        nbParticipants: p.nbParticipants,
+        jockey: p.jockey,
+        prize: p.prize,
+      })),
+    };
+  }
+
+  @Public()
+  @Get('public/jockeys')
+  @ApiOperation({ summary: 'Get all jockeys with stats (public, paginated)' })
+  async getPublicJockeys(
+    @Query('page') pageStr?: string,
+    @Query('limit') limitStr?: string,
+    @Query('search') search?: string,
+  ) {
+    const page = pageStr ? parseInt(pageStr) : 1;
+    const limit = limitStr ? parseInt(limitStr) : 50;
+    const skip = (page - 1) * limit;
+
+    // Récupérer toutes les performances avec jockey
+    const performances = await this.prisma.pmuHorsePerformance.findMany({
+      where: search ? {
+        jockey: {
+          contains: search,
+          mode: 'insensitive' as any,
+        },
+      } : {
+        jockey: {
+          not: null,
+        },
+      },
+      select: {
+        jockey: true,
+        arrivalPosition: true,
+        status: true,
+      },
+    });
+
+    // Grouper par jockey
+    const jockeyStats = performances.reduce((acc, p) => {
+      if (!p.jockey) return acc;
+      
+      if (!acc[p.jockey]) {
+        acc[p.jockey] = {
+          name: p.jockey,
+          totalRaces: 0,
+          wins: 0,
+          podiums: 0,
+        };
+      }
+      
+      acc[p.jockey].totalRaces++;
+      if (p.arrivalPosition === 1) acc[p.jockey].wins++;
+      if (p.arrivalPosition && p.arrivalPosition <= 3) acc[p.jockey].podiums++;
+      
+      return acc;
+    }, {} as Record<string, any>);
+
+    const jockeys = Object.values(jockeyStats)
+      .map((j: any) => ({
+        ...j,
+        winRate: Math.round((j.wins / j.totalRaces) * 100),
+        podiumRate: Math.round((j.podiums / j.totalRaces) * 100),
+      }))
+      .sort((a: any, b: any) => b.totalRaces - a.totalRaces)
+      .slice(skip, skip + limit);
+
+    return {
+      jockeys,
+      pagination: {
+        page,
+        limit,
+        total: Object.keys(jockeyStats).length,
+        totalPages: Math.ceil(Object.keys(jockeyStats).length / limit),
+      },
+    };
+  }
+
+  @Public()
+  @Get('public/jockey/:name')
+  @ApiOperation({ summary: 'Get jockey details by name (public)' })
+  async getPublicJockeyByName(@Param('name') name: string) {
+    const performances = await this.prisma.pmuHorsePerformance.findMany({
+      where: {
+        jockey: {
+          equals: name,
+          mode: 'insensitive' as any,
+        },
+      },
+      orderBy: { date: 'desc' },
+      take: 100,
+      include: {
+        horse: true,
+        race: {
+          include: {
+            hippodrome: true,
+          },
+        },
+      },
+    });
+
+    if (performances.length === 0) {
+      throw new HttpException('Jockey non trouvé', HttpStatus.NOT_FOUND);
+    }
+
+    const totalRaces = performances.length;
+    const wins = performances.filter(p => p.arrivalPosition === 1).length;
+    const podiums = performances.filter(p => p.arrivalPosition && p.arrivalPosition <= 3).length;
+
+    return {
+      name,
+      stats: {
+        totalRaces,
+        wins,
+        podiums,
+        winRate: Math.round((wins / totalRaces) * 100),
+        podiumRate: Math.round((podiums / totalRaces) * 100),
+      },
+      recentPerformances: performances.slice(0, 20).map(p => ({
+        date: p.date,
+        horse: p.horse?.name || 'N/A',
+        hippodrome: p.race?.hippodrome?.name || 'N/A',
+        raceName: p.raceName,
+        discipline: p.discipline,
+        distance: p.distance,
+        position: p.arrivalPosition,
+        nbParticipants: p.nbParticipants,
+      })),
+    };
+  }
+
+  @Public()
+  @Get('public/trainers')
+  @ApiOperation({ summary: 'Get all trainers with stats (public, paginated)' })
+  async getPublicTrainers(
+    @Query('page') pageStr?: string,
+    @Query('limit') limitStr?: string,
+    @Query('search') search?: string,
+  ) {
+    const page = pageStr ? parseInt(pageStr) : 1;
+    const limit = limitStr ? parseInt(limitStr) : 50;
+    const skip = (page - 1) * limit;
+
+    // Récupérer toutes les performances avec entraîneur
+    const performances = await this.prisma.pmuHorsePerformance.findMany({
+      where: search ? {
+        trainer: {
+          contains: search,
+          mode: 'insensitive' as any,
+        },
+      } : {
+        trainer: {
+          not: null,
+        },
+      },
+      select: {
+        trainer: true,
+        arrivalPosition: true,
+        status: true,
+      },
+    });
+
+    // Grouper par entraîneur
+    const trainerStats = performances.reduce((acc, p) => {
+      if (!p.trainer) return acc;
+      
+      if (!acc[p.trainer]) {
+        acc[p.trainer] = {
+          name: p.trainer,
+          totalRaces: 0,
+          wins: 0,
+          podiums: 0,
+        };
+      }
+      
+      acc[p.trainer].totalRaces++;
+      if (p.arrivalPosition === 1) acc[p.trainer].wins++;
+      if (p.arrivalPosition && p.arrivalPosition <= 3) acc[p.trainer].podiums++;
+      
+      return acc;
+    }, {} as Record<string, any>);
+
+    const trainers = Object.values(trainerStats)
+      .map((t: any) => ({
+        ...t,
+        winRate: Math.round((t.wins / t.totalRaces) * 100),
+        podiumRate: Math.round((t.podiums / t.totalRaces) * 100),
+      }))
+      .sort((a: any, b: any) => b.totalRaces - a.totalRaces)
+      .slice(skip, skip + limit);
+
+    return {
+      trainers,
+      pagination: {
+        page,
+        limit,
+        total: Object.keys(trainerStats).length,
+        totalPages: Math.ceil(Object.keys(trainerStats).length / limit),
+      },
+    };
+  }
+
+  @Public()
+  @Get('public/trainer/:name')
+  @ApiOperation({ summary: 'Get trainer details by name (public)' })
+  async getPublicTrainerByName(@Param('name') name: string) {
+    const performances = await this.prisma.pmuHorsePerformance.findMany({
+      where: {
+        trainer: {
+          equals: name,
+          mode: 'insensitive' as any,
+        },
+      },
+      orderBy: { date: 'desc' },
+      take: 100,
+      include: {
+        horse: true,
+        race: {
+          include: {
+            hippodrome: true,
+          },
+        },
+      },
+    });
+
+    if (performances.length === 0) {
+      throw new HttpException('Entraîneur non trouvé', HttpStatus.NOT_FOUND);
+    }
+
+    const totalRaces = performances.length;
+    const wins = performances.filter(p => p.arrivalPosition === 1).length;
+    const podiums = performances.filter(p => p.arrivalPosition && p.arrivalPosition <= 3).length;
+
+    return {
+      name,
+      stats: {
+        totalRaces,
+        wins,
+        podiums,
+        winRate: Math.round((wins / totalRaces) * 100),
+        podiumRate: Math.round((podiums / totalRaces) * 100),
+      },
+      recentPerformances: performances.slice(0, 20).map(p => ({
+        date: p.date,
+        horse: p.horse?.name || 'N/A',
+        hippodrome: p.race?.hippodrome?.name || 'N/A',
+        raceName: p.raceName,
+        discipline: p.discipline,
+        distance: p.distance,
+        position: p.arrivalPosition,
+        nbParticipants: p.nbParticipants,
+        jockey: p.jockey,
+      })),
+    };
+  }
+
 }

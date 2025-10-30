@@ -39,10 +39,14 @@ export default function CalendrierCourses() {
     setLoading(true);
     try {
       const dateStr = format(date, 'yyyy-MM-dd');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/pmu/races?date=${dateStr}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/pmu/public/races?date=${dateStr}`);
       if (response.ok) {
         const data = await response.json();
         setRaces(data);
+      } else {
+        // If no data in DB yet, use mock data
+        console.warn(`No races found in database for ${dateStr}, using mock data`);
+        setRaces(generateMockRaces(date));
       }
     } catch (error) {
       console.error('Error fetching races:', error);

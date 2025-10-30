@@ -25,13 +25,24 @@ export class PmuDailyPronosticService {
     timeZone: 'Europe/Paris',
   })
   async generateDailyPronostics(): Promise<void> {
-    this.logger.log('🏇 Starting daily pronostics generation...');
-
     try {
+      this.logger.log('🏇 Starting daily pronostics generation...');
+
+      // 0. Supprimer les anciens pronostics du jour (pour régénération)
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
+
+      const deleted = await this.prisma.raceAiContent.deleteMany({
+        where: {
+          createdAt: {
+            gte: today,
+            lt: tomorrow,
+          }
+        }
+      });
+      this.logger.log(`🗑️ Deleted ${deleted.count} old pronostics from today`);
 
       // 1. Récupérer toutes les courses du jour
       const races = await this.prisma.pmuRace.findMany({

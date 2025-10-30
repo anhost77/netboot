@@ -1,0 +1,78 @@
+{
+  "date": "2025-10-30",
+  "chevalDuJour": {
+    "horseNumber": 3,
+    "horseName": "POWER DOC",
+    "jockey": null,
+    "trainer": null,
+    "performanceScore": 100,
+    "jockeyScore": 50,
+    "trainerScore": 50,
+    "oddsScore": 85,
+    "distanceScore": 50,
+    "conditionsScore": 50,
+    "totalScore": 70.25,
+    "confidence": "medium",
+    "category": "favori",
+    "betTypes": [
+      "placé",
+      "couplé"
+    ],
+    "stats": {
+      "recentForm": "1aDa1a0a0a5a",
+      "age": null,
+      "weight": null,
+      "careerWins": null,
+      "careerStarts": null,
+      "winRate": null,
+      "totalEarnings": null,
+      "odds": 4.2
+    },
+    "race": {
+      "id": "1d2eda95-9014-4af9-80b7-e2f34145b09b",
+      "name": "PRIX DE SOULAC",
+      "hippodrome": "VINCENNES",
+      "startTime": 1761829020000,
+      "distance": 2700,
+      "discipline": "ATTELE"
+    }
+  },
+  "outsider": {
+    "horseNumber": 11,
+    "horseName": "KRYSTAL PIYA",
+    "jockey": null,
+    "trainer": null,
+    "performanceScore": 60,
+    "jockeyScore": 50,
+    "trainerScore": 50,
+    "oddsScore": 70,
+    "distanceScore": 50,
+    "conditionsScore": 50,
+    "totalScore": 56,
+    "confidence": "medium",
+    "category": "outsider",
+    "betTypes": [
+      "placé",
+      "outsider_value"
+    ],
+    "stats": {
+      "recentForm": "3a3aDa2a1a2a7a(24)7a4a",
+      "age": null,
+      "weight": null,
+      "careerWins": null,
+      "careerStarts": null,
+      "winRate": null,
+      "totalEarnings": null,
+      "odds": 10.2
+    },
+    "race": {
+      "id": "e200cd67-c594-4478-b342-25a1cd7f0ceb",
+      "name": "PRIX D'AMIENS",
+      "hippodrome": "VINCENNES",
+      "startTime": 1761837660000,
+      "distance": 2700,
+      "discipline": "ATTELE"
+    }
+  },
+  "totalRaces": 95
+}

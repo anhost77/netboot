@@ -493,7 +493,9 @@ Format Markdown avec titres ##`;
       const fs = require('fs');
       const path = require('path');
       
-      const summaryPath = path.join(process.cwd(), 'cache', 'daily-summary.json');
+      // Utiliser le dossier backend au lieu de process.cwd()
+      const backendDir = path.join(__dirname, '..', '..');
+      const summaryPath = path.join(backendDir, 'cache', 'daily-summary.json');
       const dir = path.dirname(summaryPath);
       
       // Créer le dossier si nécessaire
@@ -504,7 +506,8 @@ Format Markdown avec titres ##`;
       fs.writeFileSync(summaryPath, JSON.stringify(summary, null, 2));
       this.logger.log(`✅ Daily summary stored: Cheval du jour score ${summary.chevalDuJour.totalScore.toFixed(1)}`);
     } catch (error) {
-      this.logger.error('Error storing daily summary:', error.message);
+      this.logger.error('Error storing daily summary:', error);
+      // Ne pas bloquer si le stockage échoue
     }
   }
 

@@ -359,8 +359,7 @@ export default function CoursePage() {
 
       {/* Header de la course */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white py-12">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
+        <div className="container mx-auto px-4 max-w-4xl">
             <div className="text-sm text-blue-200 mb-2">
               {format(raceDate, 'EEEE d MMMM yyyy', { locale: fr })}
             </div>
@@ -404,7 +403,6 @@ export default function CoursePage() {
                 Parier sur cette course
               </button>
             </div>
-          </div>
         </div>
       </div>
 

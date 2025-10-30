@@ -69,7 +69,7 @@ export default function HippodromePage() {
       }
 
       // Charger les courses pour la date sélectionnée
-      const racesResponse = await fetch(`${API_URL}/pmu/public/races?date=${selectedDate}`);
+      const racesResponse = await fetch(`${API_URL}/pmu-test/public/races?date=${selectedDate}`);
       if (racesResponse.ok) {
         const races = await racesResponse.json();
         const hippodromeRaces = races.filter((r: any) => r.hippodrome === hippodrome);

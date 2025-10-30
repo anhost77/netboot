@@ -46,7 +46,7 @@ export default function CalendrierDatePage() {
   const loadRaces = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/pmu/public/races?date=${dateStr}`);
+      const response = await fetch(`${API_URL}/pmu-test/public/races?date=${dateStr}`);
       
       if (response.ok) {
         const data = await response.json();

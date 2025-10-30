@@ -55,7 +55,7 @@ export default function CalendrierCourses() {
     setLoading(true);
     try {
       const dateStr = format(date, 'yyyy-MM-dd');
-      const response = await fetch(`${API_URL}/pmu/public/races?date=${dateStr}`);
+      const response = await fetch(`${API_URL}/pmu-test/public/races?date=${dateStr}`);
       if (response.ok) {
         const data = await response.json();
         setRaces(data);

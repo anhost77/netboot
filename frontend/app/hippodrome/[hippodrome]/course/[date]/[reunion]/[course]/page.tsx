@@ -86,7 +86,7 @@ export default function CoursePage() {
     setLoading(true);
     try {
       // Charger depuis l'API publique qui inclut chevaux et rapports
-      const response = await fetch(`${API_URL}/pmu/public/races?date=${dateStr}`);
+      const response = await fetch(`${API_URL}/pmu-test/public/races?date=${dateStr}`);
       
       if (response.ok) {
         const races = await response.json();

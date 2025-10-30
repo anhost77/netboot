@@ -77,7 +77,7 @@ export default function RaceDetailsModal({ race, onClose, onBet }: RaceDetailsMo
     try {
       // D'abord, trouver le raceId depuis la BDD
       const dateStr = race.date ? format(race.date, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd');
-      const racesResponse = await fetch(`${API_URL}/pmu/public/races?date=${dateStr}`);
+      const racesResponse = await fetch(`${API_URL}/pmu-test/public/races?date=${dateStr}`);
       
       if (!racesResponse.ok) {
         throw new Error('Failed to load races');

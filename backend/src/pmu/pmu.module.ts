@@ -8,6 +8,7 @@ import { PmuAiService } from './pmu-ai.service';
 import { PmuPronosticAnalyzerService } from './pmu-pronostic-analyzer.service';
 import { PmuDailySyncService } from './pmu-daily-sync.service';
 import { PmuHistoryCollectorService } from './pmu-history-collector.service';
+import { PmuDailyPronosticService } from './pmu-daily-pronostic.service';
 import { WeatherService } from './weather.service';
 import { WeatherCacheService } from './weather-cache.service';
 import { PrismaService } from '../prisma.service';
@@ -23,6 +24,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
     PmuAutoUpdateService,
     PmuAiService,
     PmuPronosticAnalyzerService,
+    PmuDailyPronosticService,
     WeatherService,
     WeatherCacheService,
     PmuDailySyncService,

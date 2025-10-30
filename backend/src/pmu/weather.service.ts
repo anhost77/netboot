@@ -55,9 +55,131 @@ export class WeatherService {
   }
 
   /**
-   * Récupère la météo actuelle pour un hippodrome
+   * Récupère la météo prévue pour une heure spécifique
+   */
+  async getWeatherForecast(hippodromeName: string, targetTime: Date): Promise<WeatherData | null> {
+    // 1. Vérifier le cache d'abord
+    const cached = await this.weatherCache.getCachedWeather(hippodromeName);
+    if (cached) {
+      this.logger.debug(`✅ Using cached weather for ${hippodromeName}`);
+      return {
+        temperature: cached.temperature,
+        humidity: cached.humidity,
+        windSpeed: cached.windSpeed,
+        precipitation: cached.precipitation,
+        condition: cached.condition,
+        description: cached.description,
+      };
+    }
+
+    // 2. Vérifier si on peut faire un appel API
+    if (!this.weatherCache.canMakeApiCall()) {
+      this.logger.warn(`⚠️ API call limit reached. Using fallback for ${hippodromeName}`);
+      return null;
+    }
+
+    if (!this.apiKey) {
+      this.logger.warn('Weather API key not configured');
+      return null;
+    }
+
+    const coords = this.getHippodromeCoordinates(hippodromeName);
+    if (!coords) {
+      this.logger.warn(`Coordinates not found for hippodrome: ${hippodromeName}`);
+      return null;
+    }
+
+    try {
+      // Calculer les heures entre maintenant et l'heure cible
+      const now = new Date();
+      const hoursUntilRace = Math.floor((targetTime.getTime() - now.getTime()) / (1000 * 60 * 60));
+
+      let url: string;
+      let weatherData: WeatherData;
+
+      if (hoursUntilRace <= 0) {
+        // Course déjà passée ou en cours → météo actuelle
+        url = `${this.baseUrl}/weather?lat=${coords.lat}&lon=${coords.lon}&appid=${this.apiKey}&units=metric&lang=fr`;
+        
+        this.logger.log(`🌐 Current weather API call for ${hippodromeName} (${this.weatherCache.getRemainingCalls()} calls remaining)`);
+        
+        const response = await firstValueFrom(
+          this.httpService.get(url, { timeout: 5000 })
+        );
+
+        const data = response.data;
+        weatherData = {
+          temperature: data.main.temp,
+          humidity: data.main.humidity,
+          windSpeed: data.wind.speed,
+          precipitation: data.rain?.['1h'] || 0,
+          condition: data.weather[0].main.toLowerCase(),
+          description: data.weather[0].description,
+        };
+      } else if (hoursUntilRace <= 120) {
+        // Course dans les 5 prochains jours → prévisions
+        url = `${this.baseUrl}/forecast?lat=${coords.lat}&lon=${coords.lon}&appid=${this.apiKey}&units=metric&lang=fr`;
+        
+        this.logger.log(`🌐 Forecast API call for ${hippodromeName} at ${targetTime.toISOString()} (${this.weatherCache.getRemainingCalls()} calls remaining)`);
+        
+        const response = await firstValueFrom(
+          this.httpService.get(url, { timeout: 5000 })
+        );
+
+        // Trouver la prévision la plus proche de l'heure cible
+        const forecasts = response.data.list;
+        const targetTimestamp = targetTime.getTime();
+        
+        let closestForecast = forecasts[0];
+        let minDiff = Math.abs(new Date(closestForecast.dt * 1000).getTime() - targetTimestamp);
+        
+        for (const forecast of forecasts) {
+          const forecastTime = new Date(forecast.dt * 1000).getTime();
+          const diff = Math.abs(forecastTime - targetTimestamp);
+          if (diff < minDiff) {
+            minDiff = diff;
+            closestForecast = forecast;
+          }
+        }
+
+        this.logger.debug(`📅 Using forecast for ${new Date(closestForecast.dt * 1000).toISOString()}`);
+
+        weatherData = {
+          temperature: closestForecast.main.temp,
+          humidity: closestForecast.main.humidity,
+          windSpeed: closestForecast.wind.speed,
+          precipitation: closestForecast.rain?.['3h'] || 0,
+          condition: closestForecast.weather[0].main.toLowerCase(),
+          description: closestForecast.weather[0].description,
+        };
+      } else {
+        // Course trop loin dans le futur
+        this.logger.warn(`⚠️ Race too far in the future (${hoursUntilRace}h). Using current weather as estimate.`);
+        return this.getCurrentWeather(hippodromeName);
+      }
+
+      // 3. Incrémenter le compteur et mettre en cache
+      this.weatherCache.incrementApiCallCounter();
+      await this.weatherCache.cacheWeather(hippodromeName, weatherData);
+      
+      return weatherData;
+    } catch (error) {
+      this.logger.error(`Error fetching weather forecast for ${hippodromeName}:`, error.message);
+      return null;
+    }
+  }
+
+  /**
+   * Récupère la météo actuelle pour un hippodrome (backward compatibility)
    */
   async getCurrentWeather(hippodromeName: string): Promise<WeatherData | null> {
+    return this.getWeatherForecast(hippodromeName, new Date());
+  }
+
+  /**
+   * ANCIENNE VERSION - Récupère la météo actuelle pour un hippodrome
+   */
+  private async _getCurrentWeatherOld(hippodromeName: string): Promise<WeatherData | null> {
     // 1. Vérifier le cache d'abord
     const cached = await this.weatherCache.getCachedWeather(hippodromeName);
     if (cached) {

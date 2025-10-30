@@ -1,0 +1,25 @@
+# robots.txt for bettracker.io
+
+User-agent: *
+Allow: /
+Allow: /calendrier-courses
+Allow: /pronostics
+Allow: /blog
+Allow: /hippodromes
+Allow: /register
+Allow: /login
+
+# Bloquer les pages d'administration
+Disallow: /admin
+Disallow: /dashboard
+
+# Fichiers techniques
+Disallow: /api/
+Disallow: /_next/
+Disallow: /*.json$
+
+# Sitemap
+Sitemap: https://bettracker.io/sitemap.xml
+
+# Crawl-delay pour éviter la surcharge
+Crawl-delay: 1

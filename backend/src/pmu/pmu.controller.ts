@@ -2504,24 +2504,12 @@ export class PmuTestController {
   @Get('public/horse/:name')
   @ApiOperation({ summary: 'Get horse details by name (public)' })
   async getPublicHorseByName(@Param('name') name: string) {
+    // Trouver le cheval
     const horse = await this.prisma.pmuHorse.findFirst({
       where: {
         name: {
           equals: name,
           mode: 'insensitive' as any,
-        },
-      },
-      include: {
-        performances: {
-          orderBy: { date: 'desc' },
-          take: 20,
-          include: {
-            race: {
-              include: {
-                hippodrome: true,
-              },
-            },
-          },
         },
       },
     });
@@ -2530,12 +2518,19 @@ export class PmuTestController {
       throw new HttpException('Cheval non trouvé', HttpStatus.NOT_FOUND);
     }
 
-    const totalRaces = horse.performances.length;
-    const wins = horse.performances.filter(p => p.arrivalPosition === 1).length;
-    const podiums = horse.performances.filter(p => p.arrivalPosition && p.arrivalPosition <= 3).length;
-    const positions = horse.performances
-      .filter(p => p.arrivalPosition)
-      .map(p => p.arrivalPosition);
+    // Récupérer les performances
+    const performances = await this.prisma.pmuHorsePerformance.findMany({
+      where: { horseId: horse.id },
+      orderBy: { date: 'desc' },
+      take: 20,
+    });
+
+    const totalRaces = performances.length;
+    const wins = performances.filter(p => p.arrivalPosition === 1).length;
+    const podiums = performances.filter(p => p.arrivalPosition && p.arrivalPosition <= 3).length;
+    const positions = performances
+      .filter(p => p.arrivalPosition !== null)
+      .map(p => p.arrivalPosition!);
     const avgPosition = positions.length > 0
       ? positions.reduce((sum, p) => sum + p, 0) / positions.length
       : null;
@@ -2551,9 +2546,9 @@ export class PmuTestController {
         podiumRate: totalRaces > 0 ? Math.round((podiums / totalRaces) * 100) : 0,
         avgPosition: avgPosition ? Math.round(avgPosition * 10) / 10 : null,
       },
-      recentPerformances: horse.performances.slice(0, 10).map(p => ({
+      recentPerformances: performances.slice(0, 10).map(p => ({
         date: p.date,
-        hippodrome: p.race?.hippodrome?.name || 'N/A',
+        hippodrome: p.hippodrome,
         raceName: p.raceName,
         discipline: p.discipline,
         distance: p.distance,
@@ -2649,14 +2644,6 @@ export class PmuTestController {
       },
       orderBy: { date: 'desc' },
       take: 100,
-      include: {
-        horse: true,
-        race: {
-          include: {
-            hippodrome: true,
-          },
-        },
-      },
     });
 
     if (performances.length === 0) {
@@ -2666,6 +2653,14 @@ export class PmuTestController {
     const totalRaces = performances.length;
     const wins = performances.filter(p => p.arrivalPosition === 1).length;
     const podiums = performances.filter(p => p.arrivalPosition && p.arrivalPosition <= 3).length;
+
+    // Récupérer les noms des chevaux
+    const horseIds = performances.map(p => p.horseId);
+    const horses = await this.prisma.pmuHorse.findMany({
+      where: { id: { in: horseIds } },
+      select: { id: true, name: true },
+    });
+    const horseMap = new Map(horses.map(h => [h.id, h.name]));
 
     return {
       name,
@@ -2678,8 +2673,8 @@ export class PmuTestController {
       },
       recentPerformances: performances.slice(0, 20).map(p => ({
         date: p.date,
-        horse: p.horse?.name || 'N/A',
-        hippodrome: p.race?.hippodrome?.name || 'N/A',
+        horse: horseMap.get(p.horseId) || 'N/A',
+        hippodrome: p.hippodrome,
         raceName: p.raceName,
         discipline: p.discipline,
         distance: p.distance,
@@ -2773,14 +2768,6 @@ export class PmuTestController {
       },
       orderBy: { date: 'desc' },
       take: 100,
-      include: {
-        horse: true,
-        race: {
-          include: {
-            hippodrome: true,
-          },
-        },
-      },
     });
 
     if (performances.length === 0) {
@@ -2790,6 +2777,14 @@ export class PmuTestController {
     const totalRaces = performances.length;
     const wins = performances.filter(p => p.arrivalPosition === 1).length;
     const podiums = performances.filter(p => p.arrivalPosition && p.arrivalPosition <= 3).length;
+
+    // Récupérer les noms des chevaux
+    const horseIds = performances.map(p => p.horseId);
+    const horses = await this.prisma.pmuHorse.findMany({
+      where: { id: { in: horseIds } },
+      select: { id: true, name: true },
+    });
+    const horseMap = new Map(horses.map(h => [h.id, h.name]));
 
     return {
       name,
@@ -2802,8 +2797,8 @@ export class PmuTestController {
       },
       recentPerformances: performances.slice(0, 20).map(p => ({
         date: p.date,
-        horse: p.horse?.name || 'N/A',
-        hippodrome: p.race?.hippodrome?.name || 'N/A',
+        horse: horseMap.get(p.horseId) || 'N/A',
+        hippodrome: p.hippodrome,
         raceName: p.raceName,
         discipline: p.discipline,
         distance: p.distance,

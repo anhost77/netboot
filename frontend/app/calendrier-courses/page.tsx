@@ -58,51 +58,17 @@ export default function CalendrierCourses() {
       const response = await fetch(`${API_URL}/pmu/public/races?date=${dateStr}`);
       if (response.ok) {
         const data = await response.json();
-        // Si pas de données en BDD, utiliser les données mock
-        if (data && data.length > 0) {
-          setRaces(data);
-        } else {
-          console.warn(`No races found in database for ${dateStr}, using mock data`);
-          setRaces(generateMockRaces(date));
-        }
+        setRaces(data);
       } else {
-        // If no data in DB yet, use mock data
-        console.warn(`API error for ${dateStr}, using mock data`);
-        setRaces(generateMockRaces(date));
+        console.error(`API error for ${dateStr}`);
+        setRaces([]);
       }
     } catch (error) {
       console.error('Error fetching races:', error);
-      // Mock data for demonstration
-      setRaces(generateMockRaces(date));
+      setRaces([]);
     } finally {
       setLoading(false);
     }
-  };
-
-  const generateMockRaces = (date: Date): Race[] => {
-    const hippodromes = ['VINCENNES', 'LONGCHAMP', 'CHANTILLY', 'DEAUVILLE', 'COMPIEGNE', 'ENGHIEN', 'CAGNES SUR MER'];
-    const disciplines = ['Trot', 'Plat', 'Obstacle'];
-    const mockRaces: Race[] = [];
-
-    hippodromes.forEach((hippodrome, hippoIndex) => {
-      const racesCount = Math.floor(Math.random() * 8) + 3;
-      for (let i = 1; i <= racesCount; i++) {
-        mockRaces.push({
-          id: `${hippodrome}-R${hippoIndex + 1}-C${i}`,
-          hippodrome,
-          reunionNumber: hippoIndex + 1,
-          raceNumber: i,
-          name: `Prix de ${hippodrome}`,
-          startTime: `${13 + Math.floor(Math.random() * 6)}:${['00', '15', '30', '45'][Math.floor(Math.random() * 4)]}`,
-          discipline: disciplines[Math.floor(Math.random() * disciplines.length)],
-          distance: 1000 + Math.floor(Math.random() * 3000),
-          prize: 10000 + Math.floor(Math.random() * 90000),
-          betTypes: ['Simple Gagnant', 'Simple Placé', 'Couplé', 'Trio', 'Quinté+']
-        });
-      }
-    });
-
-    return mockRaces.sort((a, b) => a.startTime.localeCompare(b.startTime));
   };
 
   const hippodromes = ['all', ...Array.from(new Set(races.map(r => r.hippodrome)))];
@@ -253,8 +219,19 @@ export default function CalendrierCourses() {
           ) : Object.keys(groupedRaces).length === 0 ? (
             <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
               <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Aucune course trouvée</h3>
-              <p className="text-gray-600">Essayez de sélectionner une autre date ou modifiez vos filtres.</p>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Synchronisation en cours...</h3>
+              <p className="text-gray-600 mb-4">
+                Les courses pour cette date sont en cours de synchronisation depuis l'API PMU.
+              </p>
+              <button
+                onClick={() => fetchRaces(selectedDate)}
+                className="px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-all inline-flex items-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Rafraîchir
+              </button>
             </div>
           ) : (
             <div className="space-y-8">

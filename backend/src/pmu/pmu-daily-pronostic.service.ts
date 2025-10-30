@@ -320,7 +320,7 @@ export class PmuDailyPronosticService {
   private getHorseAnalysisSummary(horse: any): string {
     if (!horse) return 'Analyse non disponible';
 
-    const strengths = [];
+    const strengths: string[] = [];
     if (horse.performanceScore > 75) strengths.push('excellente forme');
     if (horse.jockeyScore > 70) strengths.push('bon jockey');
     if (horse.distanceScore > 75) strengths.push('spécialiste de la distance');

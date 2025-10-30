@@ -16,6 +16,8 @@ export const Public = () => SetMetadata('isPublic', true);
 @Controller('pmu')
 @UseGuards(JwtAuthGuard)
 export class PmuController {
+  private readonly logger = new (require('@nestjs/common').Logger)(PmuController.name);
+
   constructor(
     private readonly pmuService: PmuService,
     private readonly pmuDataService: PmuDataService,

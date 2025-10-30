@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { PrismaService } from '../prisma.service';
+import { WeatherCacheService } from './weather-cache.service';
 import { firstValueFrom } from 'rxjs';
 
 interface WeatherData {
@@ -45,6 +46,7 @@ export class WeatherService {
   constructor(
     private readonly httpService: HttpService,
     private readonly prisma: PrismaService,
+    private readonly weatherCache: WeatherCacheService,
   ) {
     this.apiKey = process.env.OPENWEATHER_API_KEY || '';
     if (!this.apiKey) {
@@ -56,6 +58,26 @@ export class WeatherService {
    * Récupère la météo actuelle pour un hippodrome
    */
   async getCurrentWeather(hippodromeName: string): Promise<WeatherData | null> {
+    // 1. Vérifier le cache d'abord
+    const cached = await this.weatherCache.getCachedWeather(hippodromeName);
+    if (cached) {
+      this.logger.debug(`✅ Using cached weather for ${hippodromeName}`);
+      return {
+        temperature: cached.temperature,
+        humidity: cached.humidity,
+        windSpeed: cached.windSpeed,
+        precipitation: cached.precipitation,
+        condition: cached.condition,
+        description: cached.description,
+      };
+    }
+
+    // 2. Vérifier si on peut faire un appel API
+    if (!this.weatherCache.canMakeApiCall()) {
+      this.logger.warn(`⚠️ API call limit reached. Using fallback for ${hippodromeName}`);
+      return null;
+    }
+
     if (!this.apiKey) {
       this.logger.warn('Weather API key not configured');
       return null;
@@ -70,13 +92,15 @@ export class WeatherService {
     try {
       const url = `${this.baseUrl}/weather?lat=${coords.lat}&lon=${coords.lon}&appid=${this.apiKey}&units=metric&lang=fr`;
       
+      this.logger.log(`🌐 API call for ${hippodromeName} (${this.weatherCache.getRemainingCalls()} calls remaining)`);
+      
       const response = await firstValueFrom(
         this.httpService.get(url, { timeout: 5000 })
       );
 
       const data = response.data;
       
-      return {
+      const weather: WeatherData = {
         temperature: data.main.temp,
         humidity: data.main.humidity,
         windSpeed: data.wind.speed,
@@ -84,6 +108,12 @@ export class WeatherService {
         condition: data.weather[0].main.toLowerCase(),
         description: data.weather[0].description,
       };
+
+      // 3. Incrémenter le compteur et mettre en cache
+      this.weatherCache.incrementApiCallCounter();
+      await this.weatherCache.cacheWeather(hippodromeName, weather);
+      
+      return weather;
     } catch (error) {
       this.logger.error(`Error fetching current weather for ${hippodromeName}:`, error.message);
       return null;

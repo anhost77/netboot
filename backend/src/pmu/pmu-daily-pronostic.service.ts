@@ -117,16 +117,24 @@ export class PmuDailyPronosticService {
       analyses.sort((a, b) => b.score - a.score);
 
       // 5. Filtrer : garder seulement les courses avec un bon score
-      const MIN_QUALITY_SCORE = 40; // Score minimum pour être publié (abaissé pour avoir plus de courses)
+      const MIN_QUALITY_SCORE = 55; // Score minimum pour être publié
       
-      // Toujours inclure les Quinté+ même si score faible
+      // Stratégie : Quinté+ toujours + meilleures courses
       const qualityRaces = analyses.filter(a => {
         const isQuinte = a.race.availableBetTypes?.includes('QUINTE_PLUS');
-        const isMainRace = a.race.availableBetTypes?.includes('QUARTE_PLUS') || 
-                          a.race.availableBetTypes?.includes('TIERCE') ||
-                          (a.race.prize && a.race.prize >= 30000); // Courses avec grosse allocation
-        return a.score >= MIN_QUALITY_SCORE || isQuinte || isMainRace;
+        
+        // Quinté+ toujours inclus
+        if (isQuinte) return true;
+        
+        // Pour les autres : score élevé ET grosse allocation
+        const hasGoodScore = a.score >= MIN_QUALITY_SCORE;
+        const hasGoodPrize = a.race.prize && a.race.prize >= 50000;
+        
+        return hasGoodScore && hasGoodPrize;
       });
+      
+      // Limiter à 15 courses max (Quinté+ + 10 meilleures)
+      const limitedRaces = qualityRaces.slice(0, 15);
 
       this.logger.log(`🏆 ${qualityRaces.length} races meet quality threshold (score >= ${MIN_QUALITY_SCORE} or Quinté+)`);
 
@@ -138,7 +146,7 @@ export class PmuDailyPronosticService {
 
       // 7. Stocker les pronostics des courses de qualité
       let successCount = 0;
-      for (const { race, analysis } of qualityRaces) {
+      for (const { race, analysis } of limitedRaces) {
         try {
           await this.storePronosticAnalysis(race.id, analysis);
           successCount++;

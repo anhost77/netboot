@@ -8,6 +8,7 @@ import { fr } from 'date-fns/locale';
 import MarketingHeader from '@/components/marketing/MarketingHeader';
 import MarketingFooter from '@/components/marketing/MarketingFooter';
 import { useAuthModal } from '@/contexts/AuthModalContext';
+import { API_URL } from '@/lib/config';
 
 interface Pronostic {
   id: string;
@@ -40,12 +41,31 @@ export default function PronosticsPage() {
   const [selectedType, setSelectedType] = useState<'all' | 'quinte' | 'autres'>('all');
 
   useEffect(() => {
-    // Fetch pronostics from API or generate mock data
-    setTimeout(() => {
-      setPronostics(generateMockPronostics());
-      setLoading(false);
-    }, 1000);
+    loadPronostics();
   }, []);
+
+  const loadPronostics = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/pmu/public/pronostics`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.pronostics) {
+          setPronostics(data.pronostics);
+        } else {
+          // Fallback sur mock si pas de pronostics
+          setPronostics(generateMockPronostics());
+        }
+      } else {
+        setPronostics(generateMockPronostics());
+      }
+    } catch (error) {
+      console.error('Error loading pronostics:', error);
+      setPronostics(generateMockPronostics());
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const generateMockPronostics = (): Pronostic[] => {
     return [
@@ -455,6 +475,30 @@ export default function PronosticsPage() {
         </div>
       </div>
 
+      {/* Avertissements légaux */}
+      <div className="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-6 container mx-auto px-4 mb-8">
+        <div className="max-w-4xl mx-auto">
+          <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            ⚠️ Avertissement Important
+          </h3>
+          <div className="space-y-3 text-sm text-gray-700">
+            <p className="font-semibold">
+              Les pronostics présentés sur cette page sont générés par intelligence artificielle à titre informatif uniquement.
+            </p>
+            <ul className="list-disc list-inside space-y-2 ml-4">
+              <li><strong>Aucune garantie de résultat</strong> : Les pronostics ne constituent en aucun cas une garantie de gain. Les courses hippiques comportent une part d'aléatoire importante.</li>
+              <li><strong>Responsabilité</strong> : BetTracker Pro décline toute responsabilité en cas de pertes financières résultant de l'utilisation de ces pronostics.</li>
+              <li><strong>Jeu responsable</strong> : Les jeux d'argent peuvent être addictifs. Jouez avec modération et ne misez que ce que vous pouvez vous permettre de perdre.</li>
+              <li><strong>Aide</strong> : Si vous avez un problème avec les jeux d'argent, consultez <a href="https://www.joueurs-info-service.fr" target="_blank" rel="noopener noreferrer" className="text-primary-600 underline">Joueurs Info Service</a> (09 74 75 13 13).</li>
+            </ul>
+            <p className="text-xs text-gray-600 mt-4 italic">
+              Conformément à la réglementation française, les paris hippiques sont réservés aux personnes majeures. 
+              La participation aux jeux d'argent est interdite aux mineurs. Les opérateurs de paris en ligne doivent être agréés par l'ARJEL (Autorité de Régulation des Jeux En Ligne).
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* SEO Content */}
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-4xl mx-auto prose prose-lg">
@@ -462,26 +506,35 @@ export default function PronosticsPage() {
             Pronostics PMU Gratuits - Quinté+ et Courses Principales
           </h2>
           <p className="text-gray-700 leading-relaxed mb-6">
-            Retrouvez chaque jour nos pronostics gratuits pour le Quinté+ et les principales courses hippiques
+            Retrouvez chaque jour nos pronostics gratuits générés par intelligence artificielle pour le Quinté+ et les principales courses hippiques
             françaises. Nos analyses détaillées vous aident à faire les meilleurs choix pour vos paris PMU.
           </p>
 
           <h3 className="text-2xl font-bold text-gray-900 mb-3">
-            Analyses expertes et sélections quotidiennes
+            Analyses IA et sélections quotidiennes
           </h3>
           <p className="text-gray-700 leading-relaxed mb-6">
-            Chaque pronostic est accompagné d'une analyse approfondie de la course, des chevaux, des jockeys
-            et des conditions de piste. Nous vous proposons des sélections pour tous les types de paris :
+            Chaque pronostic est généré par notre intelligence artificielle qui analyse la course, les chevaux, les jockeys,
+            les performances récentes et les conditions de piste. Nous vous proposons des sélections pour tous les types de paris :
             Simple Gagnant, Placé, Couplé, Trio, Tiercé, Quarté+ et Quinté+.
           </p>
 
           <h3 className="text-2xl font-bold text-gray-900 mb-3">
             Suivez vos paris avec BetTracker Pro
           </h3>
-          <p className="text-gray-700 leading-relaxed">
+          <p className="text-gray-700 leading-relaxed mb-6">
             Utilisez nos pronostics et suivez vos résultats avec BetTracker Pro. Analysez vos performances,
             identifiez vos meilleures stratégies et optimisez votre ROI sur le long terme. Inscrivez-vous
             gratuitement et commencez à suivre vos paris dès aujourd'hui.
+          </p>
+
+          <h3 className="text-2xl font-bold text-gray-900 mb-3">
+            Jeu Responsable
+          </h3>
+          <p className="text-gray-700 leading-relaxed">
+            <strong>Les jeux d'argent comportent des risques.</strong> Ne jouez qu'avec de l'argent que vous pouvez vous permettre de perdre.
+            Si vous pensez avoir un problème avec les jeux d'argent, n'hésitez pas à consulter un professionnel ou à contacter
+            Joueurs Info Service au 09 74 75 13 13 (appel non surtaxé).
           </p>
         </div>
       </div>

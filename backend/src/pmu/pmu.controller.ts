@@ -1286,6 +1286,82 @@ export class PmuController {
     }
   }
 
+  /**
+   * Récupérer les pronostics IA du jour
+   */
+  @Public()
+  @Get('public/pronostics')
+  @ApiOperation({ summary: 'Get AI pronostics for today (public access)' })
+  async getTodayPronostics(@Query('date') dateStr?: string) {
+    try {
+      const date = dateStr || new Date().toISOString().split('T')[0];
+      
+      // Récupérer les courses du jour
+      const races = await this.prisma.pmuRace.findMany({
+        where: {
+          date: new Date(date),
+        },
+        include: {
+          hippodrome: true,
+          horses: {
+            orderBy: { number: 'asc' },
+          },
+          aiContent: true,
+        },
+        orderBy: [
+          { reunionNumber: 'asc' },
+          { raceNumber: 'asc' },
+        ],
+      });
+
+      // Générer les pronostics pour les courses principales
+      const pronostics = [];
+      for (const race of races.slice(0, 5)) { // Limiter à 5 courses
+        try {
+          // Générer le pronostic texte
+          const pronosticText = await this.pmuAiService.getOrGeneratePronostic(race.id);
+          
+          // Générer les sélections structurées
+          const selections = await this.pmuAiService.generatePronosticSelections(race.id);
+          
+          if (selections) {
+            pronostics.push({
+              id: race.id,
+              raceId: `${race.hippodrome.code}-R${race.reunionNumber}-C${race.raceNumber}`,
+              raceName: race.name || `Course ${race.raceNumber}`,
+              hippodrome: race.hippodrome.name,
+              raceNumber: race.raceNumber,
+              startTime: race.startTime ? new Date(Number(race.startTime)).toTimeString().substring(0, 5) : 'N/A',
+              discipline: race.discipline || 'N/A',
+              distance: race.distance || 0,
+              betType: selections.betType,
+              stake: selections.stake,
+              selections: selections.selections,
+              analysis: pronosticText || 'Analyse en cours de génération...',
+              isPremium: false,
+            });
+          }
+        } catch (error) {
+          console.error(`Error generating pronostic for race ${race.id}:`, error);
+        }
+      }
+
+      return {
+        success: true,
+        date,
+        count: pronostics.length,
+        pronostics,
+      };
+    } catch (error) {
+      console.error('Error getting pronostics:', error);
+      return {
+        success: false,
+        message: error.message,
+        pronostics: [],
+      };
+    }
+  }
+
 }
 
 // Contrôleur séparé pour les tests

@@ -250,6 +250,124 @@ Fournis un pronostic structuré avec :
 Sois concis, clair et accessible. Maximum 400 mots.`;
   }
 
+  /**
+   * Génère des sélections structurées pour la page pronostics
+   */
+  async generatePronosticSelections(raceId: string): Promise<any> {
+    if (!this.isConfigured) {
+      return null;
+    }
+
+    try {
+      // Vérifier si existe déjà
+      const existingContent = await this.prisma.raceAiContent.findUnique({
+        where: { raceId },
+      });
+
+      if (existingContent?.selections) {
+        return {
+          selections: existingContent.selections,
+          betType: existingContent.betType,
+          stake: existingContent.stake,
+        };
+      }
+
+      // Récupérer la course
+      const race = await this.prisma.pmuRace.findUnique({
+        where: { id: raceId },
+        include: {
+          hippodrome: true,
+          horses: {
+            orderBy: { number: 'asc' },
+          },
+        },
+      });
+
+      if (!race || race.horses.length === 0) {
+        return null;
+      }
+
+      // Générer avec OpenAI
+      const prompt = this.buildSelectionsPrompt(race);
+      const completion = await this.openai!.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: 'Tu es un expert en pronostics hippiques. Tu dois retourner UNIQUEMENT un JSON valide, sans texte avant ou après.',
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        temperature: 0.7,
+        max_tokens: 1500,
+      });
+
+      const responseText = completion.choices[0]?.message?.content?.trim();
+      if (!responseText) return null;
+
+      // Parser le JSON
+      const data = JSON.parse(responseText);
+
+      // Sauvegarder
+      await this.prisma.raceAiContent.upsert({
+        where: { raceId },
+        create: {
+          raceId,
+          selections: data.selections,
+          betType: data.betType,
+          stake: data.stake,
+        },
+        update: {
+          selections: data.selections,
+          betType: data.betType,
+          stake: data.stake,
+        },
+      });
+
+      return data;
+    } catch (error) {
+      this.logger.error('Erreur génération sélections:', error);
+      return null;
+    }
+  }
+
+  private buildSelectionsPrompt(race: any): string {
+    const horses = race.horses.map((h: any) => ({
+      number: h.number,
+      name: h.name,
+      recentForm: h.recentForm,
+      odds: h.odds ? Number(h.odds) : null,
+    }));
+
+    return `Analyse cette course et génère des sélections de pronostic.
+
+**Course:** ${race.name || `Course ${race.raceNumber}`}
+**Hippodrome:** ${race.hippodrome.name}
+**Discipline:** ${race.discipline}
+**Distance:** ${race.distance}m
+**Partants:** ${JSON.stringify(horses)}
+
+Retourne UNIQUEMENT un JSON avec cette structure exacte :
+{
+  "betType": "Quinté+" ou "Trio" ou "Couplé" (selon le nombre de chevaux),
+  "stake": "2-5-8-11-14" (les numéros séparés par des tirets),
+  "selections": [
+    {
+      "position": 1,
+      "horseNumber": 2,
+      "horseName": "NOM_CHEVAL",
+      "confidence": "high" ou "medium" ou "low",
+      "analysis": "Courte analyse de 1-2 phrases"
+    }
+  ]
+}
+
+Sélectionne 3 à 5 chevaux selon le type de pari. Base ton analyse sur la musique et les cotes si disponibles.`;
+  }
+
   private buildReportPrompt(race: any): string {
     const podium = race.horses
       .filter((h: any) => h.arrivalOrder && h.arrivalOrder <= 3)

@@ -775,6 +775,11 @@ model RaceAiContent {
   pronosticModel  String?   @map("pronostic_model") // gpt-4, gpt-3.5-turbo, etc.
   pronosticTokens Int?      @map("pronostic_tokens")
   
+  // Sélections structurées pour la page pronostics
+  selections      Json?     // Array of {position, horseNumber, horseName, confidence, analysis}
+  betType         String?   @map("bet_type") // "Quinté+", "Trio", "Couplé", etc.
+  stake           String?   // "2-5-8-11-14"
+  
   // Compte-rendu (après la course)
   reportText      String?   @map("report_text") @db.Text
   reportModel     String?   @map("report_model")

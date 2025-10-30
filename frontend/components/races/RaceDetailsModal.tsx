@@ -575,8 +575,32 @@ export default function RaceDetailsModal({ race, onClose, onBet }: RaceDetailsMo
                 ) : (
                   <div className="text-center py-8 bg-gray-50 rounded-lg">
                     <DollarSign className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                    <p className="text-gray-600">Les rapports PMU ne sont pas encore disponibles.</p>
-                    <p className="text-sm text-gray-500 mt-2">Les cotes seront publiées après la course.</p>
+                    {(() => {
+                      // Détecter si c'est un hippodrome étranger (non français)
+                      const frenchHippodromes = ['VINCENNES', 'LONGCHAMP', 'CHANTILLY', 'DEAUVILLE', 'AUTEUIL', 'SAINT-CLOUD', 'MAISONS-LAFFITTE', 'COMPIEGNE', 'ENGHIEN', 'CAGNES', 'LYON', 'MARSEILLE', 'TOULOUSE', 'BORDEAUX'];
+                      const isForeign = !frenchHippodromes.some(h => race.hippodrome.toUpperCase().includes(h));
+                      
+                      if (isForeign) {
+                        return (
+                          <>
+                            <p className="text-gray-600 font-semibold">Rapports non disponibles</p>
+                            <p className="text-sm text-gray-500 mt-2">
+                              Les cotes PMU ne sont pas disponibles pour les hippodromes étrangers.
+                            </p>
+                            <p className="text-xs text-gray-400 mt-1">
+                              Hippodrome : {race.hippodrome}
+                            </p>
+                          </>
+                        );
+                      }
+                      
+                      return (
+                        <>
+                          <p className="text-gray-600">Les rapports PMU ne sont pas encore disponibles.</p>
+                          <p className="text-sm text-gray-500 mt-2">Les cotes seront publiées après la course.</p>
+                        </>
+                      );
+                    })()}
                   </div>
                 )}
               </div>

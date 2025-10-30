@@ -36,24 +36,34 @@ export class PmuDailySyncService {
         return;
       }
 
+      this.logger.log(`📋 Found ${program.programme.reunions.length} reunions`);
+
       let totalRacesSaved = 0;
       let totalHorsesSaved = 0;
 
       // Pour chaque réunion
       for (const reunion of program.programme.reunions) {
         const reunionNumber = reunion.numOfficiel;
+        this.logger.log(`🏇 Processing reunion ${reunionNumber} with ${reunion.courses.length} races`);
 
         // Pour chaque course de la réunion
         for (const course of reunion.courses) {
           const raceNumber = course.numOrdre;
 
           try {
+            this.logger.log(`  ⏳ Fetching R${reunionNumber}C${raceNumber}...`);
+            
             // Récupérer les détails de la course (participants)
             const raceDetails = await this.pmuService.getRaceParticipants(
               today,
               reunionNumber,
               raceNumber,
             );
+
+            if (!raceDetails) {
+              this.logger.warn(`  ⚠️ No data for R${reunionNumber}C${raceNumber}`);
+              continue;
+            }
 
             if (raceDetails && raceDetails.participants) {
               // Sauvegarder la course et ses participants
@@ -71,11 +81,12 @@ export class PmuDailySyncService {
             }
 
             // Attendre un peu entre chaque requête pour ne pas surcharger l'API
-            await this.sleep(1000);
+            await this.sleep(500);
           } catch (error) {
             this.logger.error(
-              `Error saving race R${reunionNumber}C${raceNumber}: ${error.message}`,
+              `  ❌ Error saving race R${reunionNumber}C${raceNumber}: ${error.message}`,
             );
+            this.logger.error(`  Stack: ${error.stack}`);
           }
         }
       }

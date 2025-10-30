@@ -1002,6 +1002,53 @@ export class PmuController {
     return { message: 'Yesterday results sync triggered' };
   }
 
+  @Public()
+  @Get('public/races')
+  @ApiOperation({ summary: 'Get races from database for a specific date (public access)' })
+  async getPublicRaces(@Query('date') dateStr: string) {
+    // Parse and validate date
+    if (!dateStr) {
+      throw new HttpException('Date parameter is required (format: YYYY-MM-DD)', HttpStatus.BAD_REQUEST);
+    }
+
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) {
+      throw new HttpException('Invalid date format. Use YYYY-MM-DD', HttpStatus.BAD_REQUEST);
+    }
+
+    // Get races from database for this date
+    const races = await this.prisma.pmuRace.findMany({
+      where: {
+        date: {
+          gte: new Date(date.setHours(0, 0, 0, 0)),
+          lt: new Date(date.setHours(23, 59, 59, 999)),
+        },
+      },
+      include: {
+        hippodrome: true,
+      },
+      orderBy: [
+        { reunionNumber: 'asc' },
+        { raceNumber: 'asc' },
+      ],
+    });
+
+    // Format races for frontend
+    return races.map(race => ({
+      id: race.id,
+      hippodrome: race.hippodrome.name,
+      hippodromeCode: race.hippodromeCode,
+      reunionNumber: race.reunionNumber,
+      raceNumber: race.raceNumber,
+      name: race.name || `Course ${race.raceNumber}`,
+      startTime: race.startTime ? new Date(Number(race.startTime)).toTimeString().substring(0, 5) : null,
+      discipline: race.discipline || 'N/A',
+      distance: race.distance || 0,
+      prize: Number(race.prize) || 0,
+      betTypes: race.availableBetTypes || ['Simple Gagnant', 'Simple Placé'],
+    }));
+  }
+
 }
 
 // Contrôleur séparé pour les tests
@@ -1975,54 +2022,4 @@ export class PmuTestController {
     };
   }
 
-  @Public()
-  @Get('public/races')
-  @ApiOperation({ summary: 'Get races from database for a specific date (public access)' })
-  async getPublicRaces(@Query('date') dateStr: string) {
-    // Parse and validate date
-    if (!dateStr) {
-      throw new HttpException('Date parameter is required (format: YYYY-MM-DD)', HttpStatus.BAD_REQUEST);
-    }
-
-    const date = new Date(dateStr);
-    if (isNaN(date.getTime())) {
-      throw new HttpException('Invalid date format. Use YYYY-MM-DD', HttpStatus.BAD_REQUEST);
-    }
-
-    // Set date to start of day (00:00:00) for accurate comparison
-    date.setHours(0, 0, 0, 0);
-    const nextDay = new Date(date);
-    nextDay.setDate(nextDay.getDate() + 1);
-
-    // Fetch races from database for the specified date
-    const races = await this.prisma.pmuRace.findMany({
-      where: {
-        date: {
-          gte: date,
-          lt: nextDay,
-        },
-      },
-      include: {
-        hippodrome: true,
-      },
-      orderBy: [
-        { reunionNumber: 'asc' },
-        { raceNumber: 'asc' },
-      ],
-    });
-
-    // Format races for frontend
-    return races.map(race => ({
-      id: `${race.hippodromeCode}-R${race.reunionNumber}-C${race.raceNumber}`,
-      hippodrome: race.hippodrome.name,
-      reunionNumber: race.reunionNumber,
-      raceNumber: race.raceNumber,
-      name: race.name || `Course ${race.raceNumber}`,
-      startTime: race.startTime ? new Date(Number(race.startTime)).toTimeString().substring(0, 5) : null,
-      discipline: race.discipline || 'N/A',
-      distance: race.distance || 0,
-      prize: race.prize || 0,
-      betTypes: race.availableBetTypes || ['Simple Gagnant', 'Simple Placé'],
-    }));
-  }
 }

@@ -304,7 +304,7 @@ export default function CalendrierCourses() {
 
                             {/* Types de paris disponibles */}
                             <div className="flex flex-wrap gap-2 mt-3">
-                              {race.betTypes.map(type => (
+                              {(race.betTypes || []).map(type => (
                                 <span
                                   key={type}
                                   className="text-xs px-2 py-1 bg-primary-50 text-primary-700 rounded-full font-medium"

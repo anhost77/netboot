@@ -235,7 +235,7 @@ export class PmuPronosticAnalyzerService {
   /**
    * Calcule le score du jockey
    */
-  private async calculateJockeyScore(jockeyName: string | null): number {
+  private async calculateJockeyScore(jockeyName: string | null): Promise<number> {
     if (!jockeyName) return 50;
 
     try {
@@ -273,7 +273,7 @@ export class PmuPronosticAnalyzerService {
   /**
    * Calcule le score de l'entraîneur
    */
-  private async calculateTrainerScore(trainerName: string | null): number {
+  private async calculateTrainerScore(trainerName: string | null): Promise<number> {
     if (!trainerName) return 50;
 
     try {

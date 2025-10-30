@@ -65,7 +65,10 @@ export class PmuDailySyncService {
               continue;
             }
 
-            if (raceDetails && raceDetails.participants) {
+            // raceDetails est un tableau de participants, pas un objet avec .participants
+            const participants = Array.isArray(raceDetails) ? raceDetails : [];
+            
+            if (participants.length > 0) {
               // Sauvegarder la course et ses participants
               const raceId = await this.pmuDataService.savePmuData({
                 date: today.toISOString().split('T')[0],
@@ -78,9 +81,9 @@ export class PmuDailySyncService {
 
               if (raceId) {
                 totalRacesSaved++;
-                totalHorsesSaved += raceDetails.participants.length;
+                totalHorsesSaved += participants.length;
                 this.logger.log(
-                  `  ✅ Saved race R${reunionNumber}C${raceNumber} with ${raceDetails.participants.length} horses`,
+                  `  ✅ Saved race R${reunionNumber}C${raceNumber} with ${participants.length} horses`,
                 );
               } else {
                 this.logger.warn(`  ⚠️ Failed to save R${reunionNumber}C${raceNumber}`);

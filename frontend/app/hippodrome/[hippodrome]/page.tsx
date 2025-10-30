@@ -44,10 +44,11 @@ export default function HippodromePage() {
   const [upcomingRaces, setUpcomingRaces] = useState<Race[]>([]);
   const [content, setContent] = useState<HippodromeContent | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
 
   useEffect(() => {
     loadHippodromeData();
-  }, [hippodrome]);
+  }, [hippodrome, selectedDate]);
 
   const loadHippodromeData = async () => {
     setLoading(true);
@@ -67,13 +68,12 @@ export default function HippodromePage() {
         console.log('No CMS content for this hippodrome');
       }
 
-      // Charger les courses à venir
-      const today = format(new Date(), 'yyyy-MM-dd');
-      const racesResponse = await fetch(`${API_URL}/pmu/public/races?date=${today}`);
+      // Charger les courses pour la date sélectionnée
+      const racesResponse = await fetch(`${API_URL}/pmu/public/races?date=${selectedDate}`);
       if (racesResponse.ok) {
         const races = await racesResponse.json();
         const hippodromeRaces = races.filter((r: any) => r.hippodrome === hippodrome);
-        setUpcomingRaces(hippodromeRaces.map((r: any) => ({ ...r, date: today })));
+        setUpcomingRaces(hippodromeRaces.map((r: any) => ({ ...r, date: selectedDate })));
       }
 
       // Si pas de contenu CMS, créer un contenu par défaut
@@ -125,54 +125,86 @@ export default function HippodromePage() {
         </div>
       </div>
 
-      {/* Courses du jour */}
-      {upcomingRaces.length > 0 && (
-        <div className="container mx-auto px-4 py-12">
+      {/* Barre de recherche par date */}
+      <div className="bg-white border-b border-gray-200 py-6">
+        <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                <Calendar className="w-8 h-8 text-blue-600" />
-                Courses aujourd'hui
-              </h2>
+            <div className="flex flex-col md:flex-row items-center gap-4">
+              <label className="flex items-center gap-3 flex-1">
+                <Calendar className="w-6 h-6 text-blue-600" />
+                <span className="font-semibold text-gray-700">Rechercher des courses :</span>
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </label>
               <Link
                 href="/calendrier-courses"
-                className="text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-2"
+                className="text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-2 whitespace-nowrap"
               >
                 Voir tout le calendrier
                 <ArrowRight className="w-5 h-5" />
               </Link>
             </div>
-
-            <div className="grid gap-4">
-              {upcomingRaces.map((race) => (
-                <Link
-                  key={race.id}
-                  href={`/hippodrome/${encodeURIComponent(hippodrome)}/course/${race.date}/${race.reunionNumber}/${race.raceNumber}`}
-                  className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-lg">
-                        C{race.raceNumber}
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-bold text-gray-900">{race.name}</h3>
-                        <div className="flex gap-4 text-sm text-gray-600 mt-1">
-                          <span>{race.startTime}</span>
-                          <span>{race.discipline}</span>
-                          <span>{race.distance}m</span>
-                          <span className="text-green-600 font-semibold">{race.prize.toLocaleString()}€</span>
-                        </div>
-                      </div>
-                    </div>
-                    <ArrowRight className="w-6 h-6 text-gray-400" />
-                  </div>
-                </Link>
-              ))}
-            </div>
           </div>
         </div>
-      )}
+      </div>
+
+      {/* Courses */}
+      <div className="container mx-auto px-4 py-12">
+        <div className="max-w-6xl mx-auto">
+          {upcomingRaces.length > 0 ? (
+            <>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                {upcomingRaces.length} course{upcomingRaces.length > 1 ? 's' : ''} le {format(new Date(selectedDate), 'd MMMM yyyy', { locale: fr })}
+              </h2>
+
+              <div className="grid gap-4">
+                {upcomingRaces.map((race) => (
+                  <Link
+                    key={race.id}
+                    href={`/hippodrome/${encodeURIComponent(hippodrome)}/course/${race.date}/${race.reunionNumber}/${race.raceNumber}`}
+                    className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-lg">
+                          C{race.raceNumber}
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-bold text-gray-900">{race.name}</h3>
+                          <div className="flex gap-4 text-sm text-gray-600 mt-1">
+                            <span>{race.startTime}</span>
+                            <span>{race.discipline}</span>
+                            <span>{race.distance}m</span>
+                            <span className="text-green-600 font-semibold">{race.prize.toLocaleString()}€</span>
+                          </div>
+                        </div>
+                      </div>
+                      <ArrowRight className="w-6 h-6 text-gray-400" />
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-8 text-center">
+              <Calendar className="w-16 h-16 text-yellow-600 mx-auto mb-4" />
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                Aucune course ce jour
+              </h3>
+              <p className="text-gray-700 mb-6">
+                Il n'y a pas de courses programmées à {hippodrome} le {format(new Date(selectedDate), 'd MMMM yyyy', { locale: fr })}.
+              </p>
+              <p className="text-sm text-gray-600">
+                Utilisez le sélecteur de date ci-dessus pour consulter les courses passées ou à venir.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Contenu CMS */}
       {content?.content && (

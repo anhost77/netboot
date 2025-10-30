@@ -31,24 +31,24 @@ export class PmuDailySyncService {
       const today = new Date();
       const program = await this.pmuService.getProgramByDate(today);
 
-      if (!program || !program.programme || !program.programme.reunions) {
+      if (!program || !program.meetings || program.meetings.length === 0) {
         this.logger.warn('No program available for today');
         return;
       }
 
-      this.logger.log(`📋 Found ${program.programme.reunions.length} reunions`);
+      this.logger.log(`📋 Found ${program.meetings.length} meetings`);
 
       let totalRacesSaved = 0;
       let totalHorsesSaved = 0;
 
       // Pour chaque réunion
-      for (const reunion of program.programme.reunions) {
-        const reunionNumber = reunion.numOfficiel;
-        this.logger.log(`🏇 Processing reunion ${reunionNumber} with ${reunion.courses.length} races`);
+      for (const meeting of program.meetings) {
+        const reunionNumber = meeting.number;
+        this.logger.log(`🏇 Processing reunion ${reunionNumber} (${meeting.hippodrome.name}) with ${meeting.races.length} races`);
 
         // Pour chaque course de la réunion
-        for (const course of reunion.courses) {
-          const raceNumber = course.numOrdre;
+        for (const race of meeting.races) {
+          const raceNumber = race.number;
 
           try {
             this.logger.log(`  ⏳ Fetching R${reunionNumber}C${raceNumber}...`);

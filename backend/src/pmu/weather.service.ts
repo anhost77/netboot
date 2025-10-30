@@ -21,8 +21,8 @@ interface HippodromeCoordinates {
 @Injectable()
 export class WeatherService {
   private readonly logger = new Logger(WeatherService.name);
-  private readonly apiKey: string;
-  private readonly baseUrl = 'https://api.openweathermap.org/data/2.5';
+  private readonly baseUrl = 'https://api.open-meteo.com/v1';
+  private readonly apiKey: string; // Non utilisé pour Open-Meteo mais gardé pour compatibilité
   
   // Coordonnées GPS des principaux hippodromes français
   private readonly hippodromeCoordinates: Record<string, HippodromeCoordinates> = {
@@ -48,10 +48,8 @@ export class WeatherService {
     private readonly prisma: PrismaService,
     private readonly weatherCache: WeatherCacheService,
   ) {
-    this.apiKey = process.env.OPENWEATHER_API_KEY || '';
-    if (!this.apiKey) {
-      this.logger.warn('⚠️ OPENWEATHER_API_KEY not configured. Weather features will be disabled.');
-    }
+    this.apiKey = ''; // Open-Meteo ne nécessite pas de clé API
+    this.logger.log('✅ Using Open-Meteo (free, unlimited, with forecasts)');
   }
 
   /**
@@ -72,17 +70,6 @@ export class WeatherService {
       };
     }
 
-    // 2. Vérifier si on peut faire un appel API
-    if (!this.weatherCache.canMakeApiCall()) {
-      this.logger.warn(`⚠️ API call limit reached. Using fallback for ${hippodromeName}`);
-      return null;
-    }
-
-    if (!this.apiKey) {
-      this.logger.warn('Weather API key not configured');
-      return null;
-    }
-
     const coords = this.getHippodromeCoordinates(hippodromeName);
     if (!coords) {
       this.logger.warn(`Coordinates not found for hippodrome: ${hippodromeName}`);
@@ -90,76 +77,46 @@ export class WeatherService {
     }
 
     try {
-      // Calculer les heures entre maintenant et l'heure cible
-      const now = new Date();
-      const hoursUntilRace = Math.floor((targetTime.getTime() - now.getTime()) / (1000 * 60 * 60));
+      // Open-Meteo API - Gratuit, illimité, avec prévisions
+      // Format de date pour Open-Meteo
+      const targetDate = targetTime.toISOString().split('T')[0];
+      const targetHour = targetTime.getHours();
+      
+      const url = `${this.baseUrl}/forecast?latitude=${coords.lat}&longitude=${coords.lon}&hourly=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,weather_code&timezone=Europe/Paris&forecast_days=7`;
+      
+      this.logger.log(`🌐 Open-Meteo API call for ${hippodromeName} at ${targetTime.toISOString()}`);
+      
+      const response = await firstValueFrom(
+        this.httpService.get(url, { timeout: 5000 })
+      );
 
-      let url: string;
-      let weatherData: WeatherData;
-
-      if (hoursUntilRace <= 0) {
-        // Course déjà passée ou en cours → météo actuelle
-        url = `${this.baseUrl}/weather?lat=${coords.lat}&lon=${coords.lon}&appid=${this.apiKey}&units=metric&lang=fr`;
-        
-        this.logger.log(`🌐 Current weather API call for ${hippodromeName} (${this.weatherCache.getRemainingCalls()} calls remaining)`);
-        
-        const response = await firstValueFrom(
-          this.httpService.get(url, { timeout: 5000 })
-        );
-
-        const data = response.data;
-        weatherData = {
-          temperature: data.main.temp,
-          humidity: data.main.humidity,
-          windSpeed: data.wind.speed,
-          precipitation: data.rain?.['1h'] || 0,
-          condition: data.weather[0].main.toLowerCase(),
-          description: data.weather[0].description,
-        };
-      } else if (hoursUntilRace <= 120) {
-        // Course dans les 5 prochains jours → prévisions
-        url = `${this.baseUrl}/forecast?lat=${coords.lat}&lon=${coords.lon}&appid=${this.apiKey}&units=metric&lang=fr`;
-        
-        this.logger.log(`🌐 Forecast API call for ${hippodromeName} at ${targetTime.toISOString()} (${this.weatherCache.getRemainingCalls()} calls remaining)`);
-        
-        const response = await firstValueFrom(
-          this.httpService.get(url, { timeout: 5000 })
-        );
-
-        // Trouver la prévision la plus proche de l'heure cible
-        const forecasts = response.data.list;
-        const targetTimestamp = targetTime.getTime();
-        
-        let closestForecast = forecasts[0];
-        let minDiff = Math.abs(new Date(closestForecast.dt * 1000).getTime() - targetTimestamp);
-        
-        for (const forecast of forecasts) {
-          const forecastTime = new Date(forecast.dt * 1000).getTime();
-          const diff = Math.abs(forecastTime - targetTimestamp);
-          if (diff < minDiff) {
-            minDiff = diff;
-            closestForecast = forecast;
-          }
-        }
-
-        this.logger.debug(`📅 Using forecast for ${new Date(closestForecast.dt * 1000).toISOString()}`);
-
-        weatherData = {
-          temperature: closestForecast.main.temp,
-          humidity: closestForecast.main.humidity,
-          windSpeed: closestForecast.wind.speed,
-          precipitation: closestForecast.rain?.['3h'] || 0,
-          condition: closestForecast.weather[0].main.toLowerCase(),
-          description: closestForecast.weather[0].description,
-        };
-      } else {
-        // Course trop loin dans le futur
-        this.logger.warn(`⚠️ Race too far in the future (${hoursUntilRace}h). Using current weather as estimate.`);
-        return this.getCurrentWeather(hippodromeName);
+      const data = response.data;
+      
+      // Trouver l'index de l'heure la plus proche
+      const targetDateTime = `${targetDate}T${targetHour.toString().padStart(2, '0')}:00`;
+      const timeIndex = data.hourly.time.findIndex((t: string) => t.startsWith(targetDateTime.substring(0, 13)));
+      
+      if (timeIndex === -1) {
+        this.logger.warn(`No forecast data found for ${targetDateTime}`);
+        return null;
       }
 
-      // 3. Incrémenter le compteur et mettre en cache
-      this.weatherCache.incrementApiCallCounter();
+      // Mapper le weather_code Open-Meteo vers nos conditions
+      const weatherCode = data.hourly.weather_code[timeIndex];
+      const condition = this.mapWeatherCode(weatherCode);
+
+      const weatherData: WeatherData = {
+        temperature: data.hourly.temperature_2m[timeIndex],
+        humidity: data.hourly.relative_humidity_2m[timeIndex],
+        windSpeed: data.hourly.wind_speed_10m[timeIndex],
+        precipitation: data.hourly.precipitation[timeIndex] || 0,
+        condition,
+        description: this.getWeatherDescription(weatherCode),
+      };
+
+      this.logger.debug(`📅 Forecast for ${targetDateTime}: ${condition}, ${weatherData.temperature}°C`);
+
+      // Mettre en cache
       await this.weatherCache.cacheWeather(hippodromeName, weatherData);
       
       return weatherData;
@@ -167,6 +124,32 @@ export class WeatherService {
       this.logger.error(`Error fetching weather forecast for ${hippodromeName}:`, error.message);
       return null;
     }
+  }
+
+  /**
+   * Mapper les codes météo Open-Meteo vers nos conditions
+   */
+  private mapWeatherCode(code: number): string {
+    if (code === 0) return 'clear';
+    if (code <= 3) return 'clouds';
+    if (code <= 49) return 'fog';
+    if (code <= 69) return 'rain';
+    if (code <= 79) return 'snow';
+    if (code <= 99) return 'thunderstorm';
+    return 'clouds';
+  }
+
+  /**
+   * Description météo en français
+   */
+  private getWeatherDescription(code: number): string {
+    if (code === 0) return 'Ciel dégagé';
+    if (code <= 3) return 'Nuageux';
+    if (code <= 49) return 'Brouillard';
+    if (code <= 69) return 'Pluie';
+    if (code <= 79) return 'Neige';
+    if (code <= 99) return 'Orage';
+    return 'Variable';
   }
 
   /**

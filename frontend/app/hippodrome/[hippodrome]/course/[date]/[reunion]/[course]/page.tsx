@@ -273,29 +273,29 @@ export default function CoursePage() {
       <div className="bg-white border-b-2 border-gray-200 sticky top-0 z-40 shadow-md">
         <div className="container mx-auto px-4">
           {/* Breadcrumb */}
-          <div className="flex items-center gap-2 text-sm text-gray-600 py-3 border-b border-gray-100">
+          <div className="flex items-center gap-2 text-xs text-gray-500 py-2 border-b border-gray-200">
             <Link
               href="/calendrier-courses"
               className="hover:text-primary-600 transition-colors"
             >
               Calendrier
             </Link>
-            <span>/</span>
+            <span className="text-gray-400">›</span>
             <Link
               href={`/hippodrome/${encodeURIComponent(hippodrome)}`}
               className="hover:text-primary-600 transition-colors flex items-center gap-1"
             >
-              <MapPin className="w-4 h-4" />
+              <MapPin className="w-3 h-3" />
               {hippodrome}
             </Link>
-            <span>/</span>
-            <span className="text-gray-900 font-medium">{format(raceDate, 'd MMM yyyy', { locale: fr })}</span>
-            <span>/</span>
-            <span className="text-gray-900 font-medium">R{race.reunionNumber}C{race.raceNumber}</span>
+            <span className="text-gray-400">›</span>
+            <span className="text-gray-700">{format(raceDate, 'd MMM yyyy', { locale: fr })}</span>
+            <span className="text-gray-400">›</span>
+            <span className="text-gray-900 font-semibold">R{race.reunionNumber}C{race.raceNumber}</span>
           </div>
           
           {/* Navigation rapide */}
-          <div className="flex items-center gap-6 py-3 overflow-x-auto">
+          <div className="flex items-center gap-4 py-3 overflow-x-auto">
             <button
               onClick={() => {
                 const element = document.getElementById('pronostic-ia');

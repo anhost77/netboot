@@ -1306,7 +1306,6 @@ export class PmuController {
           horses: {
             orderBy: { number: 'asc' },
           },
-          aiContent: true,
         },
         orderBy: [
           { reunionNumber: 'asc' },
@@ -1315,7 +1314,7 @@ export class PmuController {
       });
 
       // Générer les pronostics pour les courses principales
-      const pronostics = [];
+      const pronostics: any[] = [];
       for (const race of races.slice(0, 5)) { // Limiter à 5 courses
         try {
           // Générer le pronostic texte

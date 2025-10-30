@@ -137,22 +137,32 @@ export default function RaceDetailsModal({ race, onClose, onBet }: RaceDetailsMo
           
           if (isRaceFinished) {
             console.log('Course terminée, tentative de récupération des rapports depuis API PMU...');
+            console.log(`URL: ${API_URL}/pmu/race/all-odds?date=${dateStr}&reunion=${race.reunionNumber}&course=${race.raceNumber}`);
             try {
               // Essayer de récupérer les rapports depuis l'API PMU
               const reportsResponse = await fetch(
                 `${API_URL}/pmu/race/all-odds?date=${dateStr}&reunion=${race.reunionNumber}&course=${race.raceNumber}`
               );
               
+              console.log('Réponse API rapports:', reportsResponse.status, reportsResponse.statusText);
+              
               if (reportsResponse.ok) {
                 const reportsData = await reportsResponse.json();
+                console.log('Données rapports reçues:', reportsData);
+                
                 if (reportsData.odds && reportsData.odds.length > 0) {
+                  console.log(`✅ ${reportsData.odds.length} types de paris trouvés`);
                   setOddsData(reportsData.odds);
                   
                   // Déclencher la synchronisation en BDD en arrière-plan
                   fetch(
                     `${API_URL}/pmu/race/sync-reports?date=${dateStr}&reunion=${race.reunionNumber}&course=${race.raceNumber}`
                   ).catch(err => console.error('Erreur sync rapports en BDD:', err));
+                } else {
+                  console.warn('⚠️ Aucun rapport disponible dans la réponse');
                 }
+              } else {
+                console.error('❌ Erreur API rapports:', await reportsResponse.text());
               }
             } catch (err) {
               console.error('Erreur récupération rapports PMU:', err);

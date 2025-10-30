@@ -988,6 +988,30 @@ export class PmuController {
   }
 
   @Public()
+  @Get('sync-date')
+  @ApiOperation({ summary: 'Sync program for a specific date (public access)' })
+  async syncDate(@Query('date') dateStr: string) {
+    if (!dateStr) {
+      throw new HttpException('Date parameter required (format: YYYY-MM-DD)', HttpStatus.BAD_REQUEST);
+    }
+
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) {
+      throw new HttpException('Invalid date format', HttpStatus.BAD_REQUEST);
+    }
+
+    const { PmuDailySyncService } = await import('./pmu-daily-sync.service');
+    const syncService = new PmuDailySyncService(
+      this.prisma,
+      this.pmuService,
+      this.pmuDataService,
+    );
+
+    await syncService.syncProgramForDate(date);
+    return { message: `Program sync triggered for ${dateStr}` };
+  }
+
+  @Public()
   @Get('debug/races-count')
   @ApiOperation({ summary: 'Debug: Count races in database by date' })
   async debugRacesCount(@Query('date') dateStr?: string) {

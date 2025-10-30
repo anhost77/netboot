@@ -25,11 +25,17 @@ export class PmuDailySyncService {
     timeZone: 'Europe/Paris',
   })
   async syncDailyProgram() {
-    this.logger.log('🔄 Starting daily program synchronization...');
+    return this.syncProgramForDate(new Date());
+  }
+
+  /**
+   * Synchronize program for a specific date
+   */
+  async syncProgramForDate(date: Date) {
+    this.logger.log(`🔄 Starting program synchronization for ${date.toISOString().split('T')[0]}...`);
 
     try {
-      const today = new Date();
-      const program = await this.pmuService.getProgramByDate(today);
+      const program = await this.pmuService.getProgramByDate(date);
 
       if (!program || !program.meetings || program.meetings.length === 0) {
         this.logger.warn('No program available for today');
@@ -55,7 +61,7 @@ export class PmuDailySyncService {
             
             // Récupérer les détails de la course (participants)
             const raceDetails = await this.pmuService.getRaceParticipants(
-              today,
+              date,
               reunionNumber,
               raceNumber,
             );
@@ -71,7 +77,7 @@ export class PmuDailySyncService {
             if (participants.length > 0) {
               // Sauvegarder la course et ses participants
               const raceId = await this.pmuDataService.savePmuData({
-                date: today.toISOString().split('T')[0],
+                date: date.toISOString().split('T')[0],
                 reunionNumber: reunionNumber,
                 raceNumber: raceNumber,
                 hippodromeCode: meeting.hippodrome.code,

@@ -73,7 +73,17 @@ export default function HippodromePage() {
       if (racesResponse.ok) {
         const races = await racesResponse.json();
         const hippodromeRaces = races.filter((r: any) => r.hippodrome === hippodrome);
-        setUpcomingRaces(hippodromeRaces.map((r: any) => ({ ...r, date: selectedDate })));
+        
+        // Dédupliquer les courses (même réunion + même numéro = même course)
+        const uniqueRaces = hippodromeRaces.reduce((acc: any[], race: any) => {
+          const key = `${race.reunionNumber}-${race.raceNumber}`;
+          if (!acc.find((r: any) => `${r.reunionNumber}-${r.raceNumber}` === key)) {
+            acc.push(race);
+          }
+          return acc;
+        }, []);
+        
+        setUpcomingRaces(uniqueRaces.map((r: any) => ({ ...r, date: selectedDate })));
       }
 
       // Si pas de contenu CMS, créer un contenu par défaut

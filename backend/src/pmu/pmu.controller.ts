@@ -1049,6 +1049,19 @@ export class PmuController {
     };
   }
 
+  /**
+   * Synchronize a date in background (non-blocking)
+   */
+  private async syncDateInBackground(date: Date): Promise<void> {
+    const { PmuDailySyncService } = await import('./pmu-daily-sync.service');
+    const syncService = new PmuDailySyncService(
+      this.prisma,
+      this.pmuService,
+      this.pmuDataService,
+    );
+    await syncService.syncProgramForDate(date);
+  }
+
   @Public()
   @Get('sync-yesterday-results')
   @ApiOperation({ summary: 'Manually sync yesterday\'s results (public access for cron)' })
@@ -1095,10 +1108,16 @@ export class PmuController {
       ],
     });
 
-    // Si pas de courses en BDD, retourner tableau vide
-    // La synchronisation doit être faite via le cron /api/pmu/sync-today
+    // Si pas de courses en BDD, déclencher sync en arrière-plan
     if (existingRaces.length === 0) {
-      console.log(`⚠️ Aucune course en BDD pour ${dateStr}. Lancez /api/pmu/sync-today pour synchroniser.`);
+      console.log(`⚠️ Aucune course en BDD pour ${dateStr}. Synchronisation automatique en arrière-plan...`);
+      
+      // Déclencher la synchronisation en arrière-plan (ne pas attendre)
+      this.syncDateInBackground(date).catch(err => 
+        console.error(`Erreur sync background pour ${dateStr}:`, err)
+      );
+      
+      // Retourner vide immédiatement (l'utilisateur devra rafraîchir)
       return [];
     }
 

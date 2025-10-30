@@ -42,10 +42,16 @@ export default function CalendrierCourses() {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/pmu/public/races?date=${dateStr}`);
       if (response.ok) {
         const data = await response.json();
-        setRaces(data);
+        // Si pas de données en BDD, utiliser les données mock
+        if (data && data.length > 0) {
+          setRaces(data);
+        } else {
+          console.warn(`No races found in database for ${dateStr}, using mock data`);
+          setRaces(generateMockRaces(date));
+        }
       } else {
         // If no data in DB yet, use mock data
-        console.warn(`No races found in database for ${dateStr}, using mock data`);
+        console.warn(`API error for ${dateStr}, using mock data`);
         setRaces(generateMockRaces(date));
       }
     } catch (error) {
@@ -267,16 +273,16 @@ export default function CalendrierCourses() {
 
                           <div className="flex gap-2">
                             <Link
-                              href={`/pronostics/${race.id}`}
+                              href="/pronostics"
                               className="px-4 py-2 bg-yellow-400 text-primary-900 rounded-lg font-semibold hover:bg-yellow-300 transition-colors text-sm"
                             >
-                              Pronostic
+                              Voir pronostics
                             </Link>
                             <button
                               onClick={openRegisterModal}
                               className="px-4 py-2 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors text-sm"
                             >
-                              Parier
+                              Suivre mes paris
                             </button>
                           </div>
                         </div>

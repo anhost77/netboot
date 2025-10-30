@@ -912,8 +912,9 @@ export class PmuTestController {
     private readonly prisma: PrismaService,
   ) {}
 
+  @Public()
   @Get('sync-today')
-  @ApiOperation({ summary: 'Test - Manually sync today\'s program' })
+  @ApiOperation({ summary: 'Manually sync today\'s program (public access for cron)' })
   async testSyncToday() {
     const { PmuDailySyncService } = await import('./pmu-daily-sync.service');
     const syncService = new PmuDailySyncService(
@@ -921,13 +922,14 @@ export class PmuTestController {
       this.pmuService,
       this.pmuDataService,
     );
-    
+
     await syncService.syncDailyProgram();
     return { message: 'Daily program sync triggered' };
   }
 
+  @Public()
   @Get('sync-yesterday-results')
-  @ApiOperation({ summary: 'Test - Manually sync yesterday\'s results' })
+  @ApiOperation({ summary: 'Manually sync yesterday\'s results (public access for cron)' })
   async testSyncYesterdayResults() {
     const { PmuDailySyncService } = await import('./pmu-daily-sync.service');
     const syncService = new PmuDailySyncService(
@@ -935,7 +937,7 @@ export class PmuTestController {
       this.pmuService,
       this.pmuDataService,
     );
-    
+
     await syncService.syncDailyResults();
     return { message: 'Yesterday results sync triggered' };
   }

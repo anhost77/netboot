@@ -77,7 +77,9 @@ export default function RaceDetailsModal({ race, onClose, onBet }: RaceDetailsMo
 
       if (response.ok) {
         const data = await response.json();
+        console.log('Race participants data:', data);
         const horsesData = data.participants || data.horses || [];
+        console.log('Horses data:', horsesData);
         setHorses(horsesData.map((p: any) => ({
           number: p.number || p.numeroParticipant,
           name: p.name || p.nom,
@@ -276,8 +278,16 @@ export default function RaceDetailsModal({ race, onClose, onBet }: RaceDetailsMo
                 ) : (
                   <div className="text-center py-8 bg-gray-50 rounded-lg">
                     <Trophy className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                    <p className="text-gray-600">Informations sur les partants non disponibles pour le moment.</p>
-                    <p className="text-sm text-gray-500 mt-2">Les données seront disponibles quelques heures avant la course.</p>
+                    <p className="text-gray-600">Informations sur les partants non disponibles.</p>
+                    <p className="text-sm text-gray-500 mt-2">
+                      Les données PMU ne sont pas encore synchronisées pour cette course.
+                    </p>
+                    <button
+                      onClick={() => window.location.reload()}
+                      className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                    >
+                      Réessayer
+                    </button>
                   </div>
                 )}
               </div>

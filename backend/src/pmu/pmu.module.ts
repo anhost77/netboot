@@ -6,6 +6,7 @@ import { PmuDataService } from './pmu-data.service';
 import { PmuAutoUpdateService } from './pmu-auto-update.service';
 import { PmuDailySyncService } from './pmu-daily-sync.service';
 import { PmuHistoryCollectorService } from './pmu-history-collector.service';
+import { PmuAiService } from './pmu-ai.service';
 import { PrismaService } from '../prisma.service';
 import { EmailModule } from '../email/email.module';
 import { NotificationsModule } from '../notifications/notifications.module';
@@ -17,6 +18,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
     PmuService,
     PmuDataService,
     PmuAutoUpdateService,
+    PmuAiService,
     PmuDailySyncService,
     PmuHistoryCollectorService,
     PrismaService,

@@ -501,22 +501,45 @@ export default function RaceDetailsModal({ race, onClose, onBet }: RaceDetailsMo
                 ) : oddsData.length > 0 ? (
                   <div className="space-y-6">
                     {oddsData.map((betTypeData, idx) => (
-                      <div key={idx} className="bg-white border border-gray-200 rounded-lg p-4">
-                        <h4 className="font-bold text-lg text-gray-900 mb-3">{betTypeData.label}</h4>
+                      <div key={idx} className="bg-gradient-to-br from-white to-gray-50 border-2 border-gray-200 rounded-xl p-6 shadow-sm">
+                        {/* En-tête du type de pari */}
+                        <div className="flex items-center gap-3 mb-4 pb-3 border-b-2 border-gray-200">
+                          <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
+                            <DollarSign className="w-6 h-6 text-white" />
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-xl text-gray-900">{betTypeData.label}</h4>
+                            <p className="text-sm text-gray-500">{betTypeData.combinations?.length || 0} combinaison(s)</p>
+                          </div>
+                        </div>
+                        
                         {betTypeData.combinations && betTypeData.combinations.length > 0 ? (
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                          <div className="space-y-2">
                             {betTypeData.combinations.map((combo, comboIdx) => (
                               <div
                                 key={comboIdx}
-                                className="flex justify-between items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                                className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:border-primary-400 hover:shadow-md transition-all"
                               >
-                                <span className="font-semibold text-gray-900">{combo.horses}</span>
-                                <span className="text-green-600 font-bold">{combo.odds.toFixed(2)}€</span>
+                                <div className="flex items-center gap-3">
+                                  <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
+                                    <span className="font-bold text-primary-700 text-lg">{combo.horses}</span>
+                                  </div>
+                                  <div>
+                                    <p className="text-xs text-gray-500 uppercase tracking-wide">Numéro(s)</p>
+                                    <p className="font-semibold text-gray-900">{combo.horses}</p>
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Rapport</p>
+                                  <p className="text-2xl font-bold text-green-600">{(combo.odds / 100).toFixed(2)}€</p>
+                                </div>
                               </div>
                             ))}
                           </div>
                         ) : (
-                          <p className="text-gray-500 text-sm">Aucune cote disponible</p>
+                          <div className="text-center py-6 bg-gray-100 rounded-lg">
+                            <p className="text-gray-500 text-sm">Aucune cote disponible pour ce type de pari</p>
+                          </div>
                         )}
                       </div>
                     ))}

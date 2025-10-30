@@ -116,27 +116,25 @@ export class PmuDailyPronosticService {
       // 4. Trier par score de qualité et garder les meilleures
       analyses.sort((a, b) => b.score - a.score);
 
-      // 5. Filtrer : garder seulement les courses avec un bon score
-      const MIN_QUALITY_SCORE = 55; // Score minimum pour être publié
+      // 5. Stratégie ultra-sélective : seulement les MEILLEURES courses
+      const MIN_QUALITY_SCORE = 65; // Score minimum élevé
       
-      // Stratégie : Quinté+ toujours + meilleures courses
-      const qualityRaces = analyses.filter(a => {
-        const isQuinte = a.race.availableBetTypes?.includes('QUINTE_PLUS');
-        
-        // Quinté+ toujours inclus
-        if (isQuinte) return true;
-        
-        // Pour les autres : score élevé ET grosse allocation
-        const hasGoodScore = a.score >= MIN_QUALITY_SCORE;
-        const hasGoodPrize = a.race.prize && a.race.prize >= 50000;
-        
-        return hasGoodScore && hasGoodPrize;
-      });
+      // Séparer Quinté+ et autres courses
+      const quinteRaces = analyses.filter(a => a.race.availableBetTypes?.includes('QUINTE_PLUS'));
+      const otherRaces = analyses.filter(a => !a.race.availableBetTypes?.includes('QUINTE_PLUS'));
       
-      // Limiter à 15 courses max (Quinté+ + 10 meilleures)
-      const limitedRaces = qualityRaces.slice(0, 15);
+      // Prendre le meilleur Quinté+ (s'il y en a)
+      const bestQuinte = quinteRaces.length > 0 ? [quinteRaces[0]] : [];
+      
+      // Prendre les 2 meilleures autres courses (score élevé + grosse allocation)
+      const bestOthers = otherRaces
+        .filter(a => a.score >= MIN_QUALITY_SCORE && a.race.prize && a.race.prize >= 50000)
+        .slice(0, 2);
+      
+      // Combiner : 1 Quinté+ + 2 autres max = 3 pronostics max
+      const limitedRaces = [...bestQuinte, ...bestOthers];
 
-      this.logger.log(`🏆 ${qualityRaces.length} races meet quality threshold (score >= ${MIN_QUALITY_SCORE} or Quinté+)`);
+      this.logger.log(`🏆 ${limitedRaces.length} ultra-selective races (1 Quinté+ + ${bestOthers.length} premium races, score >= ${MIN_QUALITY_SCORE})`);
 
       // 6. Générer la synthèse globale (cheval du jour + outsider)
       const dailySummary = this.generateDailySummary(analyses);

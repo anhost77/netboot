@@ -20,7 +20,12 @@ export default function MarketingFooter() {
     // Charger les menus du footer depuis l'API
     fetch(`${API_URL}/api/cms/menu-items/public/footer`)
       .then(res => res.ok ? res.json() : [])
-      .then(data => setFooterMenus(data))
+      .then(data => {
+        // Si l'API retourne un tableau vide ou invalide, utiliser les menus par défaut
+        if (Array.isArray(data) && data.length > 0) {
+          setFooterMenus(data);
+        }
+      })
       .catch(err => console.error('Error loading footer menus:', err));
   }, []);
 

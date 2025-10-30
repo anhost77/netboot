@@ -271,7 +271,7 @@ export default function CoursePage() {
 
       {/* Breadcrumb (non-sticky) */}
       <div className="bg-white border-b border-gray-200">
-        <div className="container mx-auto px-4 max-w-4xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2 text-xs text-gray-500 py-2">
             <Link
               href="/calendrier-courses"
@@ -297,7 +297,7 @@ export default function CoursePage() {
 
       {/* Navigation sticky */}
       <div className="bg-white border-b-2 border-gray-200 sticky top-0 z-40 shadow-md">
-        <div className="container mx-auto px-4 max-w-4xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Navigation rapide */}
           <div className="flex items-center gap-4 py-3 overflow-x-auto">
             <button
@@ -359,7 +359,7 @@ export default function CoursePage() {
 
       {/* Header de la course */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white py-12">
-        <div className="container mx-auto px-4 max-w-4xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-sm text-blue-200 mb-2">
               {format(raceDate, 'EEEE d MMMM yyyy', { locale: fr })}
             </div>
@@ -407,8 +407,8 @@ export default function CoursePage() {
       </div>
 
       {/* Section Pronostic IA (placeholder) */}
-      <div id="pronostic-ia" className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
+      <div id="pronostic-ia" className="py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-purple-200 rounded-xl p-6 mb-8">
             <div className="flex items-center gap-3 mb-4">
               <Sparkles className="w-8 h-8 text-purple-600" />
@@ -428,8 +428,8 @@ export default function CoursePage() {
       </div>
 
       {/* Onglets Détails / Cotes */}
-      <div className="container mx-auto px-4 pb-12">
-        <div className="max-w-4xl mx-auto">
+      <div className="pb-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
             {/* Tabs */}
             <div className="border-b border-gray-200 bg-gray-50">

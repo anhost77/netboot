@@ -110,14 +110,16 @@ export class PmuController {
     return [...new Set(betTypes)];
   }
 
+  @Public()
   @Get('program/today')
-  @ApiOperation({ summary: 'Get today\'s race program' })
+  @ApiOperation({ summary: 'Get today\'s race program (public)' })
   async getTodayProgram() {
     return this.pmuService.getTodayProgram();
   }
 
+  @Public()
   @Get('program')
-  @ApiOperation({ summary: 'Get race program for a specific date' })
+  @ApiOperation({ summary: 'Get race program for a specific date (public)' })
   async getProgramByDate(@Query('date') date: string) {
     const parsedDate = new Date(date);
     if (isNaN(parsedDate.getTime())) {
@@ -139,8 +141,12 @@ export class PmuController {
       throw new Error('Invalid date format. Use YYYY-MM-DD');
     }
     
+    console.log(`[getRaceParticipants] Fetching participants for ${date} R${reunion}C${course}`);
+    
     // Get participants from PMU API (returns array)
     const participantsArray = await this.pmuService.getRaceParticipants(parsedDate, reunion, course);
+    
+    console.log(`[getRaceParticipants] Received ${participantsArray?.length || 0} participants`);
     
     // Enrich with jockey data from our database
     if (participantsArray && participantsArray.length > 0) {
@@ -574,6 +580,14 @@ export class PmuController {
       ...race,
       startTime: race.startTime ? race.startTime.toString() : null,
     }));
+  }
+
+  @Public()
+  @Get('public/race/:id')
+  @ApiOperation({ summary: 'Get race details with auto-sync (public access)' })
+  async getPublicRaceById(@Param('id') id: string) {
+    // Réutiliser la même logique que getRaceById
+    return this.getRaceById(id);
   }
 
   @Get('data/races/:id')

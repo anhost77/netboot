@@ -170,19 +170,35 @@ export default function RaceDetailsModal({ race, onClose, onBet }: RaceDetailsMo
 
   // Vérifier si la course est terminée (date + heure + 30 min de marge)
   const isRaceOver = (raceData: any): boolean => {
-    if (!raceData.date || !raceData.startTime) return false;
+    if (!raceData.date) return false;
     
     try {
-      const raceDate = new Date(raceData.date);
-      const [hours, minutes] = raceData.startTime.split(':').map(Number);
-      raceDate.setHours(hours, minutes, 0, 0);
+      let raceDateTime: Date;
+      
+      // Si startTime est un timestamp (BigInt converti en string)
+      if (raceData.startTime && !raceData.startTime.includes(':')) {
+        raceDateTime = new Date(Number(raceData.startTime));
+      } else if (raceData.startTime && raceData.startTime.includes(':')) {
+        // Si startTime est au format "HH:MM"
+        const raceDate = new Date(raceData.date);
+        const [hours, minutes] = raceData.startTime.split(':').map(Number);
+        raceDate.setHours(hours, minutes, 0, 0);
+        raceDateTime = raceDate;
+      } else {
+        // Pas d'heure, utiliser juste la date
+        raceDateTime = new Date(raceData.date);
+      }
       
       // Ajouter 30 minutes de marge pour la fin de la course
-      const raceEndTime = new Date(raceDate.getTime() + 30 * 60 * 1000);
+      const raceEndTime = new Date(raceDateTime.getTime() + 30 * 60 * 1000);
       const now = new Date();
       
-      return now > raceEndTime;
+      const isOver = now > raceEndTime;
+      console.log(`Course terminée ? ${isOver} (fin prévue: ${raceEndTime.toLocaleString()}, maintenant: ${now.toLocaleString()})`);
+      
+      return isOver;
     } catch (err) {
+      console.error('Erreur isRaceOver:', err);
       return false;
     }
   };

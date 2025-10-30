@@ -142,7 +142,23 @@ export default function MarketingFooter() {
           )}
         </div>
 
-        {/* Séparateur */}
+        {/* Disclaimer Légal */}
+        <div className="border-t border-gray-800 pt-8 pb-6">
+          <div className="bg-gray-800 border border-gray-700 rounded-lg p-4 mb-6">
+            <p className="text-xs text-gray-400 leading-relaxed">
+              <strong className="text-gray-300">Important :</strong> BetTracker Pro est une plateforme de <strong>suivi et d'analyse de paris hippiques</strong>.
+              Nous n'encaissons pas de paris et ne sommes pas un opérateur de jeux d'argent.
+              Vous pariez sur les plateformes agréées (PMU, Betclic, Unibet, etc.) et utilisez BetTracker pour enregistrer et analyser vos performances.
+              <span className="block mt-2">
+                <strong className="text-gray-300">Jeu responsable :</strong> Les jeux d'argent comportent des risques : endettement, isolement, dépendance.
+                Pour être aidé, appelez le <a href="tel:09-74-75-13-13" className="text-primary-400 hover:text-primary-300 underline">09 74 75 13 13</a> (appel non surtaxé).
+                Jouer comporte des risques. Jouez avec modération. Interdit aux mineurs (-18 ans).
+              </span>
+            </p>
+          </div>
+        </div>
+
+        {/* Copyright */}
         <div className="border-t border-gray-800 pt-8">
           <div className="flex flex-col md:flex-row items-center justify-between text-sm">
             <p className="text-gray-400">

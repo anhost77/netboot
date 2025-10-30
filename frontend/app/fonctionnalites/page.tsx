@@ -10,7 +10,8 @@ import {
   CheckCircle2, Lock, History, RefreshCw, Database,
   Eye, TrendingDown, DollarSign, Filter, BarChart,
   PieChart, Activity, Award, Settings, Smartphone,
-  PlayCircle, CheckCheck, ArrowRight, Sparkles
+  PlayCircle, CheckCheck, ArrowRight, Sparkles, Code,
+  MessageSquare, Server, Puzzle, Webhook, Key
 } from 'lucide-react';
 import MarketingHeader from '@/components/marketing/MarketingHeader';
 import MarketingFooter from '@/components/marketing/MarketingFooter';
@@ -21,27 +22,31 @@ const categories = [
     label: 'Pour Débuter',
     icon: PlayCircle,
     color: 'green',
-    description: 'Tout ce dont vous avez besoin pour commencer à parier intelligemment',
+    gradient: 'from-green-500 to-emerald-600',
+    bgLight: 'bg-green-50',
+    textColor: 'text-green-600',
+    borderColor: 'border-green-200',
+    description: 'Tout ce dont vous avez besoin pour commencer à suivre vos paris intelligemment',
     features: [
       {
         icon: Eye,
         title: 'Mode Simulation',
-        subtitle: 'Apprenez sans risque',
-        description: 'Commencez par le mode simulation pour vous entraîner avec de l\'argent virtuel. Testez vos stratégies, comprenez les différents types de paris et gagnez en confiance avant de parier en réel.',
-        benefit: 'Parfait pour apprendre les bases sans risquer votre argent'
+        subtitle: 'Testez vos stratégies sans risque',
+        description: 'Le mode simulation vous permet de tester des stratégies de paris en local, sans engager d\'argent réel. Parfait pour évaluer un tipster, tester une méthode ou vous entraîner avant de parier réellement sur les plateformes PMU.',
+        benefit: 'Expérimentez et apprenez sans risquer votre capital'
       },
       {
         icon: BookOpen,
         title: 'Interface Simple et Guidée',
         subtitle: 'Facile à utiliser',
-        description: 'Suivez un workflow étape par étape : choisissez votre plateforme (PMU, Betclic...), l\'hippodrome, la course, le type de pari et vos chevaux. Tout est expliqué clairement.',
+        description: 'Suivez un workflow étape par étape pour enregistrer vos paris : choisissez la plateforme (PMU, Betclic...), l\'hippodrome, la course, le type de pari et vos chevaux. Tout est expliqué clairement.',
         benefit: 'Pas besoin d\'être expert, on vous guide à chaque étape'
       },
       {
         icon: Target,
         title: '20+ Types de Paris Expliqués',
         subtitle: 'Quinté+, Tiercé, Quarté...',
-        description: 'Découvrez tous les types de paris PMU avec des explications claires : Super 4, Trio Bonus, Quarté+ Bonus, Multi, 2sur4... Comprenez les règles et les gains potentiels de chacun.',
+        description: 'Découvrez tous les types de paris PMU avec des explications claires : Super 4, Trio Bonus, Quarté+ Bonus, Multi, 2sur4... Comprenez les règles et suivez vos performances sur chaque type.',
         benefit: 'Apprenez progressivement chaque type de pari'
       },
       {
@@ -55,24 +60,28 @@ const categories = [
   },
   {
     id: 'gestion',
-    label: 'Gestion de Paris',
+    label: 'Suivi de Paris',
     icon: Target,
     color: 'primary',
-    description: 'Gérez tous vos paris hippiques au même endroit',
+    gradient: 'from-primary-500 to-purple-600',
+    bgLight: 'bg-primary-50',
+    textColor: 'text-primary-600',
+    borderColor: 'border-primary-200',
+    description: 'Suivez tous vos paris hippiques au même endroit',
     features: [
       {
         icon: Database,
         title: 'Tous vos Paris Centralisés',
-        subtitle: 'Un seul endroit pour tout',
-        description: 'Enregistrez tous vos paris, qu\'ils soient sur PMU.fr, Betclic, Unibet ou autres plateformes. Suivez l\'ensemble de votre activité de pari en un seul endroit.',
-        benefit: 'Plus besoin de jongler entre plusieurs sites'
+        subtitle: 'Un seul endroit pour tout suivre',
+        description: 'Enregistrez tous vos paris faits sur PMU.fr, Betclic, Unibet ou autres plateformes. BetTracker Pro est un outil de suivi - vous pariez sur les plateformes officielles, puis vous enregistrez vos paris ici pour les analyser.',
+        benefit: 'Plus besoin de jongler entre plusieurs sites pour suivre vos performances'
       },
       {
         icon: Map,
         title: 'Tous les Hippodromes',
         subtitle: 'Vincennes, Longchamp, Deauville...',
-        description: 'Pariez sur tous les hippodromes de France : Vincennes, Longchamp, Chantilly, Deauville, Enghien, Auteuil, Cagnes-sur-Mer... Accédez aux courses de plat, trot et obstacles.',
-        benefit: 'Suivez vos paris sur tous les hippodromes'
+        description: 'Suivez vos paris sur tous les hippodromes de France : Vincennes, Longchamp, Chantilly, Deauville, Enghien, Auteuil, Cagnes-sur-Mer... Courses de plat, trot et obstacles.',
+        benefit: 'Analysez vos performances par hippodrome'
       },
       {
         icon: CheckCircle2,
@@ -85,7 +94,7 @@ const categories = [
         icon: History,
         title: 'Historique Complet',
         subtitle: 'Tous vos paris archivés',
-        description: 'Retrouvez tous vos paris passés avec détails complets : date, hippodrome, course, type de pari, mise, résultat et gain. Filtrez par période, hippodrome ou résultat.',
+        description: 'Retrouvez tous vos paris enregistrés avec détails complets : date, hippodrome, course, type de pari, mise, résultat et gain. Filtrez par période, hippodrome ou résultat.',
         benefit: 'Apprenez de votre historique pour vous améliorer'
       },
       {
@@ -109,13 +118,17 @@ const categories = [
     label: 'Statistiques',
     icon: BarChart3,
     color: 'blue',
+    gradient: 'from-blue-500 to-cyan-600',
+    bgLight: 'bg-blue-50',
+    textColor: 'text-blue-600',
+    borderColor: 'border-blue-200',
     description: 'Analysez vos performances et optimisez votre stratégie',
     features: [
       {
         icon: TrendingUp,
         title: 'ROI en Temps Réel',
         subtitle: 'Retour sur investissement',
-        description: 'Suivez votre retour sur investissement en temps réel. Visualisez l\'évolution de votre ROI avec des graphiques clairs. Comprenez si votre stratégie est rentable.',
+        description: 'Suivez votre retour sur investissement en temps réel sur vos paris enregistrés. Visualisez l\'évolution de votre ROI avec des graphiques clairs. Comprenez si votre stratégie est rentable.',
         benefit: 'Mesurez objectivement votre rentabilité'
       },
       {
@@ -136,7 +149,7 @@ const categories = [
         icon: Activity,
         title: 'Graphiques d\'Évolution',
         subtitle: 'Visualisez votre progression',
-        description: 'Des graphiques interactifs vous montrent l\'évolution de votre bankroll, votre taux de réussite et vos gains au fil du temps. Suivez votre progression.',
+        description: 'Des graphiques interactifs vous montrent l\'évolution de votre bankroll (virtuelle en simulation, réelle en suivi), votre taux de réussite et vos gains au fil du temps.',
         benefit: 'Voyez votre amélioration au fil du temps'
       },
       {
@@ -160,20 +173,24 @@ const categories = [
     label: 'Gestion Financière',
     icon: Wallet,
     color: 'yellow',
+    gradient: 'from-yellow-500 to-orange-600',
+    bgLight: 'bg-yellow-50',
+    textColor: 'text-yellow-700',
+    borderColor: 'border-yellow-200',
     description: 'Gérez votre capital et évitez les pertes',
     features: [
       {
         icon: DollarSign,
         title: 'Suivi de Bankroll',
         subtitle: 'Gérez votre capital',
-        description: 'Définissez votre bankroll de départ et suivez son évolution en temps réel. Visualisez combien vous avez gagné ou perdu depuis le début.',
+        description: 'Définissez votre bankroll de départ et suivez son évolution en temps réel. En mode réel, suivez votre capital réel investi. En mode simulation, testez la gestion de votre bankroll virtuelle.',
         benefit: 'Gardez le contrôle de votre budget'
       },
       {
         icon: TrendingDown,
         title: 'Alertes de Sécurité',
         subtitle: 'Protégez votre capital',
-        description: 'Recevez des alertes quand votre bankroll descend sous certains seuils. Le système vous prévient pour éviter de tout perdre.',
+        description: 'Recevez des alertes quand votre bankroll descend sous certains seuils. Le système vous prévient pour éviter de tout perdre. Particulièrement utile pour le suivi de vos paris réels.',
         benefit: 'Évitez la ruine grâce aux alertes'
       },
       {
@@ -207,18 +224,77 @@ const categories = [
     ]
   },
   {
+    id: 'api',
+    label: 'API & Intégrations',
+    icon: Code,
+    color: 'indigo',
+    gradient: 'from-indigo-500 to-violet-600',
+    bgLight: 'bg-indigo-50',
+    textColor: 'text-indigo-600',
+    borderColor: 'border-indigo-200',
+    description: 'Intégrez BetTracker Pro dans vos outils et workflows',
+    features: [
+      {
+        icon: MessageSquare,
+        title: 'Chatbot IA Intégré',
+        subtitle: 'Assistant virtuel intelligent',
+        description: 'Posez des questions en langage naturel sur vos statistiques, vos performances ou des conseils de paris. Le chatbot analyse vos données et vous répond instantanément avec des insights personnalisés.',
+        benefit: 'Obtenez des réponses instantanées sans chercher dans les menus'
+      },
+      {
+        icon: Server,
+        title: 'Serveur MCP',
+        subtitle: 'Model Context Protocol',
+        description: 'Notre serveur MCP permet à Claude (Anthropic) et d\'autres IA d\'accéder à vos données de paris de manière sécurisée. Analysez vos performances avec l\'aide de l\'IA, générez des rapports personnalisés.',
+        benefit: 'Utilisez Claude pour analyser vos paris et stratégies'
+      },
+      {
+        icon: Key,
+        title: 'API REST Complète',
+        subtitle: 'Accès programmatique',
+        description: 'API REST complète avec authentification sécurisée. Créez vos propres outils, automatisez l\'enregistrement de paris, exportez vos données, intégrez avec vos scripts Python/Node.js.',
+        benefit: 'Automatisez et personnalisez votre expérience'
+      },
+      {
+        icon: Webhook,
+        title: 'Webhooks',
+        subtitle: 'Notifications en temps réel',
+        description: 'Configurez des webhooks pour recevoir des notifications en temps réel : nouveau pari gagné, objectif atteint, alerte bankroll... Intégrez avec Discord, Slack, Telegram.',
+        benefit: 'Soyez notifié instantanément sur vos outils préférés'
+      },
+      {
+        icon: Puzzle,
+        title: 'Intégrations Tierces',
+        subtitle: 'ChatGPT, Zapier, Make...',
+        description: 'Utilisez BetTracker Pro avec ChatGPT via notre plugin, ou connectez-le à Zapier/Make pour créer des automations complexes. Exportez vers Google Sheets, Notion, Airtable...',
+        benefit: 'Connectez BetTracker à tout votre écosystème'
+      },
+      {
+        icon: Code,
+        title: 'Documentation Développeur',
+        subtitle: 'Guides et exemples',
+        description: 'Documentation complète avec exemples de code en Python, JavaScript, cURL. SDK officiels, playground API, exemples d\'intégrations. Tout pour démarrer rapidement.',
+        benefit: 'Développez facilement vos propres intégrations'
+      }
+    ]
+  },
+  {
     id: 'avance',
     label: 'Fonctionnalités Avancées',
     icon: Zap,
     color: 'purple',
+    gradient: 'from-purple-500 to-pink-600',
+    bgLight: 'bg-purple-50',
+    textColor: 'text-purple-600',
+    borderColor: 'border-purple-200',
     description: 'Pour aller plus loin dans l\'analyse',
     features: [
       {
         icon: RefreshCw,
         title: 'Modes Réel et Simulation Séparés',
         subtitle: 'Deux univers distincts',
-        description: 'Basculez entre mode réel (argent réel) et simulation (argent virtuel). Toutes vos statistiques sont calculées séparément pour ne pas mélanger les deux.',
-        benefit: 'Testez sans impacter vos vraies stats'
+        description: 'Mode RÉEL : suivez les paris que vous faites réellement sur les plateformes (PMU, Betclic...). Mode SIMULATION : testez des stratégies localement sans parier. Les deux modes sont complètement séparés pour ne pas mélanger les statistiques.',
+        benefit: 'Testez sans impacter le suivi de vos vrais paris'
       },
       {
         icon: Zap,
@@ -231,29 +307,29 @@ const categories = [
         icon: Bell,
         title: 'Notifications Intelligentes',
         subtitle: 'Restez informé',
-        description: 'Recevez des notifications pour les résultats de vos paris, les courses importantes, vos objectifs atteints... Personnalisez complètement vos préférences.',
+        description: 'Recevez des notifications pour les résultats de vos paris enregistrés, les courses importantes, vos objectifs atteints... Personnalisez complètement vos préférences.',
         benefit: 'Ne manquez aucune information importante'
       },
       {
         icon: Users,
         title: 'Suivi Multi-Tipsters',
         subtitle: 'Suivez les experts',
-        description: 'Suivez les pronostics d\'autres tipsters et comparez vos performances. Apprenez des meilleurs et améliorez votre stratégie.',
-        benefit: 'Apprenez des meilleurs parieurs'
+        description: 'En mode simulation, testez les pronostics de différents tipsters pour évaluer leur performance avant de suivre leurs conseils en réel. Comparez vos performances avec d\'autres.',
+        benefit: 'Évaluez les tipsters avant de suivre leurs conseils'
       },
       {
         icon: Lock,
         title: 'Sécurité Maximum',
         subtitle: 'Vos données protégées',
         description: 'Toutes vos données sont cryptées et sécurisées. Conformité RGPD complète. Vos paris et statistiques restent privés sauf si vous choisissez de les partager.',
-        benefit: 'Pariez en toute confidentialité'
+        benefit: 'Suivez vos paris en toute confidentialité'
       },
       {
         icon: Smartphone,
         title: 'Application Mobile',
-        subtitle: 'Pariez partout',
-        description: 'Interface responsive parfaitement adaptée aux smartphones et tablettes. Enregistrez vos paris directement depuis l\'hippodrome.',
-        benefit: 'Gérez vos paris où que vous soyez'
+        subtitle: 'Suivez partout',
+        description: 'Interface responsive parfaitement adaptée aux smartphones et tablettes. Enregistrez vos paris directement depuis l\'hippodrome juste après avoir parié sur votre plateforme.',
+        benefit: 'Enregistrez vos paris où que vous soyez'
       }
     ]
   }
@@ -269,26 +345,26 @@ export default function FonctionnalitesPage() {
       <MarketingHeader />
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary-600 via-primary-700 to-primary-900 text-white py-16">
+      <section className={`relative overflow-hidden bg-gradient-to-br ${activeCategory.gradient} text-white py-16 transition-all duration-500`}>
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-6 border border-white/20">
               <Sparkles className="w-4 h-4 text-yellow-300" />
-              <span className="text-sm font-medium">Plateforme Complète et Facile à Utiliser</span>
+              <span className="text-sm font-medium">Plateforme de Suivi de Paris Hippiques</span>
             </div>
 
             <h1 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
-              Tout pour Réussir vos <span className="text-yellow-300">Paris Hippiques</span>
+              Tout pour Suivre et Analyser vos <span className="text-yellow-300">Paris Hippiques</span>
             </h1>
 
-            <p className="text-lg md:text-xl mb-8 text-primary-100 max-w-3xl mx-auto">
-              Des outils simples et puissants pour suivre, analyser et améliorer vos performances. Que vous soyez débutant ou expert.
+            <p className="text-lg md:text-xl mb-8 text-white/90 max-w-3xl mx-auto">
+              Des outils simples et puissants pour enregistrer, suivre et analyser vos paris faits sur les plateformes PMU. Que vous soyez débutant ou expert.
             </p>
 
             <Link
               href="/register"
-              className="inline-flex items-center justify-center gap-2 bg-yellow-400 text-primary-900 px-8 py-4 rounded-lg font-bold text-lg hover:bg-yellow-300 transition-all shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
+              className="inline-flex items-center justify-center gap-2 bg-yellow-400 text-gray-900 px-8 py-4 rounded-lg font-bold text-lg hover:bg-yellow-300 transition-all shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
             >
               Commencer Gratuitement
               <ChevronRight className="w-5 h-5" />
@@ -317,8 +393,8 @@ export default function FonctionnalitesPage() {
                   onClick={() => setActiveTab(category.id)}
                   className={`flex items-center gap-2 px-6 py-4 font-semibold text-sm whitespace-nowrap transition-all border-b-2 ${
                     isActive
-                      ? 'border-primary-600 text-primary-600 bg-primary-50'
-                      : 'border-transparent text-gray-600 hover:text-primary-600 hover:bg-gray-50'
+                      ? `border-${category.color}-600 ${category.textColor} ${category.bgLight}`
+                      : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                   }`}
                 >
                   <Icon className="w-5 h-5" />
@@ -335,8 +411,8 @@ export default function FonctionnalitesPage() {
         <div className="container mx-auto px-4">
           {/* Category Header */}
           <div className="max-w-3xl mx-auto text-center mb-12">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-100 rounded-2xl mb-4">
-              <CategoryIcon className="w-8 h-8 text-primary-600" />
+            <div className={`inline-flex items-center justify-center w-16 h-16 ${activeCategory.bgLight} rounded-2xl mb-4`}>
+              <CategoryIcon className={`w-8 h-8 ${activeCategory.textColor}`} />
             </div>
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
               {activeCategory.label}
@@ -353,20 +429,20 @@ export default function FonctionnalitesPage() {
               return (
                 <div
                   key={idx}
-                  className="group bg-white rounded-2xl p-8 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-primary-200"
+                  className={`group bg-white rounded-2xl p-8 shadow-sm hover:shadow-xl transition-all duration-300 border ${activeCategory.borderColor} hover:border-opacity-100 border-opacity-50`}
                 >
                   {/* Icon & Title */}
                   <div className="flex items-start gap-4 mb-4">
                     <div className="flex-shrink-0">
-                      <div className="w-14 h-14 bg-primary-50 rounded-xl flex items-center justify-center group-hover:bg-primary-100 transition-colors">
-                        <FeatureIcon className="w-7 h-7 text-primary-600" />
+                      <div className={`w-14 h-14 ${activeCategory.bgLight} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                        <FeatureIcon className={`w-7 h-7 ${activeCategory.textColor}`} />
                       </div>
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-xl font-bold text-gray-900 mb-1 group-hover:text-primary-600 transition-colors">
+                      <h3 className={`text-xl font-bold text-gray-900 mb-1 group-hover:${activeCategory.textColor} transition-colors`}>
                         {feature.title}
                       </h3>
-                      <p className="text-sm font-medium text-primary-600">
+                      <p className={`text-sm font-medium ${activeCategory.textColor}`}>
                         {feature.subtitle}
                       </p>
                     </div>
@@ -449,19 +525,19 @@ export default function FonctionnalitesPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-br from-primary-600 to-primary-900 text-white">
+      <section className={`py-20 bg-gradient-to-br ${activeCategory.gradient} text-white transition-all duration-500`}>
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-4xl md:text-5xl font-bold mb-6">
               Prêt à Améliorer vos Performances ?
             </h2>
-            <p className="text-xl mb-8 text-primary-100">
-              Rejoignez BetTracker Pro gratuitement et commencez à optimiser vos paris hippiques dès aujourd'hui.
+            <p className="text-xl mb-8 text-white/90">
+              Rejoignez BetTracker Pro gratuitement et commencez à suivre et optimiser vos paris hippiques dès aujourd'hui.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 href="/register"
-                className="inline-flex items-center justify-center gap-2 bg-yellow-400 text-primary-900 px-8 py-4 rounded-lg font-bold text-lg hover:bg-yellow-300 transition-all shadow-xl"
+                className="inline-flex items-center justify-center gap-2 bg-yellow-400 text-gray-900 px-8 py-4 rounded-lg font-bold text-lg hover:bg-yellow-300 transition-all shadow-xl"
               >
                 Créer un Compte Gratuit
                 <ChevronRight className="w-5 h-5" />

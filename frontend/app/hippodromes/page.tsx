@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { Map, MapPin, TrendingUp, Trophy, Info, ChevronRight, Search } from 'lucide-react';
 import { useState } from 'react';
+import MarketingHeader from '@/components/marketing/MarketingHeader';
+import MarketingFooter from '@/components/marketing/MarketingFooter';
 
 interface Hippodrome {
   id: string;
@@ -163,6 +165,8 @@ export default function HippodromesPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <MarketingHeader />
+
       {/* Header */}
       <div className="bg-gradient-to-r from-primary-600 to-primary-800 text-white py-12">
         <div className="container mx-auto px-4">
@@ -377,6 +381,8 @@ export default function HippodromesPage() {
           </p>
         </div>
       </div>
+
+      <MarketingFooter />
     </div>
   );
 }

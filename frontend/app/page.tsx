@@ -4,10 +4,13 @@ import {
   Zap, Users, Clock, Trophy, ChevronRight, Star,
   Calendar, Newspaper, LineChart, Map
 } from 'lucide-react';
+import MarketingHeader from '@/components/marketing/MarketingHeader';
+import MarketingFooter from '@/components/marketing/MarketingFooter';
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-white">
+      <MarketingHeader />
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-br from-primary-600 via-primary-700 to-primary-900 text-white">
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
@@ -483,48 +486,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-gray-300 py-12">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
-            <div>
-              <h3 className="text-white font-bold text-lg mb-4">BetTracker Pro</h3>
-              <p className="text-sm">
-                La plateforme complète pour gérer et optimiser vos paris hippiques PMU.
-              </p>
-            </div>
-            <div>
-              <h4 className="text-white font-semibold mb-4">Produit</h4>
-              <ul className="space-y-2 text-sm">
-                <li><Link href="/fonctionnalites" className="hover:text-white transition-colors">Fonctionnalités</Link></li>
-                <li><Link href="/tarifs" className="hover:text-white transition-colors">Tarifs</Link></li>
-                <li><Link href="/pronostics" className="hover:text-white transition-colors">Pronostics</Link></li>
-                <li><Link href="/calendrier-courses" className="hover:text-white transition-colors">Calendrier</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-white font-semibold mb-4">Ressources</h4>
-              <ul className="space-y-2 text-sm">
-                <li><Link href="/blog" className="hover:text-white transition-colors">Blog</Link></li>
-                <li><Link href="/hippodromes" className="hover:text-white transition-colors">Guide Hippodromes</Link></li>
-                <li><Link href="/aide" className="hover:text-white transition-colors">Centre d'aide</Link></li>
-                <li><Link href="/contact" className="hover:text-white transition-colors">Contact</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-white font-semibold mb-4">Légal</h4>
-              <ul className="space-y-2 text-sm">
-                <li><Link href="/mentions-legales" className="hover:text-white transition-colors">Mentions légales</Link></li>
-                <li><Link href="/confidentialite" className="hover:text-white transition-colors">Confidentialité</Link></li>
-                <li><Link href="/cgu" className="hover:text-white transition-colors">CGU</Link></li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-gray-800 pt-8 text-center text-sm">
-            <p>&copy; 2024 BetTracker Pro. Tous droits réservés.</p>
-          </div>
-        </div>
-      </footer>
+      <MarketingFooter />
     </div>
   );
 }

@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { Trophy, Star, TrendingUp, Target, ChevronRight, Calendar, Clock, Award, Zap } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import MarketingHeader from '@/components/marketing/MarketingHeader';
+import MarketingFooter from '@/components/marketing/MarketingFooter';
 
 interface Pronostic {
   id: string;
@@ -212,6 +214,8 @@ export default function PronosticsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <MarketingHeader />
+
       {/* Header */}
       <div className="bg-gradient-to-r from-yellow-500 via-yellow-600 to-orange-600 text-white py-12">
         <div className="container mx-auto px-4">
@@ -479,6 +483,8 @@ export default function PronosticsPage() {
           </p>
         </div>
       </div>
+
+      <MarketingFooter />
     </div>
   );
 }

@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { Calendar, Clock, MapPin, Trophy, ChevronRight, Search, Filter } from 'lucide-react';
 import { format, addDays, startOfDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import MarketingHeader from '@/components/marketing/MarketingHeader';
+import MarketingFooter from '@/components/marketing/MarketingFooter';
 
 interface Race {
   id: string;
@@ -94,6 +96,8 @@ export default function CalendrierCourses() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <MarketingHeader />
+
       {/* Header */}
       <div className="bg-gradient-to-r from-primary-600 to-primary-800 text-white py-12">
         <div className="container mx-auto px-4">
@@ -329,6 +333,8 @@ export default function CalendrierCourses() {
           </p>
         </div>
       </div>
+
+      <MarketingFooter />
     </div>
   );
 }

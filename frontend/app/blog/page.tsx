@@ -5,6 +5,8 @@ import { Newspaper, Clock, User, TrendingUp, ChevronRight, Search } from 'lucide
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useState } from 'react';
+import MarketingHeader from '@/components/marketing/MarketingHeader';
+import MarketingFooter from '@/components/marketing/MarketingFooter';
 
 interface Article {
   id: string;
@@ -136,6 +138,8 @@ export default function BlogPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <MarketingHeader />
+
       {/* Header */}
       <div className="bg-gradient-to-r from-primary-600 to-primary-800 text-white py-12">
         <div className="container mx-auto px-4">
@@ -324,6 +328,8 @@ export default function BlogPage() {
           </p>
         </div>
       </div>
+
+      <MarketingFooter />
     </div>
   );
 }

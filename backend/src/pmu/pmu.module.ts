@@ -9,8 +9,10 @@ import { PmuPronosticAnalyzerService } from './pmu-pronostic-analyzer.service';
 import { PmuDailySyncService } from './pmu-daily-sync.service';
 import { PmuHistoryCollectorService } from './pmu-history-collector.service';
 import { PmuDailyPronosticService } from './pmu-daily-pronostic.service';
+import { PmuMergeService } from './pmu-merge.service';
 import { WeatherService } from './weather.service';
 import { WeatherCacheService } from './weather-cache.service';
+import { LeTrotService } from './letrot.service';
 import { PrismaService } from '../prisma.service';
 import { EmailModule } from '../email/email.module';
 import { NotificationsModule } from '../notifications/notifications.module';
@@ -25,12 +27,14 @@ import { NotificationsModule } from '../notifications/notifications.module';
     PmuAiService,
     PmuPronosticAnalyzerService,
     PmuDailyPronosticService,
+    PmuMergeService,
     WeatherService,
     WeatherCacheService,
     PmuDailySyncService,
     PmuHistoryCollectorService,
+    LeTrotService,
     PrismaService,
   ],
-  exports: [PmuService, PmuDataService, PmuHistoryCollectorService, PmuPronosticAnalyzerService],
+  exports: [PmuService, PmuDataService, PmuHistoryCollectorService, PmuPronosticAnalyzerService, LeTrotService],
 })
 export class PmuModule {}

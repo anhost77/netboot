@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { PmuService } from './pmu.service';
+import { PmuDataService } from './pmu-data.service';
 
 @Injectable()
 export class PmuHistoryCollectorService {
@@ -9,6 +10,7 @@ export class PmuHistoryCollectorService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly pmuService: PmuService,
+    private readonly pmuDataService: PmuDataService,
   ) {}
 
   /**
@@ -35,7 +37,29 @@ export class PmuHistoryCollectorService {
           continue;
         }
 
-        // Process each meeting
+        // ÉTAPE 1: Enrichir avec les données complètes (âge, sexe, entraîneur)
+        this.logger.log(`🔄 Enrichissement des données pour ${currentDate.toISOString().split('T')[0]}...`);
+        
+        try {
+          // Pour chaque course, enregistrer les participants avec toutes les données
+          for (const meeting of program.meetings) {
+            for (const race of meeting.races) {
+              await this.pmuDataService.savePmuData({
+                date: currentDate.toISOString().split('T')[0],
+                reunionNumber: meeting.number,
+                raceNumber: race.number,
+                hippodromeCode: meeting.hippodrome.code,
+                hippodromeName: meeting.hippodrome.name,
+                hippodromeFullName: meeting.hippodrome.fullName,
+              });
+            }
+          }
+          this.logger.log(`✅ Données enrichies pour ${currentDate.toISOString().split('T')[0]}`);
+        } catch (error) {
+          this.logger.warn(`⚠️ Impossible d'enrichir ${currentDate.toISOString().split('T')[0]}: ${error.message}`);
+        }
+
+        // ÉTAPE 2: Collecter les performances historiques
         for (const meeting of program.meetings) {
           for (const race of meeting.races) {
             totalRaces++;
@@ -154,14 +178,35 @@ export class PmuHistoryCollectorService {
             number: participant.numPmu,
             name: participant.nomCheval,
             arrivalOrder: null, // Will be updated when results are available
-            recentForm: null,
-            blinkers: false,
-            unshod: null,
-            firstTime: false,
-            odds: null,
+            recentForm: participant.musique || null,
+            blinkers: participant.oeilleres || false,
+            unshod: participant.deferre || null,
+            firstTime: participant.inedit || false,
+            odds: participant.rapport ? parseFloat(participant.rapport) : null,
+            // Informations du cheval
+            jockey: participant.driver || participant.jockey || null,
+            trainer: participant.entraineur || null,
+            age: participant.age || null,
+            sex: participant.sexe || null,
+            weight: participant.handicapPoids || null,
+            rope: participant.corde || null,
+            totalEarnings: participant.gainsCarriere || null,
+            careerStarts: participant.nombreCourses || null,
+            careerWins: participant.nombreVictoires || null,
+            careerPlaces: participant.nombrePlaces || null,
           },
           update: {
             name: participant.nomCheval,
+            recentForm: participant.musique || null,
+            jockey: participant.driver || participant.jockey || null,
+            trainer: participant.entraineur || null,
+            age: participant.age || null,
+            sex: participant.sexe || null,
+            weight: participant.handicapPoids || null,
+            totalEarnings: participant.gainsCarriere || null,
+            careerStarts: participant.nombreCourses || null,
+            careerWins: participant.nombreVictoires || null,
+            careerPlaces: participant.nombrePlaces || null,
           },
         });
 
@@ -211,11 +256,11 @@ export class PmuHistoryCollectorService {
             nbParticipants: perf.nbParticipants,
             arrivalPosition: horsePerf.place?.place || null,
             status: horsePerf.place?.statusArrivee || null,
-            jockey: horsePerf.nomJockey,
-            trainer: horsePerf.nomEntraineur || null,
-            reductionKilometrique: horsePerf.reductionKilometrique,
-            distanceParcourue: horsePerf.distanceParcourue,
-            winnerTime: perf.tempsDuPremier,
+            jockey: horsePerf.nomJockey || null,
+            trainer: null, // L'API PMU ne fournit pas l'entraîneur dans l'historique
+            reductionKilometrique: horsePerf.reductionKilometrique || null,
+            distanceParcourue: horsePerf.distanceParcourue || null,
+            winnerTime: perf.tempsDuPremier || null,
             rawData: perf, // Store complete raw JSON data
           },
           update: {
@@ -226,11 +271,11 @@ export class PmuHistoryCollectorService {
             nbParticipants: perf.nbParticipants,
             arrivalPosition: horsePerf.place?.place || null,
             status: horsePerf.place?.statusArrivee || null,
-            jockey: horsePerf.nomJockey,
-            trainer: horsePerf.nomEntraineur || null,
-            reductionKilometrique: horsePerf.reductionKilometrique,
-            distanceParcourue: horsePerf.distanceParcourue,
-            winnerTime: perf.tempsDuPremier,
+            jockey: horsePerf.nomJockey || null,
+            trainer: null, // L'API PMU ne fournit pas l'entraîneur dans l'historique
+            reductionKilometrique: horsePerf.reductionKilometrique || null,
+            distanceParcourue: horsePerf.distanceParcourue || null,
+            winnerTime: perf.tempsDuPremier || null,
             rawData: perf, // Update with complete raw JSON data
           },
         });

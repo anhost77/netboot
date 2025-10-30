@@ -23,7 +23,15 @@
     "prisma:studio": "prisma studio",
     "seed": "ts-node prisma/seed.ts",
     "collect-pmu-history": "ts-node -r tsconfig-paths/register src/cli/collect-pmu-history.ts",
-    "create-admin": "ts-node -r tsconfig-paths/register src/cli/create-admin.ts"
+    "create-admin": "ts-node -r tsconfig-paths/register src/cli/create-admin.ts",
+    "merge-horses": "ts-node -r tsconfig-paths/register scripts/merge-horses.ts",
+    "check-horse-data": "ts-node -r tsconfig-paths/register scripts/check-horse-data.ts",
+    "inspect-pmu-data": "ts-node -r tsconfig-paths/register scripts/inspect-pmu-data.ts",
+    "test-letrot": "ts-node -r tsconfig-paths/register scripts/test-letrot-api.ts",
+    "analyze-raw-data": "ts-node -r tsconfig-paths/register scripts/analyze-raw-data.ts",
+    "inspect-participants": "ts-node -r tsconfig-paths/register scripts/inspect-participants.ts",
+    "check-synced-data": "ts-node -r tsconfig-paths/register scripts/check-synced-data.ts",
+    "enrich-historical-data": "ts-node -r tsconfig-paths/register scripts/enrich-historical-data.ts"
   },
   "dependencies": {
     "@bull-board/api": "^6.14.0",

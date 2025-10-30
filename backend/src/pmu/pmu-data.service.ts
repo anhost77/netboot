@@ -108,9 +108,10 @@ export class PmuDataService {
       // 4. Save horses if we have participants data
       this.logger.debug(`Participants data: ${JSON.stringify(participants)}`);
       
-      if (participants?.participants) {
-        this.logger.log(`Saving ${participants.participants.length} horses for race R${reunionNumber}C${raceNumber}`);
-        for (const participant of participants.participants) {
+      // participants est déjà un tableau depuis formatParticipantsData
+      if (participants && Array.isArray(participants) && participants.length > 0) {
+        this.logger.log(`Saving ${participants.length} horses for race R${reunionNumber}C${raceNumber}`);
+        for (const participant of participants) {
           // Convert API values to boolean
           const hasBlinkers = participant.blinkers && participant.blinkers !== 'SANS_OEILLERES';
           
@@ -131,17 +132,17 @@ export class PmuDataService {
               unshod: participant.unshod || null,
               firstTime: participant.firstTime || false,
               odds: participant.odds || null,
-              // Nouvelles données pour l'analyse
+              // Données complètes depuis formatParticipantsData
               jockey: participant.jockey || null,
               trainer: participant.trainer || null,
               age: participant.age || null,
-              sex: participant.sex || participant.sexe || null,
-              weight: participant.weight || participant.poids || null,
-              rope: participant.rope || participant.corde || null,
-              totalEarnings: participant.totalEarnings || participant.gainsCarriere || null,
-              careerStarts: participant.careerStarts || participant.nombreCourses || null,
-              careerWins: participant.careerWins || participant.nombreVictoires || null,
-              careerPlaces: participant.careerPlaces || participant.nombrePlaces || null,
+              sex: participant.sex || null,
+              weight: participant.raw?.poids || participant.raw?.handicapPoids || null,
+              rope: participant.raw?.corde || null,
+              totalEarnings: participant.raw?.gainsCarriere || participant.raw?.gainsVieEntiere || null,
+              careerStarts: participant.raw?.nombreCourses || null,
+              careerWins: participant.raw?.nombreVictoires || null,
+              careerPlaces: participant.raw?.nombrePlaces || null,
             },
             update: {
               name: participant.name,
@@ -151,17 +152,17 @@ export class PmuDataService {
               unshod: participant.unshod || null,
               firstTime: participant.firstTime || false,
               odds: participant.odds || null,
-              // Nouvelles données pour l'analyse
+              // Données complètes depuis formatParticipantsData
               jockey: participant.jockey || null,
               trainer: participant.trainer || null,
               age: participant.age || null,
-              sex: participant.sex || participant.sexe || null,
-              weight: participant.weight || participant.poids || null,
-              rope: participant.rope || participant.corde || null,
-              totalEarnings: participant.totalEarnings || participant.gainsCarriere || null,
-              careerStarts: participant.careerStarts || participant.nombreCourses || null,
-              careerWins: participant.careerWins || participant.nombreVictoires || null,
-              careerPlaces: participant.careerPlaces || participant.nombrePlaces || null,
+              sex: participant.sex || null,
+              weight: participant.raw?.poids || participant.raw?.handicapPoids || null,
+              rope: participant.raw?.corde || null,
+              totalEarnings: participant.raw?.gainsCarriere || participant.raw?.gainsVieEntiere || null,
+              careerStarts: participant.raw?.nombreCourses || null,
+              careerWins: participant.raw?.nombreVictoires || null,
+              careerPlaces: participant.raw?.nombrePlaces || null,
             },
           });
         }

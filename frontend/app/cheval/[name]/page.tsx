@@ -8,6 +8,22 @@ import Link from 'next/link';
 import { Trophy, TrendingUp, Target, Calendar, MapPin, User } from 'lucide-react';
 import { API_URL } from '@/lib/config';
 
+interface HorseInfo {
+  age: number | null;
+  sex: string | null;
+  weight: number | null;
+  jockey: string | null;
+  trainer: string | null;
+  recentForm: string | null;
+  totalEarnings: number | null;
+  careerStarts: number | null;
+  careerWins: number | null;
+  careerPlaces: number | null;
+  breeder: string | null;
+  owner: string | null;
+  breed: string | null;
+}
+
 interface HorseStats {
   totalRaces: number;
   wins: number;
@@ -32,6 +48,7 @@ interface Performance {
 interface HorseData {
   id: string;
   name: string;
+  info: HorseInfo;
   stats: HorseStats;
   recentPerformances: Performance[];
 }
@@ -52,7 +69,7 @@ export default function ChevalDetailPage() {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch(`${API_URL}/api/pmu/public/horse/${encodeURIComponent(name)}`);
+      const response = await fetch(`${API_URL}/pmu-test/public/horse/${encodeURIComponent(name)}`);
       if (response.ok) {
         const data = await response.json();
         setHorse(data);
@@ -118,7 +135,7 @@ export default function ChevalDetailPage() {
       {/* Stats */}
       <div className="container mx-auto px-4 -mt-8">
         <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div className="bg-white rounded-xl shadow-lg p-6 text-center">
               <TrendingUp className="w-8 h-8 text-primary-600 mx-auto mb-2" />
               <div className="text-3xl font-bold text-gray-900">{horse.stats.totalRaces}</div>
@@ -138,6 +155,79 @@ export default function ChevalDetailPage() {
               <TrendingUp className="w-8 h-8 text-green-500 mx-auto mb-2" />
               <div className="text-3xl font-bold text-gray-900">{horse.stats.winRate}%</div>
               <div className="text-sm text-gray-600">Taux victoire</div>
+            </div>
+          </div>
+
+          {/* Infos détaillées */}
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Informations</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {horse.info.age && (
+                <div>
+                  <div className="text-sm text-gray-500">Âge</div>
+                  <div className="text-lg font-semibold text-gray-900">{horse.info.age} ans</div>
+                </div>
+              )}
+              {horse.info.sex && (
+                <div>
+                  <div className="text-sm text-gray-500">Sexe</div>
+                  <div className="text-lg font-semibold text-gray-900">{horse.info.sex}</div>
+                </div>
+              )}
+              {horse.info.weight && (
+                <div>
+                  <div className="text-sm text-gray-500">Poids porté</div>
+                  <div className="text-lg font-semibold text-gray-900">{horse.info.weight} kg</div>
+                </div>
+              )}
+              {horse.info.totalEarnings && (
+                <div>
+                  <div className="text-sm text-gray-500">Gains totaux</div>
+                  <div className="text-lg font-semibold text-gray-900">{horse.info.totalEarnings.toLocaleString('fr-FR')} €</div>
+                </div>
+              )}
+              {horse.info.trainer && (
+                <div>
+                  <div className="text-sm text-gray-500">Entraîneur</div>
+                  <div className="text-lg font-semibold text-gray-900">{horse.info.trainer}</div>
+                </div>
+              )}
+              {horse.info.jockey && (
+                <div>
+                  <div className="text-sm text-gray-500">Jockey</div>
+                  <div className="text-lg font-semibold text-gray-900">{horse.info.jockey}</div>
+                </div>
+              )}
+              {horse.info.recentForm && (
+                <div>
+                  <div className="text-sm text-gray-500">Musique</div>
+                  <div className="text-lg font-semibold text-gray-900 font-mono">{horse.info.recentForm}</div>
+                </div>
+              )}
+              {horse.stats.avgPosition && (
+                <div>
+                  <div className="text-sm text-gray-500">Position moyenne</div>
+                  <div className="text-lg font-semibold text-gray-900">{horse.stats.avgPosition}e</div>
+                </div>
+              )}
+              {horse.info.breeder && (
+                <div>
+                  <div className="text-sm text-gray-500">Éleveur</div>
+                  <div className="text-lg font-semibold text-gray-900">{horse.info.breeder}</div>
+                </div>
+              )}
+              {horse.info.owner && (
+                <div>
+                  <div className="text-sm text-gray-500">Propriétaire</div>
+                  <div className="text-lg font-semibold text-gray-900">{horse.info.owner}</div>
+                </div>
+              )}
+              {horse.info.breed && (
+                <div>
+                  <div className="text-sm text-gray-500">Race</div>
+                  <div className="text-lg font-semibold text-gray-900">{horse.info.breed}</div>
+                </div>
+              )}
             </div>
           </div>
         </div>

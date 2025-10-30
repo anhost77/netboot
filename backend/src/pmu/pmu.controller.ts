@@ -2456,38 +2456,25 @@ export class PmuTestController {
       },
     } : {};
 
+    // Utiliser la table UniqueHorse
     const [horses, total] = await Promise.all([
-      this.prisma.pmuHorse.findMany({
+      this.prisma.uniqueHorse.findMany({
         where,
         skip,
         take: limit,
         orderBy: { name: 'asc' },
-        include: {
-          performances: {
-            select: {
-              arrivalPosition: true,
-              status: true,
-            },
-          },
-        },
       }),
-      this.prisma.pmuHorse.count({ where }),
+      this.prisma.uniqueHorse.count({ where }),
     ]);
 
-    const horsesWithStats = horses.map(horse => {
-      const totalRaces = horse.performances.length;
-      const wins = horse.performances.filter(p => p.arrivalPosition === 1).length;
-      const podiums = horse.performances.filter(p => p.arrivalPosition && p.arrivalPosition <= 3).length;
-
-      return {
-        id: horse.id,
-        name: horse.name,
-        totalRaces,
-        wins,
-        podiums,
-        winRate: totalRaces > 0 ? Math.round((wins / totalRaces) * 100) : 0,
-      };
-    });
+    const horsesWithStats = horses.map(horse => ({
+      id: horse.id,
+      name: horse.name,
+      totalRaces: horse.careerStarts,
+      wins: horse.careerWins,
+      podiums: horse.careerPlaces,
+      winRate: horse.careerStarts > 0 ? Math.round((horse.careerWins / horse.careerStarts) * 100) : 0,
+    }));
 
     return {
       horses: horsesWithStats,
@@ -2504,30 +2491,31 @@ export class PmuTestController {
   @Get('public/horse/:name')
   @ApiOperation({ summary: 'Get horse details by name (public)' })
   async getPublicHorseByName(@Param('name') name: string) {
-    // Trouver le cheval
-    const horse = await this.prisma.pmuHorse.findFirst({
-      where: {
-        name: {
-          equals: name,
-          mode: 'insensitive' as any,
-        },
-      },
+    // Trouver le cheval unique
+    const horse = await this.prisma.uniqueHorse.findUnique({
+      where: { name },
     });
 
     if (!horse) {
       throw new HttpException('Cheval non trouvé', HttpStatus.NOT_FOUND);
     }
 
+    // Récupérer un PmuHorse pour avoir l'ID et les performances
+    const pmuHorse = await this.prisma.pmuHorse.findFirst({
+      where: { name },
+    });
+
+    if (!pmuHorse) {
+      throw new HttpException('Données de performance non trouvées', HttpStatus.NOT_FOUND);
+    }
+
     // Récupérer les performances
     const performances = await this.prisma.pmuHorsePerformance.findMany({
-      where: { horseId: horse.id },
+      where: { horseId: pmuHorse.id },
       orderBy: { date: 'desc' },
       take: 20,
     });
 
-    const totalRaces = performances.length;
-    const wins = performances.filter(p => p.arrivalPosition === 1).length;
-    const podiums = performances.filter(p => p.arrivalPosition && p.arrivalPosition <= 3).length;
     const positions = performances
       .filter(p => p.arrivalPosition !== null)
       .map(p => p.arrivalPosition!);
@@ -2538,12 +2526,27 @@ export class PmuTestController {
     return {
       id: horse.id,
       name: horse.name,
+      info: {
+        age: horse.age,
+        sex: horse.sex,
+        weight: null, // Pas stocké dans UniqueHorse
+        jockey: horse.currentJockey,
+        trainer: horse.currentTrainer,
+        recentForm: horse.recentForm,
+        totalEarnings: horse.totalEarnings,
+        careerStarts: horse.careerStarts,
+        careerWins: horse.careerWins,
+        careerPlaces: horse.careerPlaces,
+        breeder: horse.breeder,
+        owner: horse.owner,
+        breed: horse.breed,
+      },
       stats: {
-        totalRaces,
-        wins,
-        podiums,
-        winRate: totalRaces > 0 ? Math.round((wins / totalRaces) * 100) : 0,
-        podiumRate: totalRaces > 0 ? Math.round((podiums / totalRaces) * 100) : 0,
+        totalRaces: horse.careerStarts,
+        wins: horse.careerWins,
+        podiums: horse.careerPlaces,
+        winRate: horse.careerStarts > 0 ? Math.round((horse.careerWins / horse.careerStarts) * 100) : 0,
+        podiumRate: horse.careerStarts > 0 ? Math.round((horse.careerPlaces / horse.careerStarts) * 100) : 0,
         avgPosition: avgPosition ? Math.round(avgPosition * 10) / 10 : null,
       },
       recentPerformances: performances.slice(0, 10).map(p => ({

@@ -3,6 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../prisma.service';
 import { PmuService } from './pmu.service';
 import { PmuDataService } from './pmu-data.service';
+import { PmuHistoryCollectorService } from './pmu-history-collector.service';
 
 @Injectable()
 export class PmuDailySyncService {
@@ -12,6 +13,7 @@ export class PmuDailySyncService {
     private prisma: PrismaService,
     private pmuService: PmuService,
     private pmuDataService: PmuDataService,
+    private historyCollector: PmuHistoryCollectorService,
   ) {
     this.logger.log('✅ PmuDailySyncService initialized');
   }
@@ -221,6 +223,32 @@ export class PmuDailySyncService {
       );
     } catch (error) {
       this.logger.error(`Error in daily results sync: ${error.message}`);
+    }
+  }
+
+  /**
+   * Cron job qui s'exécute tous les dimanches à 3h du matin
+   * Collecte l'historique des 7 derniers jours pour enrichir les données
+   */
+  @Cron('0 3 * * 0', {
+    name: 'weekly-history-sync',
+    timeZone: 'Europe/Paris',
+  })
+  async syncWeeklyHistory() {
+    this.logger.log('🔄 Starting weekly history collection (last 7 days)...');
+
+    try {
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - 7);
+
+      this.logger.log(`📅 Collecting from ${startDate.toISOString().split('T')[0]} to ${endDate.toISOString().split('T')[0]}`);
+
+      await this.historyCollector.collectHistoricalData(startDate, endDate);
+
+      this.logger.log('✅ Weekly history collection completed');
+    } catch (error) {
+      this.logger.error(`Error in weekly history sync: ${error.message}`);
     }
   }
 

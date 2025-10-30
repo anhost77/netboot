@@ -269,6 +269,10 @@ export class PmuService {
       name: participant.nom,
       jockey: participant.driver || participant.jockey || null, // driver pour le trot, jockey pour le plat
       trainer: participant.entraineur || participant.nomEntraineur || null, // Entraîneur
+      age: participant.age || null,
+      sex: participant.sexe || null,
+      breed: participant.race || null, // Race du cheval (Pur-sang, Trotteur, etc.)
+      owner: participant.proprietaire || null, // Propriétaire
       ordreArrivee: participant.ordreArrivee,
       arrivalOrder: participant.ordreArrivee,
       unshod: participant.deferre,
@@ -276,6 +280,8 @@ export class PmuService {
       firstTime: participant.indicateurInedit,
       recentForm: participant.musique,
       odds: participant.rapportProbable || participant.rapportDirect || null,
+      // Garder toutes les données brutes pour référence
+      raw: participant,
     }));
 
     return participants;

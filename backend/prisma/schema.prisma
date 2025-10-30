@@ -142,6 +142,39 @@ model PmuHorse {
   @@map("pmu_horses")
 }
 
+// Table des chevaux uniques (un seul enregistrement par cheval)
+model UniqueHorse {
+  id              String    @id @default(uuid())
+  name            String    @unique // Nom du cheval (unique)
+  
+  // Informations du cheval
+  age             Int?      // Âge actuel
+  sex             String?   // Sexe (M/F/H)
+  breed           String?   // Race (Pur-sang, Trotteur, etc.)
+  breeder         String?   // Éleveur
+  owner           String?   // Propriétaire
+  
+  // Entraîneur et jockey principaux (les plus récents)
+  currentTrainer  String?   @map("current_trainer")
+  currentJockey   String?   @map("current_jockey")
+  
+  // Statistiques de carrière
+  totalEarnings   Int?      @map("total_earnings") // Gains totaux en €
+  careerStarts    Int       @default(0) @map("career_starts") // Nombre de courses
+  careerWins      Int       @default(0) @map("career_wins") // Nombre de victoires
+  careerPlaces    Int       @default(0) @map("career_places") // Nombre de places (2ème, 3ème)
+  
+  // Forme récente (musique)
+  recentForm      String?   @map("recent_form") // Ex: "1p2p3p"
+  
+  // Métadonnées
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  lastRaceDate    DateTime? @map("last_race_date") // Date de la dernière course
+  
+  @@map("unique_horses")
+}
+
 // Historical performances for each horse
 model PmuHorsePerformance {
   id                    String    @id @default(uuid())

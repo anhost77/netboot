@@ -898,6 +898,36 @@ export class PmuController {
     return reports;
   }
 
+  @Public()
+  @Get('sync-today')
+  @ApiOperation({ summary: 'Manually sync today\'s program (public access for cron)' })
+  async syncToday() {
+    const { PmuDailySyncService } = await import('./pmu-daily-sync.service');
+    const syncService = new PmuDailySyncService(
+      this.prisma,
+      this.pmuService,
+      this.pmuDataService,
+    );
+
+    await syncService.syncDailyProgram();
+    return { message: 'Daily program sync triggered' };
+  }
+
+  @Public()
+  @Get('sync-yesterday-results')
+  @ApiOperation({ summary: 'Manually sync yesterday\'s results (public access for cron)' })
+  async syncYesterdayResults() {
+    const { PmuDailySyncService } = await import('./pmu-daily-sync.service');
+    const syncService = new PmuDailySyncService(
+      this.prisma,
+      this.pmuService,
+      this.pmuDataService,
+    );
+
+    await syncService.syncDailyResults();
+    return { message: 'Yesterday results sync triggered' };
+  }
+
 }
 
 // Contrôleur séparé pour les tests

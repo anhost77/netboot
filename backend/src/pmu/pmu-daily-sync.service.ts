@@ -67,17 +67,26 @@ export class PmuDailySyncService {
 
             if (raceDetails && raceDetails.participants) {
               // Sauvegarder la course et ses participants
-              const raceId = await this.pmuDataService.savePmuData(
-                raceDetails,
-              );
+              const raceId = await this.pmuDataService.savePmuData({
+                date: today.toISOString().split('T')[0],
+                reunionNumber: reunionNumber,
+                raceNumber: raceNumber,
+                hippodromeCode: meeting.hippodrome.code,
+                hippodromeName: meeting.hippodrome.name,
+                hippodromeFullName: meeting.hippodrome.fullName,
+              });
 
               if (raceId) {
                 totalRacesSaved++;
                 totalHorsesSaved += raceDetails.participants.length;
                 this.logger.log(
-                  `✅ Saved race R${reunionNumber}C${raceNumber} with ${raceDetails.participants.length} horses`,
+                  `  ✅ Saved race R${reunionNumber}C${raceNumber} with ${raceDetails.participants.length} horses`,
                 );
+              } else {
+                this.logger.warn(`  ⚠️ Failed to save R${reunionNumber}C${raceNumber}`);
               }
+            } else {
+              this.logger.warn(`  ⚠️ No participants for R${reunionNumber}C${raceNumber}`);
             }
 
             // Attendre un peu entre chaque requête pour ne pas surcharger l'API

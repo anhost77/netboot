@@ -2,7 +2,7 @@
 
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import {
   TrendingUp, Target, BarChart3, Wallet, Bell, Shield,
   Zap, Users, Clock, Trophy, ChevronRight, Star,
@@ -11,7 +11,7 @@ import {
   Eye, TrendingDown, DollarSign, Filter, BarChart,
   PieChart, Activity, Award, Settings, Smartphone,
   PlayCircle, CheckCheck, ArrowRight, Sparkles, Code,
-  MessageSquare, Server, Puzzle, Webhook, Key
+  MessageSquare, Server, Puzzle, Webhook, Key, ChevronLeft
 } from 'lucide-react';
 import MarketingHeader from '@/components/marketing/MarketingHeader';
 import MarketingFooter from '@/components/marketing/MarketingFooter';
@@ -339,6 +339,21 @@ export default function FonctionnalitesPage() {
   const [activeTab, setActiveTab] = useState('debutant');
   const activeCategory = categories.find(cat => cat.id === activeTab) || categories[0];
   const CategoryIcon = activeCategory.icon;
+  const tabsRef = useRef<HTMLDivElement>(null);
+
+  const scrollTabs = (direction: 'left' | 'right') => {
+    if (tabsRef.current) {
+      const scrollAmount = 200;
+      const newScrollLeft = direction === 'left'
+        ? tabsRef.current.scrollLeft - scrollAmount
+        : tabsRef.current.scrollLeft + scrollAmount;
+
+      tabsRef.current.scrollTo({
+        left: newScrollLeft,
+        behavior: 'smooth'
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -382,8 +397,18 @@ export default function FonctionnalitesPage() {
 
       {/* Tabs Navigation */}
       <section className="sticky top-16 z-40 bg-white border-b border-gray-200 shadow-sm">
-        <div className="container mx-auto px-4">
-          <div className="flex overflow-x-auto scrollbar-hide">
+        <div className="container mx-auto px-4 relative">
+          {/* Flèche gauche */}
+          <button
+            onClick={() => scrollTabs('left')}
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white p-2 rounded-full shadow-md md:hidden border border-gray-200"
+            aria-label="Défiler vers la gauche"
+          >
+            <ChevronLeft className="w-5 h-5 text-gray-700" />
+          </button>
+
+          {/* Tabs */}
+          <div ref={tabsRef} className="flex overflow-x-auto scrollbar-hide scroll-smooth">
             {categories.map((category) => {
               const Icon = category.icon;
               const isActive = activeTab === category.id;
@@ -403,6 +428,15 @@ export default function FonctionnalitesPage() {
               );
             })}
           </div>
+
+          {/* Flèche droite */}
+          <button
+            onClick={() => scrollTabs('right')}
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white p-2 rounded-full shadow-md md:hidden border border-gray-200"
+            aria-label="Défiler vers la droite"
+          >
+            <ChevronRight className="w-5 h-5 text-gray-700" />
+          </button>
         </div>
       </section>
 

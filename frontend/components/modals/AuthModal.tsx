@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { X } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
+import { authAPI } from '@/lib/api/auth';
 import { notificationService } from '@/lib/notification-service';
 
 interface LoginForm {
@@ -20,6 +21,10 @@ interface RegisterForm {
   lastName?: string;
 }
 
+interface ForgotPasswordForm {
+  email: string;
+}
+
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -30,9 +35,11 @@ interface AuthModalProps {
 export function AuthModal({ isOpen, onClose, mode, onSwitchMode }: AuthModalProps) {
   const { login, register: registerUser } = useAuth();
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [requiresTwoFactor, setRequiresTwoFactor] = useState(false);
   const [credentials, setCredentials] = useState({ email: '', password: '' });
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   const {
     register: registerLogin,
@@ -49,6 +56,13 @@ export function AuthModal({ isOpen, onClose, mode, onSwitchMode }: AuthModalProp
     reset: resetReg,
   } = useForm<RegisterForm>();
 
+  const {
+    register: registerForgot,
+    handleSubmit: handleSubmitForgot,
+    formState: { errors: errorsForgot },
+    reset: resetForgot,
+  } = useForm<ForgotPasswordForm>();
+
   const password = watch('password');
 
   // Reset forms when modal closes or mode changes
@@ -56,15 +70,20 @@ export function AuthModal({ isOpen, onClose, mode, onSwitchMode }: AuthModalProp
     if (!isOpen) {
       resetLogin();
       resetReg();
+      resetForgot();
       setError('');
+      setSuccess('');
       setRequiresTwoFactor(false);
       setCredentials({ email: '', password: '' });
+      setShowForgotPassword(false);
     }
-  }, [isOpen, resetLogin, resetReg]);
+  }, [isOpen, resetLogin, resetReg, resetForgot]);
 
   useEffect(() => {
     setError('');
+    setSuccess('');
     setRequiresTwoFactor(false);
+    setShowForgotPassword(false);
   }, [mode]);
 
   const onSubmitLogin = async (data: LoginForm) => {
@@ -152,6 +171,36 @@ export function AuthModal({ isOpen, onClose, mode, onSwitchMode }: AuthModalProp
     }
   };
 
+  const onSubmitForgotPassword = async (data: ForgotPasswordForm) => {
+    setIsLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      await authAPI.requestPasswordReset(data.email);
+      setSuccess('Un email de réinitialisation a été envoyé à votre adresse. Veuillez vérifier votre boîte de réception.');
+      notificationService.success(
+        'Email envoyé',
+        'Consultez votre boîte de réception pour réinitialiser votre mot de passe'
+      );
+    } catch (err: any) {
+      console.error('Forgot password error:', err);
+      let errorMessage = 'Échec de l\'envoi de l\'email.';
+
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message === 'Network Error' || !err.response) {
+        errorMessage = 'Impossible de se connecter au serveur.';
+      } else if (err.response?.status >= 500) {
+        errorMessage = 'Erreur serveur. Veuillez réessayer plus tard.';
+      }
+
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -177,9 +226,11 @@ export function AuthModal({ isOpen, onClose, mode, onSwitchMode }: AuthModalProp
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">🏇 BetTracker Pro</h1>
             <p className="text-gray-600">
-              {mode === 'login'
-                ? (requiresTwoFactor ? 'Authentification à deux facteurs' : 'Connectez-vous à votre compte')
-                : 'Créez votre compte gratuitement'
+              {showForgotPassword
+                ? 'Réinitialiser votre mot de passe'
+                : mode === 'login'
+                  ? (requiresTwoFactor ? 'Authentification à deux facteurs' : 'Connectez-vous à votre compte')
+                  : 'Créez votre compte gratuitement'
               }
             </p>
           </div>
@@ -190,8 +241,14 @@ export function AuthModal({ isOpen, onClose, mode, onSwitchMode }: AuthModalProp
             </div>
           )}
 
+          {success && (
+            <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-md text-sm">
+              {success}
+            </div>
+          )}
+
           {/* Login Form */}
-          {mode === 'login' && (
+          {mode === 'login' && !showForgotPassword && (
             <form onSubmit={handleSubmitLogin(onSubmitLogin)} className="space-y-4">
               {!requiresTwoFactor ? (
                 <>
@@ -237,6 +294,16 @@ export function AuthModal({ isOpen, onClose, mode, onSwitchMode }: AuthModalProp
                     {errorsLogin.password && (
                       <p className="mt-1 text-sm text-red-600">{errorsLogin.password.message}</p>
                     )}
+                  </div>
+
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setShowForgotPassword(true)}
+                      className="text-sm text-primary-600 hover:text-primary-700"
+                    >
+                      Mot de passe oublié ?
+                    </button>
                   </div>
                 </>
               ) : (
@@ -397,32 +464,86 @@ export function AuthModal({ isOpen, onClose, mode, onSwitchMode }: AuthModalProp
             </form>
           )}
 
+          {/* Forgot Password Form */}
+          {showForgotPassword && mode === 'login' && (
+            <form onSubmit={handleSubmitForgot(onSubmitForgotPassword)} className="space-y-4">
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 text-blue-700 rounded-md text-sm">
+                Entrez votre adresse email pour recevoir un lien de réinitialisation.
+              </div>
+
+              <div>
+                <label htmlFor="forgot-email" className="block text-sm font-medium text-gray-700 mb-1">
+                  Email
+                </label>
+                <input
+                  {...registerForgot('email', {
+                    required: 'Email requis',
+                    pattern: {
+                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                      message: 'Email invalide',
+                    },
+                  })}
+                  type="email"
+                  id="forgot-email"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  placeholder="votre@email.com"
+                />
+                {errorsForgot.email && (
+                  <p className="mt-1 text-sm text-red-600">{errorsForgot.email.message}</p>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full bg-primary-600 text-white py-2 px-4 rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {isLoading ? 'Envoi en cours...' : 'Envoyer le lien'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowForgotPassword(false);
+                  setError('');
+                  setSuccess('');
+                  resetForgot();
+                }}
+                className="w-full text-sm text-primary-600 hover:text-primary-700"
+              >
+                ← Retour à la connexion
+              </button>
+            </form>
+          )}
+
           {/* Switch mode */}
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              {mode === 'login' ? (
-                <>
-                  Pas encore de compte ?{' '}
-                  <button
-                    onClick={() => onSwitchMode('register')}
-                    className="text-primary-600 hover:text-primary-700 font-medium"
-                  >
-                    Créer un compte
-                  </button>
-                </>
-              ) : (
-                <>
-                  Vous avez déjà un compte ?{' '}
-                  <button
-                    onClick={() => onSwitchMode('login')}
-                    className="text-primary-600 hover:text-primary-700 font-medium"
-                  >
-                    Se connecter
-                  </button>
-                </>
-              )}
-            </p>
-          </div>
+          {!showForgotPassword && (
+            <div className="mt-6 text-center">
+              <p className="text-sm text-gray-600">
+                {mode === 'login' ? (
+                  <>
+                    Pas encore de compte ?{' '}
+                    <button
+                      onClick={() => onSwitchMode('register')}
+                      className="text-primary-600 hover:text-primary-700 font-medium"
+                    >
+                      Créer un compte
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    Vous avez déjà un compte ?{' '}
+                    <button
+                      onClick={() => onSwitchMode('login')}
+                      className="text-primary-600 hover:text-primary-700 font-medium"
+                    >
+                      Se connecter
+                    </button>
+                  </>
+                )}
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

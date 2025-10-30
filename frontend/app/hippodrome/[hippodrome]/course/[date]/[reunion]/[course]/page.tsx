@@ -12,6 +12,10 @@ import MarketingFooter from '@/components/marketing/MarketingFooter';
 import { useAuthModal } from '@/contexts/AuthModalContext';
 import { API_URL } from '@/lib/config';
 
+// Force dynamic rendering pour que Next.js pré-rende le contenu IA
+export const dynamic = 'force-dynamic';
+export const revalidate = 3600; // Revalider toutes les heures
+
 interface Horse {
   number: number;
   name: string;

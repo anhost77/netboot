@@ -9,11 +9,10 @@ Site marketing complet avec optimisation SEO et services gratuits pour générer
 ### 1. Page d'Accueil Améliorée (`/`)
 - **SEO optimisé** avec métadonnées complètes
 - Section Hero avec proposition de valeur claire
-- Statistiques impressionnantes (2000+ utilisateurs, 50K+ paris)
+- Fonctionnalités clés factuelles (20+ types de paris, tous hippodromes, 2 modes)
 - 6 fonctionnalités principales détaillées
 - Services gratuits en avant
 - Grille tarifaire (4 plans)
-- Témoignages clients
 - Multiple CTAs
 
 **Mots-clés ciblés**: paris hippiques, pmu, gestion paris, statistiques turf, quinté, tiercé, quarté
@@ -32,7 +31,7 @@ Site marketing complet avec optimisation SEO et services gratuits pour générer
 - **Pronostics quotidiens** pour Quinté+ et courses principales
 - Analyses détaillées cheval par cheval
 - Sélections avec niveau de confiance
-- Statistiques de performance (75% taux réussite, +28% ROI)
+- Informations sur la fréquence et qualité des analyses
 - Filtres par type de course
 - **Génération de trafic**: Contenu premium gratuit attirant les parieurs
 

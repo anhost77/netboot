@@ -942,36 +942,6 @@ export class PmuTestController {
     private readonly prisma: PrismaService,
   ) {}
 
-  @Public()
-  @Get('sync-today')
-  @ApiOperation({ summary: 'Manually sync today\'s program (public access for cron)' })
-  async testSyncToday() {
-    const { PmuDailySyncService } = await import('./pmu-daily-sync.service');
-    const syncService = new PmuDailySyncService(
-      this.prisma,
-      this.pmuService,
-      this.pmuDataService,
-    );
-
-    await syncService.syncDailyProgram();
-    return { message: 'Daily program sync triggered' };
-  }
-
-  @Public()
-  @Get('sync-yesterday-results')
-  @ApiOperation({ summary: 'Manually sync yesterday\'s results (public access for cron)' })
-  async testSyncYesterdayResults() {
-    const { PmuDailySyncService } = await import('./pmu-daily-sync.service');
-    const syncService = new PmuDailySyncService(
-      this.prisma,
-      this.pmuService,
-      this.pmuDataService,
-    );
-
-    await syncService.syncDailyResults();
-    return { message: 'Yesterday results sync triggered' };
-  }
-
   @Get('horse-performance')
   @ApiOperation({ summary: 'Test - View horse performance stats' })
   async testHorsePerformance() {

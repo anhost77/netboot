@@ -35,14 +35,51 @@ interface Pronostic {
   isPremium: boolean;
 }
 
+interface DailySummary {
+  date: string;
+  chevalDuJour: {
+    horseNumber: number;
+    horseName: string;
+    totalScore: number;
+    jockey: string | null;
+    trainer: string | null;
+    race: {
+      id: string;
+      name: string;
+      hippodrome: string;
+      startTime: bigint;
+      distance: number;
+      discipline: string;
+    };
+  };
+  outsider: {
+    horseNumber: number;
+    horseName: string;
+    totalScore: number;
+    jockey: string | null;
+    trainer: string | null;
+    race: {
+      id: string;
+      name: string;
+      hippodrome: string;
+      startTime: bigint;
+      distance: number;
+      discipline: string;
+    };
+  } | null;
+  totalRaces: number;
+}
+
 export default function PronosticsPage() {
   const { openRegisterModal } = useAuthModal();
   const [pronostics, setPronostics] = useState<Pronostic[]>([]);
+  const [dailySummary, setDailySummary] = useState<DailySummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedType, setSelectedType] = useState<'all' | 'quinte' | 'autres'>('all');
 
   useEffect(() => {
     loadPronostics();
+    loadDailySummary();
   }, []);
 
   const loadPronostics = async () => {
@@ -65,6 +102,20 @@ export default function PronosticsPage() {
       setPronostics(generateMockPronostics());
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadDailySummary = async () => {
+    try {
+      const response = await fetch(`${API_URL}/pmu/public/daily-summary`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.summary) {
+          setDailySummary(data.summary);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading daily summary:', error);
     }
   };
 
@@ -328,6 +379,77 @@ export default function PronosticsPage() {
               Autres courses
             </button>
           </div>
+
+          {/* Synthèse du jour - Cheval du jour + Outsider */}
+          {dailySummary && (
+            <div className="grid md:grid-cols-2 gap-6 mb-8">
+              {/* Cheval du jour */}
+              <div className="bg-gradient-to-br from-yellow-400 via-yellow-500 to-orange-500 rounded-xl shadow-2xl overflow-hidden">
+                <div className="p-6 text-white">
+                  <div className="flex items-center gap-3 mb-4">
+                    <Trophy className="w-8 h-8" />
+                    <h3 className="text-2xl font-bold">🏆 Cheval du Jour</h3>
+                  </div>
+                  <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 mb-4">
+                    <div className="flex items-center gap-4 mb-3">
+                      <div className="w-16 h-16 bg-white text-yellow-600 rounded-full flex items-center justify-center font-bold text-2xl flex-shrink-0">
+                        {dailySummary.chevalDuJour.horseNumber}
+                      </div>
+                      <div>
+                        <h4 className="text-2xl font-bold">{dailySummary.chevalDuJour.horseName}</h4>
+                        <p className="text-yellow-100">Score: {dailySummary.chevalDuJour.totalScore.toFixed(1)}/100</p>
+                      </div>
+                    </div>
+                    <div className="space-y-1 text-sm">
+                      <p><strong>Course:</strong> {dailySummary.chevalDuJour.race.name}</p>
+                      <p><strong>Hippodrome:</strong> {dailySummary.chevalDuJour.race.hippodrome}</p>
+                      <p><strong>Distance:</strong> {dailySummary.chevalDuJour.race.distance}m - {dailySummary.chevalDuJour.race.discipline}</p>
+                      {dailySummary.chevalDuJour.jockey && (
+                        <p><strong>Jockey:</strong> {dailySummary.chevalDuJour.jockey}</p>
+                      )}
+                    </div>
+                  </div>
+                  <p className="text-sm text-yellow-100">
+                    Le meilleur cheval parmi {dailySummary.totalRaces} courses analysées aujourd'hui
+                  </p>
+                </div>
+              </div>
+
+              {/* Outsider du jour */}
+              {dailySummary.outsider && (
+                <div className="bg-gradient-to-br from-purple-500 via-purple-600 to-pink-600 rounded-xl shadow-2xl overflow-hidden">
+                  <div className="p-6 text-white">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Zap className="w-8 h-8" />
+                      <h3 className="text-2xl font-bold">💎 Outsider du Jour</h3>
+                    </div>
+                    <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 mb-4">
+                      <div className="flex items-center gap-4 mb-3">
+                        <div className="w-16 h-16 bg-white text-purple-600 rounded-full flex items-center justify-center font-bold text-2xl flex-shrink-0">
+                          {dailySummary.outsider.horseNumber}
+                        </div>
+                        <div>
+                          <h4 className="text-2xl font-bold">{dailySummary.outsider.horseName}</h4>
+                          <p className="text-purple-100">Score: {dailySummary.outsider.totalScore.toFixed(1)}/100</p>
+                        </div>
+                      </div>
+                      <div className="space-y-1 text-sm">
+                        <p><strong>Course:</strong> {dailySummary.outsider.race.name}</p>
+                        <p><strong>Hippodrome:</strong> {dailySummary.outsider.race.hippodrome}</p>
+                        <p><strong>Distance:</strong> {dailySummary.outsider.race.distance}m - {dailySummary.outsider.race.discipline}</p>
+                        {dailySummary.outsider.jockey && (
+                          <p><strong>Jockey:</strong> {dailySummary.outsider.jockey}</p>
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-sm text-purple-100">
+                      Le meilleur rapport qualité/cote du jour
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Pronostics du jour */}
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-primary-200 rounded-xl p-6 mb-8">

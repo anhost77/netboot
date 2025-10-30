@@ -131,6 +131,17 @@ export class PmuDataService {
               unshod: participant.unshod || null,
               firstTime: participant.firstTime || false,
               odds: participant.odds || null,
+              // Nouvelles données pour l'analyse
+              jockey: participant.jockey || null,
+              trainer: participant.trainer || null,
+              age: participant.age || null,
+              sex: participant.sex || participant.sexe || null,
+              weight: participant.weight || participant.poids || null,
+              rope: participant.rope || participant.corde || null,
+              totalEarnings: participant.totalEarnings || participant.gainsCarriere || null,
+              careerStarts: participant.careerStarts || participant.nombreCourses || null,
+              careerWins: participant.careerWins || participant.nombreVictoires || null,
+              careerPlaces: participant.careerPlaces || participant.nombrePlaces || null,
             },
             update: {
               name: participant.name,
@@ -140,6 +151,17 @@ export class PmuDataService {
               unshod: participant.unshod || null,
               firstTime: participant.firstTime || false,
               odds: participant.odds || null,
+              // Nouvelles données pour l'analyse
+              jockey: participant.jockey || null,
+              trainer: participant.trainer || null,
+              age: participant.age || null,
+              sex: participant.sex || participant.sexe || null,
+              weight: participant.weight || participant.poids || null,
+              rope: participant.rope || participant.corde || null,
+              totalEarnings: participant.totalEarnings || participant.gainsCarriere || null,
+              careerStarts: participant.careerStarts || participant.nombreCourses || null,
+              careerWins: participant.careerWins || participant.nombreVictoires || null,
+              careerPlaces: participant.careerPlaces || participant.nombrePlaces || null,
             },
           });
         }

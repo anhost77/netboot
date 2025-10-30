@@ -121,13 +121,14 @@ export default function RaceDetailsModal({ race, onClose, onBet }: RaceDetailsMo
         
         // Mapper les rapports si disponibles en BDD
         if (fullRaceData.reports && fullRaceData.reports.length > 0) {
+          console.log('Rapports trouvés en BDD:', fullRaceData.reports);
           const mappedOdds = fullRaceData.reports.map((report: any) => ({
             betType: report.betType,
             label: getBetTypeLabel(report.betType),
-            combinations: report.rapportDirect?.map((r: any) => ({
-              horses: r.numPmu,
-              odds: r.rapport
-            })) || []
+            combinations: Array.isArray(report.reports) ? report.reports.map((r: any) => ({
+              horses: r.combinaison || r.numPmu,
+              odds: r.dividende || r.rapport
+            })) : []
           }));
           setOddsData(mappedOdds);
         } else {

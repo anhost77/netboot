@@ -322,6 +322,12 @@ export default function CalendrierCourses() {
                             >
                               Voir détails
                             </button>
+                            <Link
+                              href={`/course/${format(selectedDate, 'yyyy-MM-dd')}/${encodeURIComponent(race.hippodrome)}/${race.reunionNumber}/${race.raceNumber}`}
+                              className="px-4 py-2 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-700 transition-colors text-sm"
+                            >
+                              Page course
+                            </Link>
                             <button
                               onClick={openRegisterModal}
                               className="px-4 py-2 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors text-sm"

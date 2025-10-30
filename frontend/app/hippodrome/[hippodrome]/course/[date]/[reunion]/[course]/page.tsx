@@ -269,10 +269,11 @@ export default function CoursePage() {
     <div className="min-h-screen bg-gray-50">
       <MarketingHeader />
 
-      {/* Breadcrumb */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center gap-2 text-sm text-gray-600">
+      {/* Navigation sticky */}
+      <div className="bg-white border-b-2 border-gray-200 sticky top-0 z-40 shadow-md">
+        <div className="container mx-auto px-4">
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-2 text-sm text-gray-600 py-3 border-b border-gray-100">
             <Link
               href="/calendrier-courses"
               className="hover:text-primary-600 transition-colors"
@@ -291,6 +292,63 @@ export default function CoursePage() {
             <span className="text-gray-900 font-medium">{format(raceDate, 'd MMM yyyy', { locale: fr })}</span>
             <span>/</span>
             <span className="text-gray-900 font-medium">R{race.reunionNumber}C{race.raceNumber}</span>
+          </div>
+          
+          {/* Navigation rapide */}
+          <div className="flex items-center gap-6 py-3 overflow-x-auto">
+            <button
+              onClick={() => {
+                const element = document.getElementById('pronostic-ia');
+                element?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors whitespace-nowrap"
+            >
+              <Sparkles className="w-4 h-4" />
+              Pronostic IA
+            </button>
+            <button
+              onClick={() => setActiveTab('details')}
+              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
+                activeTab === 'details' 
+                  ? 'bg-primary-600 text-white' 
+                  : 'text-gray-700 hover:text-primary-600 hover:bg-primary-50'
+              }`}
+            >
+              <Trophy className="w-4 h-4" />
+              Partants
+            </button>
+            <button
+              onClick={() => setActiveTab('odds')}
+              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
+                activeTab === 'odds' 
+                  ? 'bg-primary-600 text-white' 
+                  : 'text-gray-700 hover:text-primary-600 hover:bg-primary-50'
+              }`}
+            >
+              <DollarSign className="w-4 h-4" />
+              Cotes PMU
+            </button>
+            {horses.some(h => h.arrivalOrder) && (
+              <button
+                onClick={() => {
+                  const element = document.getElementById('compte-rendu-ia');
+                  element?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors whitespace-nowrap"
+              >
+                <Sparkles className="w-4 h-4" />
+                Compte-rendu
+              </button>
+            )}
+            <div className="ml-auto">
+              <button
+                onClick={openRegisterModal}
+                className="flex items-center gap-2 px-4 py-2 bg-yellow-400 text-yellow-900 rounded-lg font-semibold hover:bg-yellow-300 transition-colors whitespace-nowrap"
+              >
+                <Trophy className="w-4 h-4" />
+                Parier
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -347,7 +405,7 @@ export default function CoursePage() {
       </div>
 
       {/* Section Pronostic IA (placeholder) */}
-      <div className="container mx-auto px-4 py-8">
+      <div id="pronostic-ia" className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
           <div className="bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-purple-200 rounded-xl p-6 mb-8">
             <div className="flex items-center gap-3 mb-4">
@@ -414,32 +472,58 @@ export default function CoursePage() {
                         <Trophy className="w-7 h-7 text-yellow-500" />
                         Podium
                       </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {[1, 2, 3].map(position => {
                           const horse = horses.find(h => h.arrivalOrder === position);
                           if (!horse) return null;
                           
                           const colors = {
-                            1: 'from-yellow-400 to-yellow-500 border-yellow-600',
-                            2: 'from-gray-300 to-gray-400 border-gray-500',
-                            3: 'from-orange-400 to-orange-500 border-orange-600'
+                            1: { bg: 'from-yellow-400 to-yellow-500', border: 'border-yellow-600', text: 'text-yellow-900' },
+                            2: { bg: 'from-gray-300 to-gray-400', border: 'border-gray-600', text: 'text-gray-900' },
+                            3: { bg: 'from-orange-400 to-orange-500', border: 'border-orange-600', text: 'text-orange-900' }
                           };
                           
+                          const color = colors[position as 1|2|3];
+                          
                           return (
-                            <div key={position} className={`bg-gradient-to-br ${colors[position as 1|2|3]} border-4 rounded-xl p-6 text-center transform hover:scale-105 transition-transform`}>
-                              <div className="text-6xl font-bold text-white mb-2">{position}°</div>
-                              <div className="bg-white rounded-lg p-4">
-                                <div className="w-16 h-16 bg-primary-600 text-white rounded-full flex items-center justify-center font-bold text-2xl mx-auto mb-3">
-                                  {horse.number}
+                            <div key={position} className={`bg-gradient-to-br ${color.bg} border-4 ${color.border} rounded-2xl p-6 shadow-2xl transform hover:scale-105 transition-all`}>
+                              <div className="text-7xl font-black text-white mb-3 drop-shadow-lg">{position}°</div>
+                              <div className="bg-white rounded-xl p-5 space-y-3">
+                                <div className="flex items-center justify-center gap-3">
+                                  <div className="w-14 h-14 bg-primary-600 text-white rounded-full flex items-center justify-center font-bold text-xl shadow-lg">
+                                    {horse.number}
+                                  </div>
+                                  <div className="flex-1 text-left">
+                                    <p className={`font-bold text-base ${color.text}`}>
+                                      {horse.name}
+                                    </p>
+                                    {horse.odds && (
+                                      <p className="text-sm font-bold text-green-600">
+                                        💰 {Number(horse.odds).toFixed(2)}€
+                                      </p>
+                                    )}
+                                  </div>
                                 </div>
-                                <p className="font-semibold text-sm text-orange-900 truncate">
-                                  {horse.name}
-                                </p>
-                                {horse.odds && (
-                                  <p className="text-xs font-bold text-green-600 mt-1">
-                                    {Number(horse.odds).toFixed(2)}€
-                                  </p>
-                                )}
+                                
+                                {/* Jockey et Entraîneur */}
+                                <div className="space-y-2 pt-2 border-t border-gray-200">
+                                  {horse.jockey && (
+                                    <div className="flex items-center gap-2 text-xs">
+                                      <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                                        <User className="w-3 h-3 text-blue-600" />
+                                      </div>
+                                      <span className="text-gray-700 font-medium">🏇 {horse.jockey}</span>
+                                    </div>
+                                  )}
+                                  {horse.trainer && (
+                                    <div className="flex items-center gap-2 text-xs">
+                                      <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center">
+                                        <Award className="w-3 h-3 text-purple-600" />
+                                      </div>
+                                      <span className="text-gray-700 font-medium">👔 {horse.trainer}</span>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           );
@@ -648,7 +732,7 @@ export default function CoursePage() {
 
           {/* Section Compte-rendu IA (placeholder) */}
           {horses.some(h => h.arrivalOrder) && (
-            <div className="bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-200 rounded-xl p-6 mt-8">
+            <div id="compte-rendu-ia" className="bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-200 rounded-xl p-6 mt-8">
               <div className="flex items-center gap-3 mb-4">
                 <Sparkles className="w-8 h-8 text-green-600" />
                 <div>

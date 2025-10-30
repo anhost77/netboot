@@ -520,13 +520,38 @@ export default function RaceDetailsModal({ race, onClose, onBet }: RaceDetailsMo
                                 key={comboIdx}
                                 className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:border-primary-400 hover:shadow-md transition-all"
                               >
-                                <div className="flex items-center gap-3">
-                                  <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
+                                <div className="flex items-center gap-3 flex-1">
+                                  <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0">
                                     <span className="font-bold text-primary-700 text-lg">{combo.horses}</span>
                                   </div>
-                                  <div>
-                                    <p className="text-xs text-gray-500 uppercase tracking-wide">Numéro(s)</p>
-                                    <p className="font-semibold text-gray-900">{combo.horses}</p>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs text-gray-500 uppercase tracking-wide">Cheval</p>
+                                    <p className="font-semibold text-gray-900 truncate">
+                                      {(() => {
+                                        const horseNumbers = combo.horses.toString().split('-').map(n => parseInt(n.trim()));
+                                        const horseNames = horseNumbers.map(num => {
+                                          const horse = horses.find(h => h.number === num);
+                                          return horse ? horse.name : `N°${num}`;
+                                        });
+                                        return horseNames.join(' - ');
+                                      })()}
+                                    </p>
+                                    {/* Afficher jockey et entraîneur pour les paris simples */}
+                                    {(() => {
+                                      const horseNumbers = combo.horses.toString().split('-').map(n => parseInt(n.trim()));
+                                      if (horseNumbers.length === 1) {
+                                        const horse = horses.find(h => h.number === horseNumbers[0]);
+                                        if (horse) {
+                                          return (
+                                            <div className="flex gap-3 mt-1 text-xs text-gray-500">
+                                              {horse.jockey && <span>🏇 {horse.jockey}</span>}
+                                              {horse.trainer && <span>👔 {horse.trainer}</span>}
+                                            </div>
+                                          );
+                                        }
+                                      }
+                                      return null;
+                                    })()}
                                   </div>
                                 </div>
                                 <div className="text-right">

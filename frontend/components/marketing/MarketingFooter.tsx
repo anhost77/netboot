@@ -33,26 +33,26 @@ export default function MarketingFooter() {
       links: [
         { label: 'Fonctionnalités', href: '/#fonctionnalites' },
         { label: 'Tarifs', href: '/#tarifs' },
-        { label: 'Calendrier', href: '/calendrier-courses' },
-        { label: 'Pronostics', href: '/pronostics' },
+        { label: 'Calendrier des courses', href: '/calendrier-courses' },
+        { label: 'Pronostics gratuits', href: '/pronostics' },
       ]
     },
     {
       title: 'Ressources',
       links: [
-        { label: 'Blog', href: '/blog' },
+        { label: 'Blog PMU', href: '/blog' },
         { label: 'Guide Hippodromes', href: '/hippodromes' },
-        { label: 'Documentation', href: '/docs/api' },
-        { label: 'Support', href: '/dashboard/support' },
+        { label: 'API & MCP', href: '/docs/api' },
+        { label: 'Exemples de code', href: '/docs/examples' },
       ]
     },
     {
-      title: 'Légal',
+      title: 'Support',
       links: [
-        { label: 'Mentions légales', href: '/mentions-legales' },
-        { label: 'Confidentialité', href: '/confidentialite' },
-        { label: 'CGU', href: '/cgu' },
-        { label: 'Cookies', href: '/cookies' },
+        { label: 'Centre d\'aide', href: '/dashboard/support' },
+        { label: 'Documentation technique', href: '/docs/mcp-server' },
+        { label: 'Intégration ChatGPT', href: '/docs/chatgpt' },
+        { label: 'Contact', href: '/dashboard/support' },
       ]
     }
   ];

@@ -2,10 +2,12 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Menu, X, Target } from 'lucide-react';
+import { Menu, X, Target, User, Bell } from 'lucide-react';
+import { useAuth } from '@/lib/auth-context';
 
 export default function MarketingHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { isAuthenticated, user } = useAuth();
 
   const navLinks = [
     { label: 'Accueil', href: '/' },
@@ -44,18 +46,39 @@ export default function MarketingHeader() {
 
           {/* Boutons CTA Desktop */}
           <div className="hidden md:flex items-center space-x-3">
-            <Link
-              href="/login"
-              className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-primary-600 transition-colors"
-            >
-              Connexion
-            </Link>
-            <Link
-              href="/register"
-              className="px-4 py-2 text-sm font-bold text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors shadow-sm"
-            >
-              Commencer gratuitement
-            </Link>
+            {isAuthenticated ? (
+              <>
+                <Link
+                  href="/dashboard/notifications"
+                  className="p-2 text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors"
+                  aria-label="Notifications"
+                >
+                  <Bell className="w-5 h-5" />
+                </Link>
+                <Link
+                  href="/dashboard"
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors shadow-sm"
+                >
+                  <User className="w-4 h-4" />
+                  Dashboard
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-primary-600 transition-colors"
+                >
+                  Connexion
+                </Link>
+                <Link
+                  href="/register"
+                  className="px-4 py-2 text-sm font-bold text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors shadow-sm"
+                >
+                  Commencer gratuitement
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Bouton Menu Mobile */}
@@ -88,20 +111,41 @@ export default function MarketingHeader() {
               ))}
             </nav>
             <div className="flex flex-col space-y-2 mt-4 pt-4 border-t border-gray-200">
-              <Link
-                href="/login"
-                onClick={() => setMobileMenuOpen(false)}
-                className="px-4 py-2 text-sm font-medium text-center text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
-              >
-                Connexion
-              </Link>
-              <Link
-                href="/register"
-                onClick={() => setMobileMenuOpen(false)}
-                className="px-4 py-2 text-sm font-bold text-center text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors"
-              >
-                Commencer gratuitement
-              </Link>
+              {isAuthenticated ? (
+                <>
+                  <Link
+                    href="/dashboard/notifications"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="px-4 py-2 text-sm font-medium text-center text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                  >
+                    Notifications
+                  </Link>
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="px-4 py-2 text-sm font-bold text-center text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors"
+                  >
+                    Dashboard
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/login"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="px-4 py-2 text-sm font-medium text-center text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                  >
+                    Connexion
+                  </Link>
+                  <Link
+                    href="/register"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="px-4 py-2 text-sm font-bold text-center text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors"
+                  >
+                    Commencer gratuitement
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         )}

@@ -312,7 +312,7 @@ export default function HippodromesPage() {
                   {/* Actions */}
                   <div className="flex gap-3 pt-4 border-t border-gray-200">
                     <Link
-                      href={`/hippodrome/${hippo.code}`}
+                      href={`/hippodrome/${hippo.name}`}
                       className="flex-1 inline-flex items-center justify-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-primary-700 transition-all text-sm"
                     >
                       Voir les courses

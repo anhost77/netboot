@@ -184,7 +184,7 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <h3 className="font-bold text-gray-900 mb-1">Email</h3>
-                      <p className="text-gray-600">contact@bettracker.pro</p>
+                      <p className="text-gray-600">contact@bettracker.io</p>
                       <p className="text-sm text-gray-500 mt-1">Réponse sous 24-48h</p>
                     </div>
                   </div>

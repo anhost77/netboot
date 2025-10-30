@@ -1264,15 +1264,6 @@ export default function DocPage() {
   const isRestrictedDoc = restrictedDocs.includes(slug);
 
   useEffect(() => {
-    // Charger les menus du footer
-    fetch(`${API_URL}/api/cms/menu-items/public/footer`)
-      .then(res => res.json())
-      .then(data => {
-        // Grouper les menus par catégorie (si vous avez des catégories)
-        setFooterMenus({ main: data });
-      })
-      .catch(err => console.error('Error loading footer menus:', err));
-
     // Vérifier si l'utilisateur est connecté
     checkAuth();
   }, []);
@@ -1832,28 +1823,8 @@ export default function DocPage() {
               </div>
             </div>
 
-            {/* Colonnes dynamiques depuis l'API */}
-            {footerMenus.main && footerMenus.main.length > 0 ? (
-              footerMenus.main.slice(0, 3).map((menu) => (
-                <div key={menu.id}>
-                  <h4 className="font-semibold text-white mb-4">{menu.label}</h4>
-                  <ul className="space-y-2">
-                    {menu.children?.map((child) => (
-                      <li key={child.id}>
-                        <Link
-                          href={child.url}
-                          className="text-sm text-gray-400 hover:text-primary-400 transition-colors"
-                        >
-                          {child.label}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))
-            ) : (
-              <>
-                {/* Fallback si pas de menus */}
+            {/* Colonnes de liens */}
+            <>
                 <div>
                   <h4 className="font-semibold text-white mb-4">Documentation</h4>
                   <ul className="space-y-2">
@@ -1917,7 +1888,6 @@ export default function DocPage() {
                   </ul>
                 </div>
               </>
-            )}
           </div>
 
           <div className="border-t border-gray-800 pt-8">

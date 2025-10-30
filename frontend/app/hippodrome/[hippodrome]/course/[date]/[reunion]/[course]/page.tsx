@@ -589,6 +589,16 @@ export default function CoursePage() {
                                     {horse.rope && <span>Corde: {horse.rope}</span>}
                                   </div>
                                 )}
+                                
+                                {/* Performances récentes */}
+                                {horse.recentForm && (
+                                  <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                    <p className="text-xs font-semibold text-gray-700 mb-1">📊 Musique (performances récentes)</p>
+                                    <p className="text-sm font-mono text-gray-900 tracking-wide">
+                                      {horse.recentForm}
+                                    </p>
+                                  </div>
+                                )}
                               </div>
 
                               {/* Position d'arrivée */}

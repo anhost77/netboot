@@ -91,6 +91,7 @@ model PmuRace {
   horses          PmuHorse[]
   reports         PmuReport[]
   bets            Bet[]
+  aiContent       RaceAiContent?
   createdAt       DateTime      @default(now()) @map("created_at")
   updatedAt       DateTime      @updatedAt @map("updated_at")
   
@@ -761,4 +762,26 @@ model PlatformSetting {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("platform_settings")
+}
+
+// AI-generated content for races
+model RaceAiContent {
+  id              String    @id @default(uuid())
+  raceId          String    @unique @map("race_id")
+  race            PmuRace   @relation(fields: [raceId], references: [id], onDelete: Cascade)
+  
+  // Pronostic (avant la course)
+  pronosticText   String?   @map("pronostic_text") @db.Text
+  pronosticModel  String?   @map("pronostic_model") // gpt-4, gpt-3.5-turbo, etc.
+  pronosticTokens Int?      @map("pronostic_tokens")
+  
+  // Compte-rendu (après la course)
+  reportText      String?   @map("report_text") @db.Text
+  reportModel     String?   @map("report_model")
+  reportTokens    Int?      @map("report_tokens")
+  
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  
+  @@map("race_ai_content")
 }

@@ -6,6 +6,7 @@ import { Calendar, ArrowLeft, MapPin, Trophy, User, Award, TrendingUp, DollarSig
 import { format, parse } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import Link from 'next/link';
+import ReactMarkdown from 'react-markdown';
 import MarketingHeader from '@/components/marketing/MarketingHeader';
 import MarketingFooter from '@/components/marketing/MarketingFooter';
 import { useAuthModal } from '@/contexts/AuthModalContext';
@@ -457,8 +458,8 @@ export default function CoursePage() {
                   <p className="mt-2 text-sm text-gray-600">Génération du pronostic IA...</p>
                 </div>
               ) : aiPronostic ? (
-                <div className="prose prose-sm max-w-none">
-                  <p className="text-gray-700 whitespace-pre-wrap">{aiPronostic}</p>
+                <div className="prose prose-sm max-w-none text-gray-700">
+                  <ReactMarkdown>{aiPronostic}</ReactMarkdown>
                 </div>
               ) : (
                 <p className="text-gray-600 italic">
@@ -802,8 +803,8 @@ export default function CoursePage() {
                     <p className="mt-2 text-sm text-gray-600">Génération du compte-rendu IA...</p>
                   </div>
                 ) : aiReport ? (
-                  <div className="prose prose-sm max-w-none">
-                    <p className="text-gray-700 whitespace-pre-wrap">{aiReport}</p>
+                  <div className="prose prose-sm max-w-none text-gray-700">
+                    <ReactMarkdown>{aiReport}</ReactMarkdown>
                   </div>
                 ) : (
                   <p className="text-gray-600 italic">

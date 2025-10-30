@@ -73,12 +73,13 @@ export class PmuAiService {
       }
 
       // 3. Vérifier que la course n'est pas encore terminée
-      const now = new Date();
-      const raceDate = new Date(race.startTime ? Number(race.startTime) : race.date);
-      if (now > raceDate) {
-        this.logger.log(`Course ${raceId} déjà terminée, pas de pronostic généré`);
-        return null;
-      }
+      // TEMPORAIRE: Commenté pour tester la génération de pronostic
+      // const now = new Date();
+      // const raceDate = new Date(race.startTime ? Number(race.startTime) : race.date);
+      // if (now > raceDate) {
+      //   this.logger.log(`Course ${raceId} déjà terminée, pas de pronostic généré`);
+      //   return null;
+      // }
 
       // 4. Générer le pronostic avec OpenAI
       this.logger.log(`🤖 Génération du pronostic pour ${race.hippodrome.name} R${race.reunionNumber}C${race.raceNumber}`);

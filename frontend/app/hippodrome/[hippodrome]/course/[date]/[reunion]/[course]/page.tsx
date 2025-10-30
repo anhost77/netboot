@@ -63,6 +63,9 @@ export default function CoursePage() {
   const [horses, setHorses] = useState<Horse[]>([]);
   const [oddsData, setOddsData] = useState<OddsData[]>([]);
   const [loadingOdds, setLoadingOdds] = useState(false);
+  const [aiPronostic, setAiPronostic] = useState<string | null>(null);
+  const [aiReport, setAiReport] = useState<string | null>(null);
+  const [loadingAi, setLoadingAi] = useState(false);
 
   const hippodrome = decodeURIComponent(params.hippodrome as string);
   const dateStr = params.date as string;
@@ -96,6 +99,9 @@ export default function CoursePage() {
           
           // Charger les détails complets avec chevaux
           loadFullRaceDetails(foundRace.id);
+          
+          // Charger les textes IA
+          loadAiContent(foundRace.id);
           return;
         }
       }
@@ -205,6 +211,33 @@ export default function CoursePage() {
       return new Date() > raceEndTime;
     } catch (err) {
       return false;
+    }
+  };
+
+  const loadAiContent = async (raceId: string) => {
+    setLoadingAi(true);
+    try {
+      // Charger le pronostic
+      const pronosticResponse = await fetch(`${API_URL}/pmu/race/${raceId}/ai-pronostic`);
+      if (pronosticResponse.ok) {
+        const pronosticData = await pronosticResponse.json();
+        if (pronosticData.success && pronosticData.pronostic) {
+          setAiPronostic(pronosticData.pronostic);
+        }
+      }
+
+      // Charger le compte-rendu (si course terminée)
+      const reportResponse = await fetch(`${API_URL}/pmu/race/${raceId}/ai-report`);
+      if (reportResponse.ok) {
+        const reportData = await reportResponse.json();
+        if (reportData.success && reportData.report) {
+          setAiReport(reportData.report);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading AI content:', error);
+    } finally {
+      setLoadingAi(false);
     }
   };
 
@@ -418,10 +451,20 @@ export default function CoursePage() {
               </div>
             </div>
             <div className="bg-white rounded-lg p-6 border border-purple-100">
-              <p className="text-gray-600 italic">
-                🚀 Fonctionnalité à venir : Pronostic détaillé généré par OpenAI basé sur l'analyse des partants, 
-                des performances passées et des conditions de course.
-              </p>
+              {loadingAi ? (
+                <div className="text-center py-4">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
+                  <p className="mt-2 text-sm text-gray-600">Génération du pronostic IA...</p>
+                </div>
+              ) : aiPronostic ? (
+                <div className="prose prose-sm max-w-none">
+                  <p className="text-gray-700 whitespace-pre-wrap">{aiPronostic}</p>
+                </div>
+              ) : (
+                <p className="text-gray-600 italic">
+                  Le pronostic IA n'est pas encore disponible pour cette course.
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -753,10 +796,20 @@ export default function CoursePage() {
                 </div>
               </div>
               <div className="bg-white rounded-lg p-6 border border-green-100">
-                <p className="text-gray-600 italic">
-                  🚀 Fonctionnalité à venir : Compte-rendu détaillé généré par OpenAI analysant le déroulement de la course, 
-                  les performances des chevaux et les enseignements à tirer.
-                </p>
+                {loadingAi ? (
+                  <div className="text-center py-4">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
+                    <p className="mt-2 text-sm text-gray-600">Génération du compte-rendu IA...</p>
+                  </div>
+                ) : aiReport ? (
+                  <div className="prose prose-sm max-w-none">
+                    <p className="text-gray-700 whitespace-pre-wrap">{aiReport}</p>
+                  </div>
+                ) : (
+                  <p className="text-gray-600 italic">
+                    Le compte-rendu IA sera disponible après la publication des résultats.
+                  </p>
+                )}
               </div>
             </div>
           )}

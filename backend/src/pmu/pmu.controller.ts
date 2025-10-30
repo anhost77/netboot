@@ -3,6 +3,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { PmuService } from './pmu.service';
 import { PmuDataService } from './pmu-data.service';
+import { PmuAiService } from './pmu-ai.service';
 import { PrismaService } from '../prisma.service';
 import { Prisma } from '@prisma/client';
 
@@ -16,6 +17,7 @@ export class PmuController {
   constructor(
     private readonly pmuService: PmuService,
     private readonly pmuDataService: PmuDataService,
+    private readonly pmuAiService: PmuAiService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -1218,6 +1220,70 @@ export class PmuController {
       prize: Number(race.prize) || 0,
       betTypes: race.availableBetTypes || ['Simple Gagnant', 'Simple Placé'],
     }));
+  }
+
+  /**
+   * Récupérer ou générer le pronostic IA pour une course
+   */
+  @Public()
+  @Get('race/:id/ai-pronostic')
+  @ApiOperation({ summary: 'Get or generate AI pronostic for a race (public access)' })
+  async getRaceAiPronostic(@Param('id') raceId: string) {
+    try {
+      const pronostic = await this.pmuAiService.getOrGeneratePronostic(raceId);
+      
+      if (!pronostic) {
+        return {
+          success: false,
+          message: 'Pronostic non disponible',
+          pronostic: null,
+        };
+      }
+
+      return {
+        success: true,
+        pronostic,
+      };
+    } catch (error) {
+      console.error('Error getting AI pronostic:', error);
+      return {
+        success: false,
+        message: error.message,
+        pronostic: null,
+      };
+    }
+  }
+
+  /**
+   * Récupérer ou générer le compte-rendu IA pour une course terminée
+   */
+  @Public()
+  @Get('race/:id/ai-report')
+  @ApiOperation({ summary: 'Get or generate AI report for a finished race (public access)' })
+  async getRaceAiReport(@Param('id') raceId: string) {
+    try {
+      const report = await this.pmuAiService.getOrGenerateReport(raceId);
+      
+      if (!report) {
+        return {
+          success: false,
+          message: 'Compte-rendu non disponible',
+          report: null,
+        };
+      }
+
+      return {
+        success: true,
+        report,
+      };
+    } catch (error) {
+      console.error('Error getting AI report:', error);
+      return {
+        success: false,
+        message: error.message,
+        report: null,
+      };
+    }
   }
 
 }

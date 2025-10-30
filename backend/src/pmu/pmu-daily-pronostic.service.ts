@@ -3,6 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../prisma.service';
 import { PmuPronosticAnalyzerService } from './pmu-pronostic-analyzer.service';
 import { WeatherService } from './weather.service';
+import { PmuAiService } from './pmu-ai.service';
 
 @Injectable()
 export class PmuDailyPronosticService {
@@ -12,6 +13,7 @@ export class PmuDailyPronosticService {
     private readonly prisma: PrismaService,
     private readonly pronosticAnalyzer: PmuPronosticAnalyzerService,
     private readonly weatherService: WeatherService,
+    private readonly aiService: PmuAiService,
   ) {}
 
   /**
@@ -228,8 +230,8 @@ export class PmuDailyPronosticService {
    */
   private async storePronosticAnalysis(raceId: string, analysis: any): Promise<void> {
     try {
-      // Générer le texte du pronostic
-      const pronosticText = this.generatePronosticText(analysis);
+      // Générer le texte du pronostic avec OpenAI
+      const pronosticText = await this.generatePronosticText(analysis);
 
       // Stocker dans RaceAiContent
       await this.prisma.raceAiContent.upsert({
@@ -274,9 +276,83 @@ export class PmuDailyPronosticService {
   }
 
   /**
-   * Génère le texte du pronostic
+   * Génère le texte du pronostic avec OpenAI
    */
-  private generatePronosticText(analysis: any): string {
+  private async generatePronosticText(analysis: any): Promise<string> {
+    try {
+      // Préparer les données pour OpenAI
+      const prompt = this.buildAiPrompt(analysis);
+      
+      // Appeler OpenAI
+      const aiText = await this.aiService.generatePronosticText(prompt);
+      
+      if (aiText) {
+        this.logger.debug('✅ AI-generated pronostic text');
+        return aiText;
+      }
+      
+      // Fallback sur template si OpenAI échoue
+      this.logger.warn('⚠️ OpenAI failed, using template');
+      return this.generateTemplateText(analysis);
+    } catch (error) {
+      this.logger.error('Error generating AI text:', error.message);
+      return this.generateTemplateText(analysis);
+    }
+  }
+
+  /**
+   * Construit le prompt pour OpenAI
+   */
+  private buildAiPrompt(analysis: any): string {
+    const cheval = analysis.recommendations.cheval_du_jour;
+    const favoris = analysis.recommendations.favoris.slice(0, 3);
+    const outsiders = analysis.recommendations.outsiders.slice(0, 2);
+
+    return `Tu es un expert en pronostics hippiques. Génère un pronostic professionnel basé sur ces données RÉELLES calculées algorithmiquement :
+
+**Course**: ${analysis.raceName}
+**Hippodrome**: ${analysis.hippodrome}
+**Distance**: ${analysis.distance}m - ${analysis.discipline}
+**Conditions**: ${analysis.trackCondition || 'N/A'} - ${analysis.weather || 'N/A'}
+
+**CHEVAL DU JOUR** (Score: ${cheval.totalScore.toFixed(1)}/100):
+- N°${cheval.horseNumber} ${cheval.horseName}
+- Jockey: ${cheval.jockey || 'N/A'}
+- Entraîneur: ${cheval.trainer || 'N/A'}
+- Scores détaillés:
+  * Performance: ${cheval.performanceScore.toFixed(0)}/100 (musique: ${cheval.stats.recentForm})
+  * Jockey: ${cheval.jockeyScore.toFixed(0)}/100
+  * Entraîneur: ${cheval.trainerScore.toFixed(0)}/100
+  * Cote: ${cheval.oddsScore.toFixed(0)}/100
+  * Distance: ${cheval.distanceScore.toFixed(0)}/100
+  * Conditions: ${cheval.conditionsScore.toFixed(0)}/100
+
+**FAVORIS**:
+${favoris.map((h: any) => `- N°${h.horseNumber} ${h.horseName} (${h.totalScore.toFixed(1)}/100)`).join('\n')}
+
+**OUTSIDERS**:
+${outsiders.map((h: any) => `- N°${h.horseNumber} ${h.horseName} (${h.totalScore.toFixed(1)}/100)`).join('\n')}
+
+**SÉLECTIONS**:
+- Quinté+: ${analysis.recommendations.quinte.join('-')}
+- Trio: ${analysis.recommendations.trio.join('-')}
+
+IMPORTANT:
+1. Utilise UNIQUEMENT ces chiffres (ne les invente pas)
+2. Explique POURQUOI ces chevaux sont sélectionnés (scores)
+3. Analyse l'impact des conditions météo/terrain
+4. Donne des conseils de paris concrets
+5. Reste factuel, pas de garanties
+6. Ton professionnel mais accessible
+7. Maximum 500 mots
+
+Format Markdown avec titres ##`;
+  }
+
+  /**
+   * Génère le texte du pronostic (template de secours)
+   */
+  private generateTemplateText(analysis: any): string {
     const cheval = analysis.recommendations.cheval_du_jour;
     const favoris = analysis.recommendations.favoris.slice(0, 3);
     const outsiders = analysis.recommendations.outsiders.slice(0, 2);

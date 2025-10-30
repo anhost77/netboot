@@ -38,6 +38,46 @@ export class PmuAiService {
   }
 
   /**
+   * Génère un texte de pronostic avec OpenAI
+   */
+  async generatePronosticText(prompt: string): Promise<string | null> {
+    if (!this.isConfigured || !this.openai) {
+      this.logger.warn('OpenAI not configured');
+      return null;
+    }
+
+    try {
+      const completion = await this.openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: 'Tu es un expert en pronostics hippiques. Tu analyses des données réelles et génères des pronostics professionnels, factuels et pédagogiques. Tu ne garantis jamais de résultats et rappelles toujours de jouer responsablement.'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 1000,
+      });
+
+      const text = completion.choices[0]?.message?.content;
+      
+      if (text) {
+        this.logger.debug(`✅ Generated ${text.length} characters with OpenAI`);
+        return text;
+      }
+
+      return null;
+    } catch (error) {
+      this.logger.error('Error calling OpenAI:', error.message);
+      return null;
+    }
+  }
+
+  /**
    * Génère ou récupère le pronostic IA pour une course
    */
   async getOrGeneratePronostic(raceId: string): Promise<string | null> {

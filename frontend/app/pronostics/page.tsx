@@ -17,6 +17,7 @@ interface Pronostic {
   raceName: string;
   hippodrome: string;
   raceNumber: number;
+  reunionNumber: number;
   startTime: string;
   discipline: string;
   distance: number;
@@ -453,15 +454,26 @@ export default function PronosticsPage() {
 
           {/* Pronostics du jour */}
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-primary-200 rounded-xl p-6 mb-8">
-            <div className="flex items-center gap-3 mb-2">
-              <Calendar className="w-6 h-6 text-primary-600" />
-              <h2 className="text-2xl font-bold text-gray-900">
-                Pronostics du {format(new Date(), 'd MMMM yyyy', { locale: fr })}
-              </h2>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-3 mb-2">
+                  <Calendar className="w-6 h-6 text-primary-600" />
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    Pronostics du {format(new Date(), 'd MMMM yyyy', { locale: fr })}
+                  </h2>
+                </div>
+                <p className="text-gray-700">
+                  {filteredPronostics.length} pronostic{filteredPronostics.length > 1 ? 's' : ''} disponible{filteredPronostics.length > 1 ? 's' : ''} aujourd'hui
+                </p>
+              </div>
+              <Link
+                href="/comment-ca-marche"
+                className="inline-flex items-center gap-2 bg-primary-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary-700 transition-all whitespace-nowrap"
+              >
+                <Target className="w-5 h-5" />
+                Comment ça marche ?
+              </Link>
             </div>
-            <p className="text-gray-700">
-              {filteredPronostics.length} pronostic{filteredPronostics.length > 1 ? 's' : ''} disponible{filteredPronostics.length > 1 ? 's' : ''} aujourd'hui
-            </p>
           </div>
 
           {/* Liste des pronostics */}
@@ -502,7 +514,7 @@ export default function PronosticsPage() {
                             {pronostic.startTime}
                           </span>
                           <span>{pronostic.hippodrome}</span>
-                          <span>Course {pronostic.raceNumber}</span>
+                          <span>R{pronostic.reunionNumber} - C{pronostic.raceNumber}</span>
                           <span>{pronostic.discipline}</span>
                           <span>{pronostic.distance}m</span>
                         </div>

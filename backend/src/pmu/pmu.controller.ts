@@ -1423,6 +1423,7 @@ export class PmuController {
               raceName: race.name || `Course ${race.raceNumber}`,
               hippodrome: race.hippodrome.name,
               raceNumber: race.raceNumber,
+              reunionNumber: race.reunionNumber,
               startTime: race.startTime ? new Date(Number(race.startTime)).toTimeString().substring(0, 5) : 'N/A',
               discipline: race.discipline || 'N/A',
               distance: race.distance || 0,

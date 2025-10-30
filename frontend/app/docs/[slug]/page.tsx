@@ -1826,47 +1826,52 @@ export default function DocPage() {
             {/* Colonnes de liens */}
             <>
                 <div>
-                  <h4 className="font-semibold text-white mb-4">Documentation</h4>
+                  <h4 className="font-semibold text-white mb-4">Produit</h4>
                   <ul className="space-y-2">
                     <li>
-                      <Link href="/docs/mcp-server" className="text-sm text-gray-400 hover:text-primary-400 transition-colors">
-                        Serveur MCP
+                      <Link href="/fonctionnalites" className="text-sm text-gray-400 hover:text-primary-400 transition-colors">
+                        Fonctionnalités
                       </Link>
                     </li>
                     <li>
-                      <Link href="/docs/api" className="text-sm text-gray-400 hover:text-primary-400 transition-colors">
-                        API REST
+                      <Link href="/#tarifs" className="text-sm text-gray-400 hover:text-primary-400 transition-colors">
+                        Tarifs
                       </Link>
                     </li>
                     <li>
-                      <Link href="/docs/chatgpt" className="text-sm text-gray-400 hover:text-primary-400 transition-colors">
-                        ChatGPT
+                      <Link href="/calendrier-courses" className="text-sm text-gray-400 hover:text-primary-400 transition-colors">
+                        Calendrier des courses
                       </Link>
                     </li>
                     <li>
-                      <Link href="/docs/examples" className="text-sm text-gray-400 hover:text-primary-400 transition-colors">
-                        Exemples
+                      <Link href="/pronostics" className="text-sm text-gray-400 hover:text-primary-400 transition-colors">
+                        Pronostics gratuits
                       </Link>
                     </li>
                   </ul>
                 </div>
 
                 <div>
-                  <h4 className="font-semibold text-white mb-4">Application</h4>
+                  <h4 className="font-semibold text-white mb-4">Ressources</h4>
                   <ul className="space-y-2">
                     <li>
-                      <Link href="/dashboard" className="text-sm text-gray-400 hover:text-primary-400 transition-colors">
-                        Dashboard
+                      <Link href="/blog" className="text-sm text-gray-400 hover:text-primary-400 transition-colors">
+                        Blog PMU
                       </Link>
                     </li>
                     <li>
-                      <Link href="/dashboard/statistics/pmu" className="text-sm text-gray-400 hover:text-primary-400 transition-colors">
-                        Statistiques PMU
+                      <Link href="/hippodromes" className="text-sm text-gray-400 hover:text-primary-400 transition-colors">
+                        Guide Hippodromes
                       </Link>
                     </li>
                     <li>
-                      <Link href="/dashboard/settings" className="text-sm text-gray-400 hover:text-primary-400 transition-colors">
-                        Paramètres
+                      <Link href="/docs/api" className="text-sm text-gray-400 hover:text-primary-400 transition-colors">
+                        API & MCP
+                      </Link>
+                    </li>
+                    <li>
+                      <Link href="/docs/examples" className="text-sm text-gray-400 hover:text-primary-400 transition-colors">
+                        Exemples de code
                       </Link>
                     </li>
                   </ul>
@@ -1881,9 +1886,19 @@ export default function DocPage() {
                       </Link>
                     </li>
                     <li>
-                      <a href="mailto:support@bettracker.pro" className="text-sm text-gray-400 hover:text-primary-400 transition-colors">
-                        Contact
-                      </a>
+                      <Link href="/docs/mcp-server" className="text-sm text-gray-400 hover:text-primary-400 transition-colors">
+                        Documentation technique
+                      </Link>
+                    </li>
+                    <li>
+                      <Link href="/docs/chatgpt" className="text-sm text-gray-400 hover:text-primary-400 transition-colors">
+                        Intégration ChatGPT
+                      </Link>
+                    </li>
+                    <li>
+                      <Link href="/contact" className="text-sm text-gray-400 hover:text-primary-400 transition-colors">
+                        Contactez-nous
+                      </Link>
                     </li>
                   </ul>
                 </div>

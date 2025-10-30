@@ -303,9 +303,9 @@ export default function PronosticsPage() {
           </div>
 
           {/* Pronostics du jour */}
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-6 mb-8">
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-primary-200 rounded-xl p-6 mb-8">
             <div className="flex items-center gap-3 mb-2">
-              <Calendar className="w-6 h-6 text-blue-600" />
+              <Calendar className="w-6 h-6 text-primary-600" />
               <h2 className="text-2xl font-bold text-gray-900">
                 Pronostics du {format(new Date(), 'd MMMM yyyy', { locale: fr })}
               </h2>
@@ -334,7 +334,7 @@ export default function PronosticsPage() {
                       <div>
                         <div className="flex items-center gap-3 mb-2">
                           {pronostic.betType === 'Quinté+' && (
-                            <span className="px-3 py-1 bg-yellow-400 text-blue-900 rounded-full text-sm font-bold flex items-center gap-1">
+                            <span className="px-3 py-1 bg-yellow-400 text-primary-900 rounded-full text-sm font-bold flex items-center gap-1">
                               <Award className="w-4 h-4" />
                               QUINTÉ+
                             </span>
@@ -347,7 +347,7 @@ export default function PronosticsPage() {
                           )}
                         </div>
                         <h3 className="text-2xl font-bold mb-1">{pronostic.raceName}</h3>
-                        <div className="flex flex-wrap gap-4 text-sm text-blue-100">
+                        <div className="flex flex-wrap gap-4 text-sm text-primary-100">
                           <span className="flex items-center gap-1">
                             <Clock className="w-4 h-4" />
                             {pronostic.startTime}
@@ -359,16 +359,16 @@ export default function PronosticsPage() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-sm text-blue-100 mb-1">Notre sélection</div>
+                        <div className="text-sm text-primary-100 mb-1">Notre sélection</div>
                         <div className="text-3xl font-bold">{pronostic.stake}</div>
                       </div>
                     </div>
                   </div>
 
                   {/* Analyse générale */}
-                  <div className="p-6 bg-blue-50 border-b border-blue-100">
+                  <div className="p-6 bg-primary-50 border-b border-primary-100">
                     <h4 className="font-bold text-gray-900 mb-2 flex items-center gap-2">
-                      <TrendingUp className="w-5 h-5 text-blue-600" />
+                      <TrendingUp className="w-5 h-5 text-primary-600" />
                       Analyse de la course
                     </h4>
                     <p className="text-gray-700 leading-relaxed">{pronostic.analysis}</p>
@@ -384,7 +384,7 @@ export default function PronosticsPage() {
                           className="flex flex-col md:flex-row gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200"
                         >
                           <div className="flex items-center gap-4 flex-1">
-                            <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-xl flex-shrink-0">
+                            <div className="w-12 h-12 bg-primary-600 text-white rounded-full flex items-center justify-center font-bold text-xl flex-shrink-0">
                               {selection.horseNumber}
                             </div>
                             <div className="flex-1">
@@ -410,7 +410,7 @@ export default function PronosticsPage() {
                     <div className="flex flex-col sm:flex-row gap-3">
                       <Link
                         href="/register"
-                        className="flex-1 inline-flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-blue-700 transition-all"
+                        className="flex-1 inline-flex items-center justify-center gap-2 bg-primary-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-primary-700 transition-all"
                       >
                         Suivre ce pari avec BetTracker Pro
                         <ChevronRight className="w-5 h-5" />
@@ -431,17 +431,17 @@ export default function PronosticsPage() {
       </div>
 
       {/* CTA Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16 mt-12">
+      <div className="bg-gradient-to-r from-primary-600 to-primary-800 text-white py-16 mt-12">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
             Suivez vos pronostics avec BetTracker Pro
           </h2>
-          <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
+          <p className="text-xl text-primary-100 mb-8 max-w-2xl mx-auto">
             Enregistrez vos paris basés sur nos pronostics, analysez vos résultats et améliorez votre stratégie
           </p>
           <Link
             href="/register"
-            className="inline-flex items-center gap-2 bg-yellow-400 text-blue-900 px-8 py-4 rounded-lg font-bold text-lg hover:bg-yellow-300 transition-all"
+            className="inline-flex items-center gap-2 bg-yellow-400 text-primary-900 px-8 py-4 rounded-lg font-bold text-lg hover:bg-yellow-300 transition-all"
           >
             Commencer Gratuitement
             <ChevronRight className="w-5 h-5" />

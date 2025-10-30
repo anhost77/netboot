@@ -137,14 +137,14 @@ export default function BlogPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-green-600 to-green-800 text-white py-12">
+      <div className="bg-gradient-to-r from-primary-600 to-primary-800 text-white py-12">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
             <Newspaper className="w-16 h-16 mx-auto mb-4" />
             <h1 className="text-4xl md:text-5xl font-bold mb-4">
               Blog PMU & Paris Hippiques
             </h1>
-            <p className="text-xl text-green-100 mb-6">
+            <p className="text-xl text-primary-100 mb-6">
               Guides, stratégies, analyses et actualités du monde des courses hippiques.
               Tous les conseils pour devenir un parieur gagnant.
             </p>
@@ -176,7 +176,7 @@ export default function BlogPage() {
                   onClick={() => setSelectedCategory(cat)}
                   className={`px-4 py-2 rounded-lg font-semibold transition-all ${
                     selectedCategory === cat
-                      ? 'bg-green-600 text-white shadow-md'
+                      ? 'bg-primary-600 text-white shadow-md'
                       : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
                   }`}
                 >
@@ -190,7 +190,7 @@ export default function BlogPage() {
           {featuredArticles.length > 0 && (
             <div className="mb-12">
               <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                <TrendingUp className="w-6 h-6 text-green-600" />
+                <TrendingUp className="w-6 h-6 text-primary-600" />
                 Articles à la une
               </h2>
               <div className="grid md:grid-cols-2 gap-6">
@@ -205,14 +205,14 @@ export default function BlogPage() {
                     </div>
                     <div className="p-6">
                       <div className="flex items-center gap-3 mb-3">
-                        <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-semibold">
+                        <span className="px-3 py-1 bg-primary-100 text-primary-700 rounded-full text-sm font-semibold">
                           {article.category}
                         </span>
                         <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm font-bold">
                           À LA UNE
                         </span>
                       </div>
-                      <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-green-600 transition-colors">
+                      <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-primary-600 transition-colors">
                         {article.title}
                       </h3>
                       <p className="text-gray-600 mb-4 line-clamp-2">
@@ -255,7 +255,7 @@ export default function BlogPage() {
                     <span className="inline-block px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-semibold mb-3">
                       {article.category}
                     </span>
-                    <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-green-600 transition-colors line-clamp-2">
+                    <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-primary-600 transition-colors line-clamp-2">
                       {article.title}
                     </h3>
                     <p className="text-gray-600 text-sm mb-4 line-clamp-2">
@@ -277,17 +277,17 @@ export default function BlogPage() {
       </div>
 
       {/* CTA Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16 mt-12">
+      <div className="bg-gradient-to-r from-primary-600 to-primary-800 text-white py-16 mt-12">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
             Mettez en pratique avec BetTracker Pro
           </h2>
-          <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
+          <p className="text-xl text-primary-100 mb-8 max-w-2xl mx-auto">
             Appliquez les stratégies de notre blog et suivez vos résultats avec notre plateforme
           </p>
           <Link
             href="/register"
-            className="inline-flex items-center gap-2 bg-yellow-400 text-blue-900 px-8 py-4 rounded-lg font-bold text-lg hover:bg-yellow-300 transition-all"
+            className="inline-flex items-center gap-2 bg-yellow-400 text-primary-900 px-8 py-4 rounded-lg font-bold text-lg hover:bg-yellow-300 transition-all"
           >
             Commencer Gratuitement
             <ChevronRight className="w-5 h-5" />

@@ -9,7 +9,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-blue-900 text-white">
+      <section className="relative overflow-hidden bg-gradient-to-br from-primary-600 via-primary-700 to-primary-900 text-white">
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
         <div className="container mx-auto px-4 py-20 md:py-32 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
@@ -17,7 +17,7 @@ export default function Home() {
               Maîtrisez vos <span className="text-yellow-300">Paris Hippiques</span> comme un Pro
             </h1>
 
-            <p className="text-xl md:text-2xl mb-8 text-blue-100 max-w-3xl mx-auto">
+            <p className="text-xl md:text-2xl mb-8 text-primary-100 max-w-3xl mx-auto">
               La plateforme tout-en-un pour suivre, analyser et optimiser vos paris hippiques PMU.
               Statistiques avancées, mode simulation et intégration temps réel.
             </p>
@@ -25,7 +25,7 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
               <Link
                 href="/register"
-                className="inline-flex items-center justify-center gap-2 bg-yellow-400 text-blue-900 px-8 py-4 rounded-lg font-bold text-lg hover:bg-yellow-300 transition-all shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
+                className="inline-flex items-center justify-center gap-2 bg-yellow-400 text-primary-900 px-8 py-4 rounded-lg font-bold text-lg hover:bg-yellow-300 transition-all shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
               >
                 Commencer Gratuitement
                 <ChevronRight className="w-5 h-5" />
@@ -48,7 +48,7 @@ export default function Home() {
                 <span>Données Temps Réel PMU</span>
               </div>
               <div className="flex items-center gap-2">
-                <Target className="w-5 h-5 text-blue-300" />
+                <Target className="w-5 h-5 text-primary-300" />
                 <span>20+ Types de Paris</span>
               </div>
             </div>
@@ -68,19 +68,19 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-5xl mx-auto">
             <div className="text-center">
-              <div className="text-4xl font-bold text-blue-600 mb-2">20+</div>
+              <div className="text-4xl font-bold text-primary-600 mb-2">20+</div>
               <div className="text-gray-600">Types de Paris</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold text-blue-600 mb-2">Tous</div>
+              <div className="text-4xl font-bold text-primary-600 mb-2">Tous</div>
               <div className="text-gray-600">Hippodromes Français</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold text-blue-600 mb-2">2</div>
+              <div className="text-4xl font-bold text-primary-600 mb-2">2</div>
               <div className="text-gray-600">Modes (Réel/Simulation)</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold text-blue-600 mb-2">100%</div>
+              <div className="text-4xl font-bold text-primary-600 mb-2">100%</div>
               <div className="text-gray-600">Gratuit pour commencer</div>
             </div>
           </div>
@@ -92,7 +92,7 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-              Tout ce dont vous avez besoin pour <span className="text-blue-600">réussir</span>
+              Tout ce dont vous avez besoin pour <span className="text-primary-600">réussir</span>
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
               Une suite complète d'outils professionnels pour gérer et optimiser vos paris hippiques
@@ -103,7 +103,7 @@ export default function Home() {
             {/* Suivi de Paris */}
             <div className="group p-8 bg-white rounded-2xl border-2 border-gray-100 hover:border-blue-500 hover:shadow-xl transition-all">
               <div className="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center mb-6 group-hover:bg-blue-500 transition-colors">
-                <Target className="w-7 h-7 text-blue-600 group-hover:text-white transition-colors" />
+                <Target className="w-7 h-7 text-primary-600 group-hover:text-white transition-colors" />
               </div>
               <h3 className="text-2xl font-bold mb-3 text-gray-900">Suivi de Paris Complet</h3>
               <p className="text-gray-600 mb-4 leading-relaxed">
@@ -258,7 +258,7 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-              Services <span className="text-blue-600">Gratuits</span>
+              Services <span className="text-primary-600">Gratuits</span>
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
               Accédez gratuitement à notre calendrier des courses, pronostics et actualités PMU
@@ -267,12 +267,12 @@ export default function Home() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
             <Link href="/calendrier-courses" className="group p-6 bg-white rounded-xl shadow-sm hover:shadow-xl transition-all border border-gray-100">
-              <Calendar className="w-12 h-12 text-blue-600 mb-4 group-hover:scale-110 transition-transform" />
+              <Calendar className="w-12 h-12 text-primary-600 mb-4 group-hover:scale-110 transition-transform" />
               <h3 className="text-xl font-bold mb-2 text-gray-900">Calendrier des Courses</h3>
               <p className="text-gray-600 text-sm mb-3">
                 Retrouvez toutes les courses hippiques du jour et de la semaine
               </p>
-              <div className="text-blue-600 font-semibold flex items-center gap-1 text-sm">
+              <div className="text-primary-600 font-semibold flex items-center gap-1 text-sm">
                 Voir le calendrier <ChevronRight className="w-4 h-4" />
               </div>
             </Link>
@@ -318,7 +318,7 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-              Des tarifs <span className="text-blue-600">adaptés à tous</span>
+              Des tarifs <span className="text-primary-600">adaptés à tous</span>
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
               Commencez gratuitement, évoluez quand vous êtes prêt
@@ -378,7 +378,7 @@ export default function Home() {
               </ul>
               <Link
                 href="/register"
-                className="block w-full text-center bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                className="block w-full text-center bg-primary-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary-700 transition-colors"
               >
                 Essayer
               </Link>
@@ -386,13 +386,13 @@ export default function Home() {
 
             {/* Pro */}
             <div className="p-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl border-2 border-blue-600 text-white relative overflow-hidden">
-              <div className="absolute top-4 right-4 bg-yellow-400 text-blue-900 px-3 py-1 rounded-full text-xs font-bold">
+              <div className="absolute top-4 right-4 bg-yellow-400 text-primary-900 px-3 py-1 rounded-full text-xs font-bold">
                 POPULAIRE
               </div>
               <h3 className="text-2xl font-bold mb-2">Pro</h3>
               <div className="mb-6">
                 <span className="text-4xl font-bold">19.99€</span>
-                <span className="text-blue-100">/mois</span>
+                <span className="text-primary-100">/mois</span>
               </div>
               <ul className="space-y-3 mb-8">
                 <li className="flex items-center gap-2">
@@ -414,7 +414,7 @@ export default function Home() {
               </ul>
               <Link
                 href="/register"
-                className="block w-full text-center bg-yellow-400 text-blue-900 px-6 py-3 rounded-lg font-bold hover:bg-yellow-300 transition-colors"
+                className="block w-full text-center bg-yellow-400 text-primary-900 px-6 py-3 rounded-lg font-bold hover:bg-yellow-300 transition-colors"
               >
                 Essayer Pro
               </Link>
@@ -457,18 +457,18 @@ export default function Home() {
       </section>
 
       {/* CTA Final */}
-      <section className="py-20 bg-gradient-to-br from-blue-600 to-blue-900 text-white">
+      <section className="py-20 bg-gradient-to-br from-primary-600 to-primary-900 text-white">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-4xl md:text-5xl font-bold mb-6">
             Prêt à optimiser vos paris hippiques ?
           </h2>
-          <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
+          <p className="text-xl text-primary-100 mb-8 max-w-2xl mx-auto">
             Rejoignez la communauté des parieurs qui optimisent leurs stratégies avec BetTracker Pro
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/register"
-              className="inline-flex items-center justify-center gap-2 bg-yellow-400 text-blue-900 px-8 py-4 rounded-lg font-bold text-lg hover:bg-yellow-300 transition-all"
+              className="inline-flex items-center justify-center gap-2 bg-yellow-400 text-primary-900 px-8 py-4 rounded-lg font-bold text-lg hover:bg-yellow-300 transition-all"
             >
               Commencer Gratuitement
               <ChevronRight className="w-5 h-5" />

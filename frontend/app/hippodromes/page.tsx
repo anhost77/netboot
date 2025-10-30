@@ -164,14 +164,14 @@ export default function HippodromesPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 to-purple-800 text-white py-12">
+      <div className="bg-gradient-to-r from-primary-600 to-primary-800 text-white py-12">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
             <Map className="w-16 h-16 mx-auto mb-4" />
             <h1 className="text-4xl md:text-5xl font-bold mb-4">
               Guide des Hippodromes Français
             </h1>
-            <p className="text-xl text-purple-100 mb-6">
+            <p className="text-xl text-primary-100 mb-6">
               Découvrez les caractéristiques, particularités et courses phares de chaque hippodrome.
               Adaptez votre stratégie en fonction du terrain.
             </p>
@@ -191,7 +191,7 @@ export default function HippodromesPage() {
                 placeholder="Rechercher un hippodrome..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
             </div>
 
@@ -203,7 +203,7 @@ export default function HippodromesPage() {
                   onClick={() => setSelectedDiscipline(disc)}
                   className={`px-4 py-2 rounded-lg font-semibold transition-all ${
                     selectedDiscipline === disc
-                      ? 'bg-purple-600 text-white shadow-md'
+                      ? 'bg-primary-600 text-white shadow-md'
                       : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
                   }`}
                 >
@@ -214,22 +214,22 @@ export default function HippodromesPage() {
           </div>
 
           {/* Stats */}
-          <div className="bg-purple-50 border-2 border-purple-200 rounded-xl p-6 mb-8">
+          <div className="bg-primary-50 border-2 border-primary-200 rounded-xl p-6 mb-8">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
               <div>
-                <div className="text-3xl font-bold text-purple-600 mb-1">{hippodromes.length}</div>
+                <div className="text-3xl font-bold text-primary-600 mb-1">{hippodromes.length}</div>
                 <div className="text-sm text-gray-600">Hippodromes présentés</div>
               </div>
               <div>
-                <div className="text-3xl font-bold text-purple-600 mb-1">3</div>
+                <div className="text-3xl font-bold text-primary-600 mb-1">3</div>
                 <div className="text-sm text-gray-600">Disciplines</div>
               </div>
               <div>
-                <div className="text-3xl font-bold text-purple-600 mb-1">Toute</div>
+                <div className="text-3xl font-bold text-primary-600 mb-1">Toute</div>
                 <div className="text-sm text-gray-600">La France</div>
               </div>
               <div>
-                <div className="text-3xl font-bold text-purple-600 mb-1">Détails</div>
+                <div className="text-3xl font-bold text-primary-600 mb-1">Détails</div>
                 <div className="text-sm text-gray-600">Complets</div>
               </div>
             </div>
@@ -240,14 +240,14 @@ export default function HippodromesPage() {
             {filteredHippodromes.map(hippo => (
               <div
                 key={hippo.id}
-                className="bg-white rounded-xl shadow-lg border-2 border-gray-200 overflow-hidden hover:shadow-xl hover:border-purple-300 transition-all"
+                className="bg-white rounded-xl shadow-lg border-2 border-gray-200 overflow-hidden hover:shadow-xl hover:border-primary-300 transition-all"
               >
                 {/* En-tête */}
-                <div className="bg-gradient-to-r from-purple-600 to-purple-700 text-white p-6">
+                <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white p-6">
                   <div className="flex items-start justify-between mb-2">
                     <div>
                       <h3 className="text-2xl font-bold mb-1">{hippo.name}</h3>
-                      <p className="text-purple-100">{hippo.fullName}</p>
+                      <p className="text-primary-100">{hippo.fullName}</p>
                     </div>
                     <MapPin className="w-8 h-8 flex-shrink-0" />
                   </div>
@@ -256,7 +256,7 @@ export default function HippodromesPage() {
                       {hippo.region}
                     </span>
                     {hippo.disciplines.map(disc => (
-                      <span key={disc} className="px-3 py-1 bg-yellow-400 text-purple-900 rounded-full text-sm font-semibold">
+                      <span key={disc} className="px-3 py-1 bg-yellow-400 text-primary-900 rounded-full text-sm font-semibold">
                         {disc}
                       </span>
                     ))}
@@ -272,13 +272,13 @@ export default function HippodromesPage() {
                   {/* Caractéristiques */}
                   <div className="mb-6">
                     <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                      <Info className="w-5 h-5 text-purple-600" />
+                      <Info className="w-5 h-5 text-primary-600" />
                       Caractéristiques
                     </h4>
                     <ul className="space-y-2">
                       {hippo.characteristics.map((char, idx) => (
                         <li key={idx} className="text-sm text-gray-600 flex items-start gap-2">
-                          <ChevronRight className="w-4 h-4 text-purple-500 flex-shrink-0 mt-0.5" />
+                          <ChevronRight className="w-4 h-4 text-primary-500 flex-shrink-0 mt-0.5" />
                           <span>{char}</span>
                         </li>
                       ))}
@@ -295,7 +295,7 @@ export default function HippodromesPage() {
                       {hippo.popularRaces.map((race, idx) => (
                         <span
                           key={idx}
-                          className="px-3 py-1 bg-purple-50 text-purple-700 rounded-lg text-sm font-medium border border-purple-200"
+                          className="px-3 py-1 bg-primary-50 text-primary-700 rounded-lg text-sm font-medium border border-primary-200"
                         >
                           {race}
                         </span>
@@ -307,14 +307,14 @@ export default function HippodromesPage() {
                   <div className="flex gap-3 pt-4 border-t border-gray-200">
                     <Link
                       href={`/calendrier-courses?hippodrome=${hippo.code}`}
-                      className="flex-1 inline-flex items-center justify-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-purple-700 transition-all text-sm"
+                      className="flex-1 inline-flex items-center justify-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-primary-700 transition-all text-sm"
                     >
                       Voir les courses
                       <ChevronRight className="w-4 h-4" />
                     </Link>
                     <Link
                       href={`/pronostics?hippodrome=${hippo.code}`}
-                      className="inline-flex items-center justify-center gap-2 bg-yellow-400 text-purple-900 px-4 py-2 rounded-lg font-semibold hover:bg-yellow-300 transition-all text-sm"
+                      className="inline-flex items-center justify-center gap-2 bg-yellow-400 text-primary-900 px-4 py-2 rounded-lg font-semibold hover:bg-yellow-300 transition-all text-sm"
                     >
                       Pronostics
                     </Link>
@@ -327,17 +327,17 @@ export default function HippodromesPage() {
       </div>
 
       {/* CTA Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16 mt-12">
+      <div className="bg-gradient-to-r from-primary-600 to-primary-800 text-white py-16 mt-12">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
             Suivez vos performances par hippodrome
           </h2>
-          <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
+          <p className="text-xl text-primary-100 mb-8 max-w-2xl mx-auto">
             BetTracker Pro vous permet d'analyser vos résultats hippodrome par hippodrome pour identifier vos terrains favoris
           </p>
           <Link
             href="/register"
-            className="inline-flex items-center gap-2 bg-yellow-400 text-blue-900 px-8 py-4 rounded-lg font-bold text-lg hover:bg-yellow-300 transition-all"
+            className="inline-flex items-center gap-2 bg-yellow-400 text-primary-900 px-8 py-4 rounded-lg font-bold text-lg hover:bg-yellow-300 transition-all"
           >
             Commencer Gratuitement
             <ChevronRight className="w-5 h-5" />

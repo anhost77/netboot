@@ -130,7 +130,13 @@ export class PmuDailyPronosticService {
 
       this.logger.log(`🏆 ${qualityRaces.length} races meet quality threshold (score >= ${MIN_QUALITY_SCORE} or Quinté+)`);
 
-      // 6. Stocker les pronostics des courses de qualité
+      // 6. Générer la synthèse globale (cheval du jour + outsider)
+      const dailySummary = this.generateDailySummary(analyses);
+      if (dailySummary) {
+        await this.storeDailySummary(dailySummary);
+      }
+
+      // 7. Stocker les pronostics des courses de qualité
       let successCount = 0;
       for (const { race, analysis } of qualityRaces) {
         try {
@@ -413,6 +419,93 @@ Format Markdown avec titres ##`;
     return strengths.length > 0 
       ? `Atouts: ${strengths.join(', ')}`
       : 'Profil équilibré';
+  }
+
+  /**
+   * Génère une synthèse quotidienne avec le meilleur cheval et le meilleur outsider
+   */
+  private generateDailySummary(analyses: Array<{ race: any; analysis: any; score: number }>) {
+    if (analyses.length === 0) return null;
+
+    // 1. Trouver le cheval avec le meilleur score global
+    let bestHorse = null;
+    let bestScore = 0;
+
+    for (const { race, analysis } of analyses) {
+      const topHorse = analysis.recommendations.cheval_du_jour;
+      if (topHorse && topHorse.totalScore > bestScore) {
+        bestScore = topHorse.totalScore;
+        bestHorse = {
+          ...topHorse,
+          race: {
+            id: race.id,
+            name: analysis.raceName,
+            hippodrome: analysis.hippodrome,
+            startTime: race.startTime,
+            distance: analysis.distance,
+            discipline: analysis.discipline,
+          }
+        };
+      }
+    }
+
+    // 2. Trouver le meilleur outsider (bon score mais cote élevée)
+    let bestOutsider = null;
+    let bestOutsiderValue = 0;
+
+    for (const { race, analysis } of analyses) {
+      const outsiders = analysis.recommendations.outsiders || [];
+      for (const outsider of outsiders) {
+        // Score de valeur = score du cheval / position dans la course
+        const valueScore = outsider.totalScore * (outsider.oddsScore / 100);
+        if (valueScore > bestOutsiderValue && outsider.totalScore >= 45) {
+          bestOutsiderValue = valueScore;
+          bestOutsider = {
+            ...outsider,
+            race: {
+              id: race.id,
+              name: analysis.raceName,
+              hippodrome: analysis.hippodrome,
+              startTime: race.startTime,
+              distance: analysis.distance,
+              discipline: analysis.discipline,
+            }
+          };
+        }
+      }
+    }
+
+    if (!bestHorse) return null;
+
+    return {
+      date: new Date().toISOString().split('T')[0],
+      chevalDuJour: bestHorse,
+      outsider: bestOutsider,
+      totalRaces: analyses.length,
+    };
+  }
+
+  /**
+   * Stocke la synthèse quotidienne en cache (fichier JSON ou BDD)
+   */
+  private async storeDailySummary(summary: any): Promise<void> {
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      
+      const summaryPath = path.join(process.cwd(), 'cache', 'daily-summary.json');
+      const dir = path.dirname(summaryPath);
+      
+      // Créer le dossier si nécessaire
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      
+      fs.writeFileSync(summaryPath, JSON.stringify(summary, null, 2));
+      this.logger.log(`✅ Daily summary stored: Cheval du jour score ${summary.chevalDuJour.totalScore.toFixed(1)}`);
+    } catch (error) {
+      this.logger.error('Error storing daily summary:', error.message);
+    }
   }
 
   private delay(ms: number): Promise<void> {

@@ -1348,6 +1348,38 @@ export class PmuController {
   }
 
   /**
+   * Récupérer la synthèse quotidienne (cheval du jour + outsider)
+   */
+  @Public()
+  @Get('public/daily-summary')
+  @ApiOperation({ summary: 'Get daily summary with best horse and outsider (public access)' })
+  async getDailySummary() {
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      const summaryPath = path.join(process.cwd(), 'cache', 'daily-summary.json');
+      
+      if (fs.existsSync(summaryPath)) {
+        const summary = JSON.parse(fs.readFileSync(summaryPath, 'utf8'));
+        return {
+          success: true,
+          summary,
+        };
+      }
+      
+      return {
+        success: false,
+        message: 'No summary available yet',
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message,
+      };
+    }
+  }
+
+  /**
    * Récupérer les pronostics IA du jour
    */
   @Public()

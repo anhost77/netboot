@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { WeatherService } from './weather.service';
 
-interface HorseAnalysis {
+export interface HorseAnalysis {
   horseNumber: number;
   horseName: string;
   jockey: string | null;
@@ -37,7 +37,7 @@ interface HorseAnalysis {
   };
 }
 
-interface RaceAnalysis {
+export interface RaceAnalysis {
   raceId: string;
   raceName: string;
   hippodrome: string;

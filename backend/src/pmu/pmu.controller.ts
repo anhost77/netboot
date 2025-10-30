@@ -1016,8 +1016,8 @@ export class PmuController {
       throw new HttpException('Invalid date format. Use YYYY-MM-DD', HttpStatus.BAD_REQUEST);
     }
 
-    // Get races from database for this date
-    const races = await this.prisma.pmuRace.findMany({
+    // Vérifier si on a des courses en BDD pour cette date
+    const existingRaces = await this.prisma.pmuRace.findMany({
       where: {
         date: {
           gte: new Date(date.setHours(0, 0, 0, 0)),
@@ -1032,6 +1032,15 @@ export class PmuController {
         { raceNumber: 'asc' },
       ],
     });
+
+    // Si pas de courses en BDD, retourner tableau vide
+    // La synchronisation doit être faite via le cron /api/pmu/sync-today
+    if (existingRaces.length === 0) {
+      console.log(`⚠️ Aucune course en BDD pour ${dateStr}. Lancez /api/pmu/sync-today pour synchroniser.`);
+      return [];
+    }
+
+    const races = existingRaces;
 
     // Format races for frontend
     return races.map(race => ({

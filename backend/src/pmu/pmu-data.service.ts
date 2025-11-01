@@ -192,13 +192,79 @@ export class PmuDataService {
 
       this.logger.debug(`Found ${reports.length} bet types in reports`);
 
-      // Extract odds from Simple Gagnant (winner odds)
+      // ===== EXTRACT ARRIVAL ORDER FROM REPORTS =====
+      // Use TRIO or combination of reports to deduce arrival order
+      const trioReport = reports.find(r => r.typePari === 'TRIO');
       const simpleGagnant = reports.find(r => r.typePari === 'SIMPLE_GAGNANT');
+      const simplePlace = reports.find(r => r.typePari === 'SIMPLE_PLACE');
+      const deuxSurQuatre = reports.find(r => r.typePari === 'DEUX_SUR_QUATRE');
+
+      // Extract arrival order
+      const arrivalOrder: number[] = [];
+
+      if (trioReport && trioReport.rapports && trioReport.rapports.length > 0) {
+        // TRIO gives us the first 3 horses in order
+        const trioCombinaison = trioReport.rapports[0].combinaison;
+        const trioHorses = trioCombinaison.split('-').map((n: string) => parseInt(n));
+        arrivalOrder.push(...trioHorses);
+        this.logger.log(`📊 Extracted top 3 from TRIO: ${trioHorses.join('-')}`);
+      } else if (simpleGagnant && simpleGagnant.rapports && simplePlace && simplePlace.rapports) {
+        // Fallback: use SIMPLE_GAGNANT (1st) + SIMPLE_PLACE (top 3)
+        const winner = parseInt(simpleGagnant.rapports[0].combinaison);
+        arrivalOrder.push(winner);
+
+        // Add placed horses (excluding winner)
+        for (const rapport of simplePlace.rapports) {
+          const horseNum = parseInt(rapport.combinaison);
+          if (horseNum !== winner && !arrivalOrder.includes(horseNum)) {
+            arrivalOrder.push(horseNum);
+          }
+        }
+        this.logger.log(`📊 Extracted arrival order from SIMPLE reports: ${arrivalOrder.join('-')}`);
+      }
+
+      // If we have 2SUR4, we can deduce the 4th horse
+      if (deuxSurQuatre && deuxSurQuatre.rapports && arrivalOrder.length === 3) {
+        // Find a combination that includes horses NOT in top 3
+        for (const rapport of deuxSurQuatre.rapports) {
+          const horses = rapport.combinaison.split('-').map((n: string) => parseInt(n));
+          for (const horse of horses) {
+            if (!arrivalOrder.includes(horse)) {
+              arrivalOrder.push(horse);
+              this.logger.log(`📊 Found 4th horse from 2SUR4: ${horse}`);
+              break;
+            }
+          }
+          if (arrivalOrder.length === 4) break;
+        }
+      }
+
+      // Update arrivalOrder in database
+      if (arrivalOrder.length > 0) {
+        for (let i = 0; i < arrivalOrder.length; i++) {
+          const horseNumber = arrivalOrder[i];
+          const position = i + 1;
+
+          await this.prisma.pmuHorse.updateMany({
+            where: {
+              raceId,
+              number: horseNumber,
+            },
+            data: {
+              arrivalOrder: position,
+            },
+          });
+          this.logger.log(`🏁 Updated arrivalOrder for horse ${horseNumber}: position ${position}`);
+        }
+      }
+
+      // ===== EXTRACT ODDS =====
+      // Extract odds from Simple Gagnant (winner odds)
       if (simpleGagnant && simpleGagnant.rapports) {
         for (const rapport of simpleGagnant.rapports) {
           const horseNumber = parseInt(rapport.combinaison);
           const odds = rapport.dividendePourUnEuro / 100; // Convert cents to euros
-          
+
           if (horseNumber && odds) {
             await this.prisma.pmuHorse.updateMany({
               where: {
@@ -215,7 +281,6 @@ export class PmuDataService {
       }
 
       // Extract odds from Simple Placé (place odds) for horses without winner odds
-      const simplePlace = reports.find(r => r.typePari === 'SIMPLE_PLACE');
       if (simplePlace && simplePlace.rapports) {
         for (const rapport of simplePlace.rapports) {
           const horseNumber = parseInt(rapport.combinaison);
